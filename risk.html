@@ -716,117 +716,7 @@ function getDisplayDateTime() {
 window.addEventListener('DOMContentLoaded', () => { loadNames(); applySeasonalMarkers(); setCurrentDateTime(); });
 </script>
 
-<script>
-async function v10AutoFill(){
-  const status = document.getElementById('gpsStatus');
-  try{
-    if(status) status.textContent='위치 확인중...';
-    navigator.geolocation.getCurrentPosition(async (pos)=>{
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
 
-      try{
-        const now=new Date();
-        const base_date=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-        const base_time='0800'; // 기본값
-        const nx=89, ny=90; // 임시 격자값(추후 GPS격자변환 적용 가능)
-
-        const url=`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst?serviceKey=${window.KMA_SERVICE_KEY}&pageNo=1&numOfRows=1000&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${nx}&ny=${ny}`;
-
-        const w = await fetch(url);
-        const wd = await w.json();
-
-        let temp=null;
-        let reh=null;
-        let wsd=null;
-
-        const items=wd?.response?.body?.items?.item || [];
-        items.forEach(i=>{
-          if(i.category==='T1H') temp=Number(i.obsrValue);
-          if(i.category==='REH') reh=Number(i.obsrValue);
-          if(i.category==='WSD') wsd=Number(i.obsrValue);
-        });
-
-        let feel=temp;
-        if(temp!==null){
-          if(temp>=27 && reh!==null){
-            feel=temp + ((reh-40)*0.05);
-          }else if(temp<=10 && wsd!==null){
-            feel=13.12 + 0.6215*temp -11.37*Math.pow(wsd,0.16)+0.3965*temp*Math.pow(wsd,0.16);
-          }
-        }
-
-        let rt=document.getElementById('real_temperature');
-        let ft=document.getElementById('fake_temperature');
-
-        if(rt && temp!==null) rt.value=Number(temp).toFixed(1)+'℃';
-        if(ft && feel!==null) ft.value=Number(feel).toFixed(1)+'℃';
-
-        const hot=document.querySelector('input[value="weather_hot"]');
-        const cold=document.querySelector('input[value="weather_cold"]');
-        if(hot && feel!==null) hot.checked=(feel>=35);
-        if(cold && feel!==null) cold.checked=(feel<=-12);
-      }catch(e){}
-
-      try{
-const r = await fetch(
- `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lon}&y=${lat}`,
- {
-   headers:{
-     Authorization:`KakaoAK ${window.KAKAO_REST_API_KEY}`
-   }
- }
-);
-
-const data = await r.json();
-
-if(data.documents && data.documents.length){
-
-    const doc = data.documents[0];
-
-    let addr = "";
-
-    if(doc.road_address){
-        addr =
-        `${doc.road_address.region_1depth_name} ` +
-        `${doc.road_address.region_2depth_name} ` +
-        `${doc.road_address.road_name} ` +
-        `${doc.road_address.main_building_no}`;
-
-        if(doc.road_address.sub_building_no &&
-           doc.road_address.sub_building_no !== "0"){
-            addr += `-${doc.road_address.sub_building_no}`;
-        }
-    }else if(doc.address){
-
-        addr =
-        `${doc.address.region_1depth_name} ` +
-        `${doc.address.region_2depth_name} ` +
-        `${doc.address.region_3depth_name} ` +
-        `${doc.address.main_address_no}`;
-
-        if(doc.address.sub_address_no &&
-           doc.address.sub_address_no !== "0"){
-            addr += `-${doc.address.sub_address_no}`;
-        }
-    }
-
-    document.getElementById("location").value = addr;
-}
-
-      }catch(e){}
-
-      if(status) status.textContent='자동입력 완료';
-      if(typeof generateImage==='function') generateImage();
-    },()=>{
-      if(status) status.textContent='위치권한 허용 필요';
-    },{enableHighAccuracy:true,timeout:15000});
-  }catch(e){
-    if(status) status.textContent='오류 발생';
-  }
-}
-window.addEventListener('load',()=>setTimeout(v10AutoFill,1500));
-</script>
 
 <script>
 function autoWeatherCheck(apparentTemp){
@@ -885,7 +775,9 @@ async function fetchKmaByGps(lat, lon){
   const hh=String(d.getHours()).padStart(2,'0');
 
   const base_date=`${yyyy}${mm}${dd}`;
-  const base_time=`${hh}00`;
+  let baseHour=d.getHours()-1;
+if(baseHour<0){baseHour=23; d.setDate(d.getDate()-1);}
+const base_time=String(baseHour).padStart(2,'0')+'00';
 
   const url=`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst?serviceKey=${window.KMA_SERVICE_KEY}&pageNo=1&numOfRows=100&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${g.nx}&ny=${g.ny}`;
 
@@ -907,6 +799,9 @@ async function fetchKmaByGps(lat, lon){
   const ft=document.getElementById('fake_temperature');
   if(rt && T1H!=null) rt.value=T1H.toFixed(1)+'℃';
   if(ft && feel!=null) ft.value=feel.toFixed(1)+'℃';
+const status=document.getElementById('gpsStatus');
+if(status) status.textContent=`자동입력 완료 (${T1H?.toFixed?.(1) ?? '-'}℃)`;
+if(typeof generateImage==='function') generateImage();
 
   const q=v=>document.querySelector(`input[value="${v}"]`);
   if(q('weather_clear')) q('weather_clear').checked = RN1===0;
