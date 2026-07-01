@@ -933,10 +933,3 @@ function updateWeatherStatus(temp, feel, hum, wind){
 </html>
 
 
-function calcFeelTempV17(temp, wind){
-  if(temp==null || wind==null || isNaN(temp) || isNaN(wind)) return temp;
-  const windKmh = Math.max(0.1, wind * 3.6);
-  return 13.12 + (0.6215 * temp)
-    - (11.37 * Math.pow(windKmh,0.16))
-    + (0.3965 * temp * Math.pow(windKmh,0.16));
-}
