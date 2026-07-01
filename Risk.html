@@ -54,7 +54,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V19 자동기상판</b><br>
+<b>V19.2 자동갱신판</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -891,6 +891,27 @@ function autoWeatherCheckV19(T1H,REH,WSD,PTY){
    if(find('weather_cold')) find('weather_cold').checked=(T1H<=-12);
  }catch(e){console.log(e);}
 }
+</script>
+
+
+<script>
+// 5분마다 자동 갱신
+setInterval(function(){
+    if(typeof v11AutoFill === 'function'){
+        v11AutoFill();
+
+        const st = document.getElementById('gpsStatus');
+        if(st){
+            const now = new Date();
+            st.innerHTML += '<br>마지막 갱신: ' +
+              now.getFullYear() + '-' +
+              String(now.getMonth()+1).padStart(2,'0') + '-' +
+              String(now.getDate()).padStart(2,'0') + ' ' +
+              String(now.getHours()).padStart(2,'0') + ':' +
+              String(now.getMinutes()).padStart(2,'0');
+        }
+    }
+}, 300000);
 </script>
 
 </body>
