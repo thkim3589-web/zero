@@ -738,10 +738,40 @@ async function v10AutoFill(){
       }catch(e){}
 
       try{
-        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
-        const rd = await r.json();
-        let loc=document.getElementById('location');
-        if(loc && rd.display_name) loc.value=rd.display_name;
+const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
+const rd = await r.json();
+
+let loc = document.getElementById('location');
+
+if(loc && rd.address){
+
+    const a = rd.address;
+
+    const city =
+        a.city || a.county || a.state || "";
+
+    const district =
+        a.suburb || a.city_district || a.town || a.village || "";
+
+    const road = a.road || "";
+    const house = a.house_number || "";
+
+    const dong =
+        a.neighbourhood || a.quarter || a.hamlet || "";
+
+    // 도로명주소 우선
+    if(road){
+        loc.value = `${city} ${district} ${road} ${house}`.replace(/\s+/g," ").trim();
+    }
+    // 지번주소
+    else if(dong){
+        loc.value = `${city} ${district} ${dong} ${house}`.replace(/\s+/g," ").trim();
+    }
+    // 예외
+    else{
+        loc.value = rd.display_name;
+    }
+}
       }catch(e){}
 
       if(status) status.textContent='자동입력 완료';
