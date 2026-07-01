@@ -841,5 +841,29 @@ function autoWeatherCheck(apparentTemp){
   if(typeof generateImage === 'function') generateImage();
 }
 </script>
+
+<script>
+function applyWeatherAutoChecks(temp, feel, rain, wind){
+  const clear=document.querySelector('input[value="weather_clear"]');
+  const rainbox=document.querySelector('input[value="weather_rain"]');
+  const windbox=document.querySelector('input[value="weather_wind"]');
+  const hot=document.querySelector('input[value="weather_hot"]');
+  const cold=document.querySelector('input[value="weather_cold"]');
+
+  if(clear) clear.checked = Number(rain||0) === 0;
+  if(rainbox) rainbox.checked = Number(rain||0) > 0;
+  if(windbox) windbox.checked = Number(wind||0) >= 10;
+
+  if(hot) hot.checked = Number(feel) >= 35.0;
+  if(cold) cold.checked = Number(feel) <= -12.0;
+
+  const rt=document.getElementById('real_temperature');
+  const ft=document.getElementById('fake_temperature');
+
+  if(rt && temp!=null) rt.value = Number(temp).toFixed(1) + '℃';
+  if(ft && feel!=null) ft.value = Number(feel).toFixed(1) + '℃';
+}
+</script>
+
 </body>
 </html>
