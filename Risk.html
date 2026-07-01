@@ -54,7 +54,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V17 자동위치/날씨</b><br>
+<b>V18.1 자동위치/날씨</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -876,6 +876,26 @@ if(typeof generateImage==='function') generateImage();
 }
 
 window.addEventListener('load',()=>{ v11AutoFill(); });
+</script>
+
+
+<script>
+function calcFeelTempV18(temp, humidity, wind){
+    temp = parseFloat(temp||0);
+    humidity = parseFloat(humidity||0);
+    wind = parseFloat(wind||0);
+
+    const humidityBonus = Math.max(0, (humidity - 50) * 0.06);
+    const windPenalty = wind * 0.15;
+
+    return (temp + humidityBonus - windPenalty).toFixed(1);
+}
+</script>
+
+
+<!-- V18.1 -->
+<script>
+console.log("V18.1 준비완료 - 기상청 API 연동용 체감온도 로직 포함");
 </script>
 
 </body>
