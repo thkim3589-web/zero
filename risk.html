@@ -847,22 +847,15 @@ const base_time=String(baseHour).padStart(2,'0')+'00';
 
   // 기상청 자료 기반 체감온도 계산
   let feel=T1H;
-  if(T1H!=null){
-    if(T1H > 10 && T1H < 27 && REH != null && WSD != null){
-      feel = T1H + ((REH-50)*0.03) - (WSD*0.15);
-    } else if(T1H >= 27 && REH != null){
-      feel = -0.2442 + 0.55399*T1H + 0.45535*REH - 0.0022*T1H*T1H
-             + 0.00278*T1H*REH + 3.0; // 폭염 체감온도
-    }else if(T1H <= 10 && WSD != null){
-      feel = 13.12 + 0.6215*T1H - 11.37*Math.pow(WSD*3.6,0.16)
-             + 0.3965*T1H*Math.pow(WSD*3.6,0.16); // 한랭 체감온도
-    }
+  if(T1H!=null && WSD!=null){
+    const windKmh = WSD * 3.6;
+    feel =
+      13.12 +
+      (0.6215 * T1H) -
+      (11.37 * Math.pow(windKmh, 0.16)) +
+      (0.3965 * T1H * Math.pow(windKmh, 0.16));
   }
-
-  const rt=document.getElementById('real_temperature');
-  const ft=document.getElementById('fake_temperature');
-  if(rt && T1H!=null) rt.value=T1H.toFixed(1)+'℃';
-  if(ft && feel!=null) ft.value=feel.toFixed(1)+'℃';
+  if(ft && feel!=null) ft.value = feel.toFixed(1)+'℃';
 const status=document.getElementById('gpsStatus');
 if(status) status.textContent=`주소확인 완료 | 기온:${T1H?.toFixed?.(1) ?? '-'}℃ | 습도:${REH ?? '-'}% | 풍속:${WSD ?? '-'}m/s`;
 if(typeof generateImage==='function') generateImage();
