@@ -56,7 +56,7 @@ GPS는 기존 navigator.geolocation 사용.
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
 <b>V10 자동위치/날씨</b><br>
 <span id="gpsStatus">대기중</span><br>
-<button type="button" onclick="v10AutoFill()">GPS·주소·날씨 재조회</button>
+<button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
 
 
@@ -764,6 +764,59 @@ function dfs_xy_conv(lat, lon) {
     };
 }
 
+
+async function fetchAddressByGps(lat, lon){
+  try{
+    const res = await fetch(`https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lon}&y=${lat}`,{
+      headers:{ Authorization:`KakaoAK ${window.KAKAO_REST_API_KEY}` }
+    });
+    const data = await res.json();
+    const doc = data?.documents?.[0];
+    if(!doc) return;
+
+    const jibunAddr = doc.address?.address_name || '';
+    const dongName = doc.address?.region_3depth_name || '';
+    const roadAddr = doc.road_address?.address_name || '';
+
+    const loc = document.getElementById('location');
+    if(loc){
+      loc.value = roadAddr || jibunAddr || dongName || '';
+    }
+
+    let info = document.getElementById('addressInfo');
+    if(!info){
+      info = document.createElement('div');
+      info.id='addressInfo';
+      info.style.cssText='margin-top:8px;padding:8px;background:#eef7ff;border-radius:6px;font-size:13px;';
+      document.getElementById('gpsStatus').parentNode.appendChild(info);
+    }
+
+    info.innerHTML=`<b>행정동</b> : ${dongName}<br><b>지번주소</b> : ${jibunAddr}<br><b>도로명주소</b> : ${roadAddr}`;
+
+    if(typeof generateImage==='function') generateImage();
+  }catch(e){
+    console.error('주소 조회 실패',e);
+  }
+}
+
+function v11AutoFill(){
+ const status=document.getElementById('gpsStatus');
+ if(status) status.textContent='GPS 조회중...';
+
+ navigator.geolocation.getCurrentPosition(
+   p=>{
+     fetchKmaByGps(p.coords.latitude,p.coords.longitude);
+     fetchAddressByGps(p.coords.latitude,p.coords.longitude);
+   },
+   err=>{
+     if(status) status.textContent='위치 권한 허용 필요';
+     console.error(err);
+   },
+   {enableHighAccuracy:true,timeout:15000,maximumAge:0}
+ );
+}
+
+
 async function fetchKmaByGps(lat, lon){
   const g=dfs_xy_conv(lat, lon);
 
@@ -792,8 +845,17 @@ const base_time=String(baseHour).padStart(2,'0')+'00';
     if(i.category==='RN1') RN1=Number(i.obsrValue)||0;
   });
 
+  // 기상청 자료 기반 체감온도 계산
   let feel=T1H;
-  if(T1H!=null && REH!=null && T1H>=27) feel=T1H+((REH-40)*0.05);
+  if(T1H!=null){
+    if(T1H >= 27 && REH != null){
+      feel = -0.2442 + 0.55399*T1H + 0.45535*REH - 0.0022*T1H*T1H
+             + 0.00278*T1H*REH + 3.0; // 폭염 체감온도
+    }else if(T1H <= 10 && WSD != null){
+      feel = 13.12 + 0.6215*T1H - 11.37*Math.pow(WSD*3.6,0.16)
+             + 0.3965*T1H*Math.pow(WSD*3.6,0.16); // 한랭 체감온도
+    }
+  }
 
   const rt=document.getElementById('real_temperature');
   const ft=document.getElementById('fake_temperature');
@@ -811,11 +873,7 @@ if(typeof generateImage==='function') generateImage();
   if(q('weather_cold')) q('weather_cold').checked = (feel||0)<=-12;
 }
 
-window.addEventListener('load',()=>{
-  navigator.geolocation.getCurrentPosition(p=>{
-    fetchKmaByGps(p.coords.latitude,p.coords.longitude);
-  });
-});
+window.addEventListener('load',()=>{ v11AutoFill(); });
 </script>
 
 </body>
