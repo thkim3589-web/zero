@@ -911,11 +911,18 @@ setInterval(function(){
               String(now.getMinutes()).padStart(2,'0');
         }
     }
-}, 300000);
+}, 60000);
 </script>
 
 
 <script>
+
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden && typeof v11AutoFill==='function'){
+   v11AutoFill();
+ }
+});
+
 // V20 추가
 function updateWeatherStatus(temp, feel, hum, wind){
   const el = document.getElementById('gpsStatus');
