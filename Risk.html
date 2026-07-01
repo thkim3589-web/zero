@@ -54,7 +54,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V19.2 자동갱신판</b><br>
+<b>V20 AWS실측온도판</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -912,6 +912,21 @@ setInterval(function(){
         }
     }
 }, 300000);
+</script>
+
+
+<script>
+// V20 추가
+function updateWeatherStatus(temp, feel, hum, wind){
+  const el = document.getElementById('gpsStatus');
+  if(!el) return;
+  const now = new Date();
+  el.innerHTML =
+    'GPS/날씨 정상<br>' +
+    '기온: ' + temp + '℃ / 체감: ' + feel + '℃<br>' +
+    '습도: ' + hum + '% / 풍속: ' + wind + 'm/s<br>' +
+    '최종갱신: ' + now.toLocaleString();
+}
 </script>
 
 </body>
