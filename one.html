@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded',()=>{
      const v=parseFloat(input.value);
      if(isNaN(v)){alert('심도를 입력하세요.');return;}
      const arr=loadRecords();
-     const addr=(document.body.innerText.match(/대구광역시[^\n]*/)||[''])[0];const now=new Date();
+     const addr=document.getElementById('roadAddr')?.textContent || '';const now=new Date();
 const time=`${now.getFullYear()}. ${String(now.getMonth()+1).padStart(2,'0')}. ${String(now.getDate()).padStart(2,'0')}. ${now.getHours()<12?'오전':'오후'} ${String((now.getHours()%12)||12).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
 arr.push({depth:v,time:time,address:addr,latitude:currentLat,longitude:currentLng,accuracy:currentAcc});
      saveRecords(arr);
@@ -442,14 +442,14 @@ async function reverseGeocode(lat,lng){
  const jibun=document.getElementById('jibunAddr');
  const gps=document.getElementById('gpsCoord');
 
- gps.textContent=`${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+ gps.textContent=`위도:${lat.toFixed(6)} / 경도:${lng.toFixed(6)} / 오차범위: ±${currentAcc || '-'}m`;
 
  try{
    const response=await fetch(
     `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lng}&y=${lat}`,
     {
       headers:{
-        Authorization:'KakaoAK YOUR_REST_API_KEY'
+        Authorization:'KakaoAK eaa5300f4046bfac8ce0355b1bd8cd88'
       }
     }
    );
@@ -472,7 +472,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(gpsBtn){
   gpsBtn.addEventListener('click',()=>{
    navigator.geolocation.getCurrentPosition(p=>{
-    reverseGeocode(p.coords.latitude,p.coords.longitude);
+    currentAcc=Math.round(p.coords.accuracy); reverseGeocode(p.coords.latitude,p.coords.longitude);
    },()=>alert('위치 권한을 허용해주세요.'));
   });
  }
@@ -481,4 +481,3 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 </body>
 </html>
-
