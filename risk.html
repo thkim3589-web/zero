@@ -738,8 +738,50 @@ async function v10AutoFill(){
       }catch(e){}
 
       try{
-const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
-const rd = await r.json();
+const r = await fetch(
+ `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lon}&y=${lat}`,
+ {
+   headers:{
+     Authorization:`KakaoAK ${window.KAKAO_REST_API_KEY}`
+   }
+ }
+);
+
+const data = await r.json();
+
+if(data.documents && data.documents.length){
+
+    const doc = data.documents[0];
+
+    let addr = "";
+
+    if(doc.road_address){
+        addr =
+        `${doc.road_address.region_1depth_name} ` +
+        `${doc.road_address.region_2depth_name} ` +
+        `${doc.road_address.road_name} ` +
+        `${doc.road_address.main_building_no}`;
+
+        if(doc.road_address.sub_building_no &&
+           doc.road_address.sub_building_no !== "0"){
+            addr += `-${doc.road_address.sub_building_no}`;
+        }
+    }else if(doc.address){
+
+        addr =
+        `${doc.address.region_1depth_name} ` +
+        `${doc.address.region_2depth_name} ` +
+        `${doc.address.region_3depth_name} ` +
+        `${doc.address.main_address_no}`;
+
+        if(doc.address.sub_address_no &&
+           doc.address.sub_address_no !== "0"){
+            addr += `-${doc.address.sub_address_no}`;
+        }
+    }
+
+    document.getElementById("location").value = addr;
+}
 
 let loc = document.getElementById('location');
 
