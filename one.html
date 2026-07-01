@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 let currentLat='';
 let currentLng='';
 let currentAcc='';
-const DEPTH_KEY='depth_records_v35';
+const DEPTH_KEY='depth_records_v42';
 
 function loadRecords(){
   return JSON.parse(localStorage.getItem(DEPTH_KEY)||'[]');
@@ -204,12 +204,17 @@ document.addEventListener('DOMContentLoaded',()=>{
  const input=document.getElementById('depth');
  if(btn&&input){
    btn.addEventListener('click',()=>{
+      if(btn.disabled) return;
+      btn.disabled=true;
+      setTimeout(()=>btn.disabled=false,1000);
      const v=parseFloat(input.value);
      if(isNaN(v)){alert('심도를 입력하세요.');return;}
      const arr=loadRecords();
      const addr=document.getElementById('roadAddr')?.textContent || '';const now=new Date();
 const time=`${now.getFullYear()}. ${String(now.getMonth()+1).padStart(2,'0')}. ${String(now.getDate()).padStart(2,'0')}. ${now.getHours()<12?'오전':'오후'} ${String((now.getHours()%12)||12).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-arr.push({depth:v,time:time,address:addr,latitude:currentLat,longitude:currentLng,accuracy:currentAcc});
+const roadAddr=document.getElementById('roadAddr')?.textContent||'';
+const jibunAddr=document.getElementById('jibunAddr')?.textContent||'';
+arr.push({depth:v,time:time,address:addr,roadAddr:roadAddr,jibunAddr:jibunAddr,latitude:currentLat,longitude:currentLng,accuracy:currentAcc});
      saveRecords(arr);
      refreshStats();
      alert('저장되었습니다.');
@@ -234,6 +239,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   load();
   btn.addEventListener('click',()=>{
+      if(btn.disabled) return;
+      btn.disabled=true;
+      setTimeout(()=>btn.disabled=false,1000);
     const current=localStorage.getItem(KEY)||'김태호';
     const v=prompt('사용자명을 입력하세요.',current);
     if(v && v.trim()){
@@ -284,7 +292,16 @@ document.addEventListener('DOMContentLoaded',()=>{
  excelBtn.addEventListener('click',()=>{
    const data=loadRecords();
    if(!data.length){alert('내보낼 데이터가 없습니다.');return;}
-   const rows=data.map((r,i)=>({번호:i+1,주소:r.address||'',심도_m:r.depth,측정시간:r.time,위도:r.latitude||'',경도:r.longitude||'',GPS정확도_m:r.accuracy||''}));
+   const rows=data.map((r,i)=>({
+번호:i+1,
+도로명주소:r.roadAddr||r.address||'',
+지번주소:r.jibunAddr||'',
+심도_m:r.depth,
+측정시간:r.time,
+위도:r.latitude||'',
+경도:r.longitude||'',
+GPS정확도_m:r.accuracy||''
+}));
    const ws=XLSX.utils.json_to_sheet(rows);
    const wb=XLSX.utils.book_new();
    XLSX.utils.book_append_sheet(wb,ws,'심도측정');
@@ -306,7 +323,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    const data={
      version:'V42.0',
      user:localStorage.getItem('depth_user_name')||'',
-     records:JSON.parse(localStorage.getItem('depth_records_v35')||'[]')
+     records:JSON.parse(localStorage.getItem('depth_records_v42')||'[]')
    };
    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
    const a=document.createElement('a');
@@ -335,7 +352,7 @@ document.addEventListener('DOMContentLoaded',()=>{
        const obj=JSON.parse(fr.result);
        if(!obj.records) throw Error();
        if(!confirm('기존 데이터를 복원 데이터로 덮어쓰시겠습니까?')) return;
-       localStorage.setItem('depth_records_v35',JSON.stringify(obj.records));
+       localStorage.setItem('depth_records_v42',JSON.stringify(obj.records));
        if(obj.user) localStorage.setItem('depth_user_name',obj.user);
        alert('복원이 완료되었습니다. 화면을 새로고침합니다.');
        location.reload();
@@ -428,6 +445,50 @@ document.addEventListener('DOMContentLoaded',()=>{
    },()=>alert('위치 권한을 허용해주세요.'),{enableHighAccuracy:true,timeout:15000,maximumAge:0});
   });
  }
+});
+
+ document.addEventListener('DOMContentLoaded',()=>{
+   if(navigator.geolocation){
+     navigator.geolocation.getCurrentPosition(p=>{
+       currentLat=p.coords.latitude;
+       currentLng=p.coords.longitude;
+       currentAcc=Math.round(p.coords.accuracy);
+       reverseGeocode(currentLat,currentLng);
+     },()=>{},{
+       enableHighAccuracy:true,
+       timeout:15000,
+       maximumAge:0
+     });
+   }
+ });
+
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  let retry=0;
+  function autoGps(){
+    if(!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(p=>{
+      currentLat=p.coords.latitude;
+      currentLng=p.coords.longitude;
+      currentAcc=Math.round(p.coords.accuracy);
+      if(typeof reverseGeocode==='function'){
+        reverseGeocode(currentLat,currentLng);
+      }
+    },()=>{
+      if(retry<2){
+        retry++;
+        setTimeout(autoGps,3000);
+      }
+    },{
+      enableHighAccuracy:true,
+      timeout:15000,
+      maximumAge:0
+    });
+  }
+  autoGps();
 });
 </script>
 
