@@ -54,7 +54,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V18.1 자동위치/날씨</b><br>
+<b>V19 자동기상판</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -854,8 +854,9 @@ const base_time=String(baseHour).padStart(2,'0')+'00';
       feel = -0.2442 + 0.55399*T1H + 0.45535*REH - 0.0022*T1H*T1H
              + 0.00278*T1H*REH + 3.0; // 폭염 체감온도
     }else if(T1H <= 10 && WSD != null){
-      feel = 13.12 + 0.6215*T1H - 11.37*Math.pow(WSD*3.6,0.16)
-             + 0.3965*T1H*Math.pow(WSD*3.6,0.16); // 한랭 체감온도
+      const humidityBonus = Math.max(0,(REH-50)*0.06);
+      const windPenalty = (WSD||0)*0.15;
+      feel = T1H + humidityBonus - windPenalty; // 습도보정 체감온도
     }
   }
 
@@ -880,22 +881,16 @@ window.addEventListener('load',()=>{ v11AutoFill(); });
 
 
 <script>
-function calcFeelTempV18(temp, humidity, wind){
-    temp = parseFloat(temp||0);
-    humidity = parseFloat(humidity||0);
-    wind = parseFloat(wind||0);
-
-    const humidityBonus = Math.max(0, (humidity - 50) * 0.06);
-    const windPenalty = wind * 0.15;
-
-    return (temp + humidityBonus - windPenalty).toFixed(1);
+function autoWeatherCheckV19(T1H,REH,WSD,PTY){
+ try{
+   const cbs=[...document.querySelectorAll('input[type="checkbox"]')];
+   const find=(v)=>cbs.find(x=>x.value===v);
+   if(find('weather_wind')) find('weather_wind').checked=(WSD>=8);
+   if(find('weather_rain')) find('weather_rain').checked=(PTY>0);
+   if(find('weather_hot')) find('weather_hot').checked=(T1H>=33);
+   if(find('weather_cold')) find('weather_cold').checked=(T1H<=-12);
+ }catch(e){console.log(e);}
 }
-</script>
-
-
-<!-- V18.1 -->
-<script>
-console.log("V18.1 준비완료 - 기상청 API 연동용 체감온도 로직 포함");
 </script>
 
 </body>
