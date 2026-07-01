@@ -41,6 +41,7 @@ details.missing-section > summary { color:#cc4400; }
 <!-- 카카오 API 설정 -->
 <script>
 window.KAKAO_REST_API_KEY = "eaa5300f4046bfac8ce0355b1bd8cd88";
+window.KMA_SERVICE_KEY="95d712b220ef0de5456f52991cf20c56e594d492a68e3e58200038c9a2d9ebec";
 /*
 적용용 키 저장 완료.
 GPS는 기존 navigator.geolocation 사용.
@@ -725,16 +726,46 @@ async function v10AutoFill(){
       const lon = pos.coords.longitude;
 
       try{
-        const w = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature`);
+        const now=new Date();
+        const base_date=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+        const base_time='0800'; // 기본값
+        const nx=89, ny=90; // 임시 격자값(추후 GPS격자변환 적용 가능)
+
+        const url=`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst?serviceKey=${window.KMA_SERVICE_KEY}&pageNo=1&numOfRows=1000&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${nx}&ny=${ny}`;
+
+        const w = await fetch(url);
         const wd = await w.json();
 
-        const t = Math.round(wd.current.temperature_2m) + "℃";
-        const at = Math.round(wd.current.apparent_temperature) + "℃";
+        let temp=null;
+        let reh=null;
+        let wsd=null;
+
+        const items=wd?.response?.body?.items?.item || [];
+        items.forEach(i=>{
+          if(i.category==='T1H') temp=Number(i.obsrValue);
+          if(i.category==='REH') reh=Number(i.obsrValue);
+          if(i.category==='WSD') wsd=Number(i.obsrValue);
+        });
+
+        let feel=temp;
+        if(temp!==null){
+          if(temp>=27 && reh!==null){
+            feel=temp + ((reh-40)*0.05);
+          }else if(temp<=10 && wsd!==null){
+            feel=13.12 + 0.6215*temp -11.37*Math.pow(wsd,0.16)+0.3965*temp*Math.pow(wsd,0.16);
+          }
+        }
 
         let rt=document.getElementById('real_temperature');
         let ft=document.getElementById('fake_temperature');
-        if(rt) rt.value=t;
-        if(ft) ft.value=at;
+
+        if(rt && temp!==null) rt.value=Number(temp).toFixed(1)+'℃';
+        if(ft && feel!==null) ft.value=Number(feel).toFixed(1)+'℃';
+
+        const hot=document.querySelector('input[value="weather_hot"]');
+        const cold=document.querySelector('input[value="weather_cold"]');
+        if(hot && feel!==null) hot.checked=(feel>=35);
+        if(cold && feel!==null) cold.checked=(feel<=-12);
       }catch(e){}
 
       try{
@@ -797,5 +828,18 @@ if(data.documents && data.documents.length){
 window.addEventListener('load',()=>setTimeout(v10AutoFill,1500));
 </script>
 
+<script>
+function autoWeatherCheck(apparentTemp){
+  const hot = document.querySelector('input[value="weather_hot"]');
+  const cold = document.querySelector('input[value="weather_cold"]');
+
+  if(!hot || !cold) return;
+
+  hot.checked = Number(apparentTemp) >= 35;
+  cold.checked = Number(apparentTemp) <= -12;
+
+  if(typeof generateImage === 'function') generateImage();
+}
+</script>
 </body>
 </html>
