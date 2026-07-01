@@ -843,25 +843,26 @@ function autoWeatherCheck(apparentTemp){
 </script>
 
 <script>
-function applyWeatherAutoChecks(temp, feel, rain, wind){
-  const clear=document.querySelector('input[value="weather_clear"]');
-  const rainbox=document.querySelector('input[value="weather_rain"]');
-  const windbox=document.querySelector('input[value="weather_wind"]');
-  const hot=document.querySelector('input[value="weather_hot"]');
-  const cold=document.querySelector('input[value="weather_cold"]');
+/* V16 최종판 - GPS 기반 기상청 실황 연동 준비 */
+window.WEATHER_MODE = "KMA_GPS";
 
-  if(clear) clear.checked = Number(rain||0) === 0;
-  if(rainbox) rainbox.checked = Number(rain||0) > 0;
-  if(windbox) windbox.checked = Number(wind||0) >= 10;
+function dfs_xy_conv_placeholder(lat, lon){
+  // 실제 기상청 DFS 격자변환 적용 위치
+  return {nx:89, ny:90};
+}
 
-  if(hot) hot.checked = Number(feel) >= 35.0;
-  if(cold) cold.checked = Number(feel) <= -12.0;
+async function applyFinalWeather(temp, feel, rain, wind){
+  const set=(v,val)=>{ if(v) v.checked=val; };
+  set(document.querySelector('input[value="weather_clear"]'), Number(rain||0)===0);
+  set(document.querySelector('input[value="weather_rain"]'), Number(rain||0)>0);
+  set(document.querySelector('input[value="weather_wind"]'), Number(wind||0)>=10);
+  set(document.querySelector('input[value="weather_hot"]'), Number(feel)>=35);
+  set(document.querySelector('input[value="weather_cold"]'), Number(feel)<=-12);
 
   const rt=document.getElementById('real_temperature');
   const ft=document.getElementById('fake_temperature');
-
-  if(rt && temp!=null) rt.value = Number(temp).toFixed(1) + '℃';
-  if(ft && feel!=null) ft.value = Number(feel).toFixed(1) + '℃';
+  if(rt && temp!=null) rt.value=Number(temp).toFixed(1)+'℃';
+  if(ft && feel!=null) ft.value=Number(feel).toFixed(1)+'℃';
 }
 </script>
 
