@@ -54,7 +54,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V23 통합안정화판</b><br>
+<b>V20 AWS실측온도판</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -933,91 +933,6 @@ function updateWeatherStatus(temp, feel, hum, wind){
     '기온: ' + temp + '℃ / 체감: ' + feel + '℃<br>' +
     '습도: ' + hum + '% / 풍속: ' + wind + 'm/s<br>' +
     '최종갱신: ' + now.toLocaleString();
-}
-</script>
-
-
-<script>
-function updateWeatherStatusV22(temp, feel, hum, wind){
- const st=document.getElementById('gpsStatus');
- if(!st) return;
- const now=new Date();
- st.innerHTML='관측정보<br>기온 : '+temp+'℃<br>체감 : '+feel+'℃<br>습도 : '+hum+'%<br>풍속 : '+wind+'m/s<br>최종갱신 : '+now.toLocaleTimeString();
-}
-</script>
-
-
-<script>
-function showWeatherPanelV221(obs,temp,feel,hum,wind){
- const st=document.getElementById('gpsStatus');
- if(!st) return;
- const now=new Date();
- st.innerHTML=`
- <b>관측정보</b><br>
- 관측소 : ${obs||'GPS기반'}<br>
- 기온 : ${temp}℃<br>
- 체감 : ${feel}℃<br>
- 습도 : ${hum}%<br>
- 풍속 : ${wind}m/s<br>
- 최종갱신 : ${now.toLocaleString()}`;
-}
-
-document.addEventListener('visibilitychange',()=>{
- if(!document.hidden && typeof v11AutoFill==='function'){
-   v11AutoFill();
- }
-});
-</script>
-
-
-<script>
-function calcFeelTempV22(t,w){
- t=parseFloat(t)||0;
- w=Math.max(parseFloat(w)||0.1,0.1);
- return (13.12 + 0.6215*t - 11.37*Math.pow(w,0.16) + 0.3965*t*Math.pow(w,0.16)).toFixed(1);
-}
-
-function updateV222Status(temp,hum,wind,obs){
- const st=document.getElementById('gpsStatus');
- if(!st) return;
- const feel=calcFeelTempV22(temp,wind);
- const now=new Date().toLocaleString();
- st.innerHTML=`<b>V22.2 실시간 관측정보</b><br>
- 관측소 : ${obs||'GPS기반'}<br>
- 기온 : ${temp}℃<br>
- 체감 : ${feel}℃<br>
- 습도 : ${hum}%<br>
- 풍속 : ${wind}m/s<br>
- 최종갱신 : ${now}`;
-
- const rt=document.getElementById('real_temperature');
- const ft=document.getElementById('fake_temperature');
- if(rt) rt.value=temp;
- if(ft) ft.value=feel;
-}
-
-document.addEventListener('visibilitychange',()=>{
- if(!document.hidden && typeof v11AutoFill==='function'){ v11AutoFill(); }
-});
-
-setInterval(()=>{
- if(typeof v11AutoFill==='function'){ v11AutoFill(); }
-},60000);
-</script>
-
-
-<script>
-function updateWeatherStatusV23(temp, feel, hum, wind, obs){
- const el=document.getElementById('gpsStatus');
- if(!el) return;
- const now=new Date();
- el.innerHTML=`<b>V23 통합안정화판</b><br>
- 관측소 : ${obs||'GPS 기반'}<br>
- 기온 : ${temp}℃<br>
- 체감 : ${feel}℃<br>
- 습도 : ${hum}%<br>
- 풍속 : ${wind}m/s<br>
- 최종갱신 : ${now.toLocaleString()}`;
 }
 </script>
 
