@@ -54,7 +54,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V25 통합정리안정화판</b><br>
+<b>V25.1 체감온도수정판</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -1011,7 +1011,7 @@ function updateWeatherStatusV23(temp, feel, hum, wind, obs){
  const el=document.getElementById('gpsStatus');
  if(!el) return;
  const now=new Date();
- el.innerHTML=`<b>V25 통합정리안정화판</b><br>
+ el.innerHTML=`<b>V25.1 체감온도수정판</b><br>
  관측소 : ${obs||'GPS 기반'}<br>
  기온 : ${temp}℃<br>
  체감 : ${feel}℃<br>
@@ -1096,7 +1096,7 @@ function updateWeatherStatusV243(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V25 통합정리안정화판</b><br>' +
+   '<b>V25.1 체감온도수정판</b><br>' +
    '관측소 : ' + (obs || '자동선택') + '<br>' +
    '기온 : ' + (temp || '-') + '℃<br>' +
    '체감 : ' + (feel || '-') + '℃<br>' +
@@ -1126,7 +1126,7 @@ function updateWeatherStatusV244(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V25 통합정리안정화판</b><br>' +
+   '<b>V25.1 체감온도수정판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
@@ -1142,7 +1142,7 @@ function updateWeatherStatusV25(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V25 통합정리안정화판</b><br>' +
+   '<b>V25.1 체감온도수정판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
@@ -1156,6 +1156,27 @@ document.addEventListener('visibilitychange', function(){
     v11AutoFill();
   }
 });
+</script>
+
+
+<script>
+// V25.1 체감온도 수정
+function calcFeelTempV251(temp, humidity){
+    temp = Number(temp);
+    humidity = Number(humidity);
+    if(isNaN(temp) || isNaN(humidity)) return temp;
+    if(temp < 20) return temp;
+
+    const feel = temp + (0.33 * (humidity/10)) - 4.0;
+    return Math.round(feel * 10) / 10;
+}
+
+function autoWeatherCheckV251(temp, wind){
+    const hot = Number(temp) >= 33;
+    const cold = Number(temp) <= -12;
+    const strong = Number(wind) >= 10;
+    console.log('폭염:', hot, '한파:', cold, '강풍:', strong);
+}
 </script>
 
 </body>
