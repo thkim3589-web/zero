@@ -54,7 +54,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V25.1 체감온도수정판</b><br>
+<b>V25.2 체감온도정상화판</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -851,8 +851,9 @@ const base_time=String(baseHour).padStart(2,'0')+'00';
     if(T1H > 10 && T1H < 27 && REH != null && WSD != null){
       feel = T1H + ((REH-50)*0.03) - (WSD*0.15);
     } else if(T1H >= 27 && REH != null){
-      feel = -0.2442 + 0.55399*T1H + 0.45535*REH - 0.0022*T1H*T1H
-             + 0.00278*T1H*REH + 3.0; // 폭염 체감온도
+      // V25.2 수정: 과도한 체감온도 방지
+      feel = T1H + ((REH-50)*0.08) - ((WSD||0)*0.2);
+      if(feel > T1H + 4) feel = T1H + 4;
     }else if(T1H <= 10 && WSD != null){
       const humidityBonus = Math.max(0,(REH-50)*0.06);
       const windPenalty = (WSD||0)*0.15;
@@ -1011,7 +1012,7 @@ function updateWeatherStatusV23(temp, feel, hum, wind, obs){
  const el=document.getElementById('gpsStatus');
  if(!el) return;
  const now=new Date();
- el.innerHTML=`<b>V25.1 체감온도수정판</b><br>
+ el.innerHTML=`<b>V25.2 체감온도정상화판</b><br>
  관측소 : ${obs||'GPS 기반'}<br>
  기온 : ${temp}℃<br>
  체감 : ${feel}℃<br>
@@ -1096,7 +1097,7 @@ function updateWeatherStatusV243(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V25.1 체감온도수정판</b><br>' +
+   '<b>V25.2 체감온도정상화판</b><br>' +
    '관측소 : ' + (obs || '자동선택') + '<br>' +
    '기온 : ' + (temp || '-') + '℃<br>' +
    '체감 : ' + (feel || '-') + '℃<br>' +
@@ -1126,7 +1127,7 @@ function updateWeatherStatusV244(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V25.1 체감온도수정판</b><br>' +
+   '<b>V25.2 체감온도정상화판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
@@ -1142,7 +1143,7 @@ function updateWeatherStatusV25(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V25.1 체감온도수정판</b><br>' +
+   '<b>V25.2 체감온도정상화판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
