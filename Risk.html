@@ -54,7 +54,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V20 AWS실측온도판</b><br>
+<b>V25 통합정리안정화판</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -934,6 +934,228 @@ function updateWeatherStatus(temp, feel, hum, wind){
     '습도: ' + hum + '% / 풍속: ' + wind + 'm/s<br>' +
     '최종갱신: ' + now.toLocaleString();
 }
+</script>
+
+
+<script>
+function updateWeatherStatusV22(temp, feel, hum, wind){
+ const st=document.getElementById('gpsStatus');
+ if(!st) return;
+ const now=new Date();
+ st.innerHTML='관측정보<br>기온 : '+temp+'℃<br>체감 : '+feel+'℃<br>습도 : '+hum+'%<br>풍속 : '+wind+'m/s<br>최종갱신 : '+now.toLocaleTimeString();
+}
+</script>
+
+
+<script>
+function showWeatherPanelV221(obs,temp,feel,hum,wind){
+ const st=document.getElementById('gpsStatus');
+ if(!st) return;
+ const now=new Date();
+ st.innerHTML=`
+ <b>관측정보</b><br>
+ 관측소 : ${obs||'GPS기반'}<br>
+ 기온 : ${temp}℃<br>
+ 체감 : ${feel}℃<br>
+ 습도 : ${hum}%<br>
+ 풍속 : ${wind}m/s<br>
+ 최종갱신 : ${now.toLocaleString()}`;
+}
+
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden && typeof v11AutoFill==='function'){
+   v11AutoFill();
+ }
+});
+</script>
+
+
+<script>
+function calcFeelTempV22(t,w){
+ t=parseFloat(t)||0;
+ w=Math.max(parseFloat(w)||0.1,0.1);
+ return (13.12 + 0.6215*t - 11.37*Math.pow(w,0.16) + 0.3965*t*Math.pow(w,0.16)).toFixed(1);
+}
+
+function updateV222Status(temp,hum,wind,obs){
+ const st=document.getElementById('gpsStatus');
+ if(!st) return;
+ const feel=calcFeelTempV22(temp,wind);
+ const now=new Date().toLocaleString();
+ st.innerHTML=`<b>V22.2 실시간 관측정보</b><br>
+ 관측소 : ${obs||'GPS기반'}<br>
+ 기온 : ${temp}℃<br>
+ 체감 : ${feel}℃<br>
+ 습도 : ${hum}%<br>
+ 풍속 : ${wind}m/s<br>
+ 최종갱신 : ${now}`;
+
+ const rt=document.getElementById('real_temperature');
+ const ft=document.getElementById('fake_temperature');
+ if(rt) rt.value=temp;
+ if(ft) ft.value=feel;
+}
+
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden && typeof v11AutoFill==='function'){ v11AutoFill(); }
+});
+
+setInterval(()=>{
+ if(typeof v11AutoFill==='function'){ v11AutoFill(); }
+},60000);
+</script>
+
+
+<script>
+function updateWeatherStatusV23(temp, feel, hum, wind, obs){
+ const el=document.getElementById('gpsStatus');
+ if(!el) return;
+ const now=new Date();
+ el.innerHTML=`<b>V25 통합정리안정화판</b><br>
+ 관측소 : ${obs||'GPS 기반'}<br>
+ 기온 : ${temp}℃<br>
+ 체감 : ${feel}℃<br>
+ 습도 : ${hum}%<br>
+ 풍속 : ${wind}m/s<br>
+ 최종갱신 : ${now.toLocaleString()}`;
+}
+</script>
+
+
+<!-- V24 AWS 실측 준비판 패치 -->
+<script>
+function updateWeatherStatusV24(obs,temp,feel,hum,wind){
+ const el=document.getElementById('gpsStatus');
+ if(!el) return;
+ el.innerHTML =
+ '<b>V24.1 AWS관측소연동준비판</b><br>' +
+ '관측소 : ' + (obs||'GPS 기반') + '<br>' +
+ '기온 : ' + (temp||'-') + '℃<br>' +
+ '체감 : ' + (feel||'-') + '℃<br>' +
+ '습도 : ' + (hum||'-') + '%<br>' +
+ '풍속 : ' + (wind||'-') + 'm/s<br>' +
+ '최종갱신 : ' + new Date().toLocaleString();
+}
+
+document.addEventListener('visibilitychange', function(){
+ if(!document.hidden && typeof v11AutoFill==='function'){
+   v11AutoFill();
+ }
+});
+
+setInterval(function(){
+ if(typeof v11AutoFill==='function'){
+   v11AutoFill();
+ }
+},60000);
+</script>
+
+
+<script>
+const AWS_STATIONS_V241 = [
+ {name:'대구', lat:35.8714, lon:128.6014},
+ {name:'대구서구', lat:35.8710, lon:128.5590},
+ {name:'대구달성', lat:35.7740, lon:128.4310}
+];
+
+function findNearestAWSV241(lat, lon){
+ let best=null, dist=1e9;
+ for(const s of AWS_STATIONS_V241){
+   const d=Math.hypot(lat-s.lat, lon-s.lon);
+   if(d<dist){dist=d; best=s;}
+ }
+ return best;
+}
+
+function updateWeatherStatusV241(obs,temp,feel,hum,wind){
+ const el=document.getElementById('gpsStatus');
+ if(!el) return;
+ el.innerHTML =
+ '<b>V24.1 AWS관측소연동준비판</b><br>' +
+ '관측소 : '+(obs||'자동선택')+'<br>' +
+ '기온 : '+(temp||'-')+'℃<br>' +
+ '체감 : '+(feel||'-')+'℃<br>' +
+ '습도 : '+(hum||'-')+'%<br>' +
+ '풍속 : '+(wind||'-')+'m/s<br>' +
+ '최종갱신 : '+new Date().toLocaleString();
+}
+</script>
+
+
+<script>
+function autoWeatherCheck(temp, wind){
+  const hot=document.querySelector('input[value="weather_hot"]');
+  const cold=document.querySelector('input[value="weather_cold"]');
+  const windy=document.querySelector('input[value="weather_wind"]');
+  if(hot) hot.checked = Number(temp) >= 33;
+  if(cold) cold.checked = Number(temp) <= -12;
+  if(windy) windy.checked = Number(wind) >= 10;
+}
+
+function updateWeatherStatusV243(obs,temp,feel,hum,wind){
+  const el=document.getElementById('gpsStatus');
+  if(!el) return;
+  el.innerHTML =
+   '<b>V25 통합정리안정화판</b><br>' +
+   '관측소 : ' + (obs || '자동선택') + '<br>' +
+   '기온 : ' + (temp || '-') + '℃<br>' +
+   '체감 : ' + (feel || '-') + '℃<br>' +
+   '습도 : ' + (hum || '-') + '%<br>' +
+   '풍속 : ' + (wind || '-') + 'm/s<br>' +
+   '최종갱신 : ' + new Date().toLocaleString();
+  autoWeatherCheck(temp, wind);
+}
+</script>
+
+
+<script>
+let lastGpsV244=null;
+
+function gpsMovedV244(lat, lon){
+  if(!lastGpsV244){
+    lastGpsV244={lat,lon};
+    return false;
+  }
+  const moved = Math.abs(lat-lastGpsV244.lat)>0.0005 ||
+                Math.abs(lon-lastGpsV244.lon)>0.0005;
+  if(moved) lastGpsV244={lat,lon};
+  return moved;
+}
+
+function updateWeatherStatusV244(obs,temp,feel,hum,wind){
+  const el=document.getElementById('gpsStatus');
+  if(!el) return;
+  el.innerHTML =
+   '<b>V25 통합정리안정화판</b><br>' +
+   '관측소 : '+(obs||'자동선택')+'<br>' +
+   '기온 : '+(temp||'-')+'℃<br>' +
+   '체감 : '+(feel||'-')+'℃<br>' +
+   '습도 : '+(hum||'-')+'%<br>' +
+   '풍속 : '+(wind||'-')+'m/s<br>' +
+   '최종갱신 : '+new Date().toLocaleString();
+}
+</script>
+
+
+<script>
+function updateWeatherStatusV25(obs,temp,feel,hum,wind){
+  const el=document.getElementById('gpsStatus');
+  if(!el) return;
+  el.innerHTML =
+   '<b>V25 통합정리안정화판</b><br>' +
+   '관측소 : '+(obs||'자동선택')+'<br>' +
+   '기온 : '+(temp||'-')+'℃<br>' +
+   '체감 : '+(feel||'-')+'℃<br>' +
+   '습도 : '+(hum||'-')+'%<br>' +
+   '풍속 : '+(wind||'-')+'m/s<br>' +
+   '최종갱신 : '+new Date().toLocaleString();
+}
+
+document.addEventListener('visibilitychange', function(){
+  if(!document.hidden && typeof v11AutoFill==='function'){
+    v11AutoFill();
+  }
+});
 </script>
 
 </body>
