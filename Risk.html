@@ -54,7 +54,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V25.2 체감온도정상화판</b><br>
+<b>V26.1 체감온도 이중검증판</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -82,8 +82,8 @@ GPS는 기존 navigator.geolocation 사용.
     <label><input type="checkbox" value="weather_hot" onchange="generateImage()"> 폭염</label>
     <label><input type="checkbox" value="weather_cold" onchange="generateImage()"> 한파</label>
   </div>
-  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" oninput="generateImage()"></label>
-  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" oninput="generateImage()"></label>
+  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" readonly oninput="generateImage()"></label>
+  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" readonly oninput="generateImage()"></label>
 </details>
 
 <details>
@@ -1012,7 +1012,7 @@ function updateWeatherStatusV23(temp, feel, hum, wind, obs){
  const el=document.getElementById('gpsStatus');
  if(!el) return;
  const now=new Date();
- el.innerHTML=`<b>V25.2 체감온도정상화판</b><br>
+ el.innerHTML=`<b>V26.1 체감온도 이중검증판</b><br>
  관측소 : ${obs||'GPS 기반'}<br>
  기온 : ${temp}℃<br>
  체감 : ${feel}℃<br>
@@ -1097,7 +1097,7 @@ function updateWeatherStatusV243(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V25.2 체감온도정상화판</b><br>' +
+   '<b>V26.1 체감온도 이중검증판</b><br>' +
    '관측소 : ' + (obs || '자동선택') + '<br>' +
    '기온 : ' + (temp || '-') + '℃<br>' +
    '체감 : ' + (feel || '-') + '℃<br>' +
@@ -1127,7 +1127,7 @@ function updateWeatherStatusV244(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V25.2 체감온도정상화판</b><br>' +
+   '<b>V26.1 체감온도 이중검증판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
@@ -1143,7 +1143,7 @@ function updateWeatherStatusV25(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V25.2 체감온도정상화판</b><br>' +
+   '<b>V26.1 체감온도 이중검증판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
@@ -1177,6 +1177,111 @@ function autoWeatherCheckV251(temp, wind){
     const cold = Number(temp) <= -12;
     const strong = Number(wind) >= 10;
     console.log('폭염:', hot, '한파:', cold, '강풍:', strong);
+}
+</script>
+
+
+<script>
+function updateWeatherStatusV25(obs,temp,feel,hum,wind){
+  const el=document.getElementById('gpsStatus');
+  const feelInput=document.getElementById('fake_temperature');
+  const realInput=document.getElementById('real_temperature');
+
+  if(!el) return;
+
+  const obsDisplay = obs || '조회 실패(위치확인요망)';
+
+  el.innerHTML =
+   '<b>V26.1 체감온도 이중검증판</b><br>' +
+   '관측소 : ' + obsDisplay + '<br>' +
+   '기온 : ' + (temp ?? '-') + '℃<br>' +
+   '체감 : ' + (feel ?? '-') + '℃<br>' +
+   '습도 : ' + (hum ?? '-') + '%<br>' +
+   '풍속 : ' + (wind ?? '-') + 'm/s<br>' +
+   '최종갱신 : ' + new Date().toLocaleString();
+
+  if(realInput && temp != null){
+      realInput.value = Number(temp).toFixed(1);
+  }
+
+  if(feelInput && feel != null){
+      feelInput.value = Number(feel).toFixed(1);
+  }
+
+  const hot=document.querySelector('input[value="weather_hot"]');
+  const cold=document.querySelector('input[value="weather_cold"]');
+  const windChk=document.querySelector('input[value="weather_wind"]');
+
+  if(hot) hot.checked = Number(temp) >= 33;
+  if(cold) cold.checked = Number(temp) <= -12;
+  if(windChk) windChk.checked = Number(wind) >= 10;
+
+  if(typeof generateImage==='function') generateImage();
+}
+
+setInterval(function(){
+  if(typeof v11AutoFill==='function') v11AutoFill();
+},600000);
+</script>
+
+
+<script>
+function validateFeelTemperature(temp, feel, humidity, wind){
+    temp = Number(temp);
+    feel = Number(feel);
+    humidity = Number(humidity);
+    wind = Number(wind);
+
+    if(isNaN(feel)){
+        return { value: temp, source:'기온대체' };
+    }
+
+    const diff = feel - temp;
+
+    if(diff < -5 || diff > 8){
+        let corrected =
+            temp +
+            ((humidity - 50) * 0.08) -
+            (wind * 0.2);
+
+        corrected = Math.round(corrected * 10) / 10;
+
+        return { value: corrected, source:'보정계산' };
+    }
+
+    return { value: feel, source:'기상청' };
+}
+
+function updateWeatherStatusV26(obs,temp,feel,hum,wind){
+
+  const el=document.getElementById('gpsStatus');
+  const tempInput=document.getElementById('real_temperature');
+  const feelInput=document.getElementById('fake_temperature');
+
+  if(!el) return;
+
+  const result=validateFeelTemperature(temp,feel,hum,wind);
+  const finalFeel=result.value;
+
+  if(tempInput && temp!=null){
+      tempInput.value=Number(temp).toFixed(1)+'℃';
+  }
+
+  if(feelInput && finalFeel!=null){
+      feelInput.value=Number(finalFeel).toFixed(1)+'℃';
+  }
+
+  el.innerHTML =
+      '<b>V26.1 체감온도 이중검증판</b><br>' +
+      '관측소 : ' + (obs || '자동선택') + '<br>' +
+      '기온 : ' + temp + '℃<br>' +
+      '체감 : ' + finalFeel + '℃<br>' +
+      '습도 : ' + hum + '%<br>' +
+      '풍속 : ' + wind + 'm/s<br>' +
+      '출처 : ' + result.source + '<br>' +
+      '최종갱신 : ' + new Date().toLocaleString();
+
+  if(typeof generateImage==='function') generateImage();
 }
 </script>
 
