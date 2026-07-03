@@ -115,8 +115,8 @@ GPS는 기존 navigator.geolocation 사용.
     <label><input type="checkbox" value="weather_hot" onchange="generateImage()"> 폭염</label>
     <label><input type="checkbox" value="weather_cold" onchange="generateImage()"> 한파</label>
   </div>
-  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" readonly oninput="generateImage()"></label>
-  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" readonly oninput="generateImage()"></label>
+  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" oninput="generateImage()"></label>
+  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" oninput="generateImage()"></label>
 </details>
 
 <details>
@@ -1698,6 +1698,28 @@ window.V306_TIME_FIX = true;
 
   console.log("V30.7 실시간동기화판 적용");
 })();
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+ const rt=document.getElementById('real_temperature');
+ const ft=document.getElementById('fake_temperature');
+
+ if(rt){
+   rt.placeholder='기온 직접 입력 가능';
+   rt.addEventListener('input',()=>{
+      if(typeof generateImage==='function') generateImage();
+   });
+ }
+
+ if(ft){
+   ft.placeholder='체감온도 직접 입력 가능';
+   ft.addEventListener('input',()=>{
+      if(typeof generateImage==='function') generateImage();
+   });
+ }
+});
 </script>
 
 </body>
