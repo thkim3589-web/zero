@@ -1,3 +1,11 @@
+
+window.manualTempLock=false;
+document.addEventListener('DOMContentLoaded',()=>{
+ const rt=document.getElementById('real_temperature');
+ const ft=document.getElementById('fake_temperature');
+ if(rt) rt.addEventListener('input',()=>window.manualTempLock=true);
+ if(ft) ft.addEventListener('input',()=>window.manualTempLock=true);
+});
 <!DOCTYPE html>
 <!-- build v4.1: missing-highlight / seasonal hot+cold / per-field temp+special -->
 <html lang="ko">
@@ -863,8 +871,8 @@ const base_time=String(baseHour).padStart(2,'0')+'00';
 
   const rt=document.getElementById('real_temperature');
   const ft=document.getElementById('fake_temperature');
-  if(rt && T1H!=null) rt.value=T1H.Math.round(T1H)+'℃';
-  if(ft && feel!=null) ft.value=feel.Math.round(T1H)+'℃';
+  if(rt && T1H!=null) rt.value=Math.round(T1H)+'℃';
+  if(ft && feel!=null) ft.value=Math.round(feel)+'℃';
 const status=document.getElementById('gpsStatus');
 if(status) status.textContent=`주소확인 완료 | 기온:${Math.round(T1H) ?? '-'}℃ | 습도:${REH ?? '-'}% | 풍속:${WSD ?? '-'}m/s`;
 if(typeof generateImage==='function') generateImage();
@@ -975,7 +983,7 @@ document.addEventListener('visibilitychange',()=>{
 function calcFeelTempV22(t,w){
  t=parseFloat(t)||0;
  w=Math.max(parseFloat(w)||0.1,0.1);
- return (13.12 + 0.6215*t - 11.37*Math.pow(w,0.16) + 0.3965*t*Math.pow(w,0.16)).toFixed(1);
+ return Math.round(13.12 + 0.6215*t - 11.37*Math.pow(w,0.16) + 0.3965*t*Math.pow(w,0.16));
 }
 
 function updateV222Status(temp,hum,wind,obs){
@@ -993,8 +1001,8 @@ function updateV222Status(temp,hum,wind,obs){
 
  const rt=document.getElementById('real_temperature');
  const ft=document.getElementById('fake_temperature');
- if(rt) rt.value=temp;
- if(ft) ft.value=feel;
+ if(rt && !window.manualTempLock) rt.value=Math.round(temp)+'℃';
+ if(ft && !window.manualTempLock) ft.value=Math.round(feel)+'℃';
 }
 
 document.addEventListener('visibilitychange',()=>{
@@ -1284,14 +1292,6 @@ function updateWeatherStatusV26(obs,temp,feel,hum,wind){
   if(typeof generateImage==='function') generateImage();
 }
 </script>
-
-
-<hr>
-<h3>다중 온도 비교(V26.6)</h3>
-<label>기상청(KMA)<input type="text" id="kmaTemp" readonly></label>
-<label>OpenWeather<input type="text" id="openTemp" readonly></label>
-<label>WeatherAPI<input type="text" id="weatherApiTemp" readonly></label>
-<label>평균온도<input type="text" id="avgTemp" readonly></label>
 
 </body>
 </html>
