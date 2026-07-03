@@ -1471,6 +1471,77 @@ window.weatherRefreshV28 = async function(){
   }
 }
 </script>
+
+<!-- V29.0 리팩토링 구조 추가 -->
+<style>
+.weather-warning{background:#ffeb3b;padding:8px;margin:8px 0;font-weight:bold;border-radius:6px}
+.warning-hot{background:#ffcccc}
+.warning-cold{background:#d6ecff}
+.warning-wind{background:#fff4cc}
+</style>
+
+<script>
+const weatherOptions=[
+ {value:'weather_clear',text:'맑음'},
+ {value:'weather_wind',text:'강풍'},
+ {value:'weather_rain',text:'비/눈'},
+ {value:'weather_hot',text:'폭염'},
+ {value:'weather_cold',text:'한파'}
+];
+
+const weatherRules=[
+ {name:'폭염',condition:d=>d.feel>=33},
+ {name:'한파',condition:d=>d.feel<=-12},
+ {name:'강풍',condition:d=>d.wind>=10}
+];
+
+async function refreshWeather(){
+ if(typeof weatherRefreshV28==='function'){
+   return weatherRefreshV28();
+ }
+}
+
+function updateRiskChecks(weather){
+  return weatherRules.filter(r=>r.condition(weather)).map(r=>r.name);
+}
+</script>
+
+
+<!-- V30.1 안정화 패치 -->
+<script>
+const WEATHER_CACHE_KEY='weather_cache_v301';
+
+function saveWeatherCache(data){
+ localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({
+   time: Date.now(),
+   data
+ }));
+}
+
+function loadWeatherCache(){
+ try{
+   const c=JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY));
+   if(!c) return null;
+   if(Date.now()-c.time < 10*60*1000) return c.data;
+ }catch(e){}
+ return null;
+}
+
+async function refreshWeatherV301(){
+ const cached = loadWeatherCache();
+ if(cached) return cached;
+
+ if(typeof refreshWeather==='function'){
+   const result = await refreshWeather();
+   saveWeatherCache(result || {});
+   return result;
+ }
+}
+
+window.addEventListener('online', ()=>console.log('온라인'));
+window.addEventListener('offline', ()=>console.log('오프라인'));
+</script>
+
 </body>
 
 
