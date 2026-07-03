@@ -1,11 +1,3 @@
-
-window.manualTempLock=false;
-document.addEventListener('DOMContentLoaded',()=>{
- const rt=document.getElementById('real_temperature');
- const ft=document.getElementById('fake_temperature');
- if(rt) rt.addEventListener('input',()=>window.manualTempLock=true);
- if(ft) ft.addEventListener('input',()=>window.manualTempLock=true);
-});
 <!DOCTYPE html>
 <!-- build v4.1: missing-highlight / seasonal hot+cold / per-field temp+special -->
 <html lang="ko">
@@ -48,6 +40,13 @@ details.missing-section > summary { color:#cc4400; }
 
 <!-- 카카오 API 설정 -->
 <script>
+
+function calculateWindChill(Ta, windMS){
+  const V=(windMS||0)*3.6;
+  if(Ta>10 || V<4.8) return Ta;
+  return 13.12 + 0.6215*Ta - 11.37*Math.pow(V,0.16) + 0.3965*Math.pow(V,0.16)*Ta;
+}
+
 window.KAKAO_REST_API_KEY = "eaa5300f4046bfac8ce0355b1bd8cd88";
 window.KMA_SERVICE_KEY="95d712b220ef0de5456f52991cf20c56e594d492a68e3e58200038c9a2d9ebec";
 /*
@@ -90,8 +89,8 @@ GPS는 기존 navigator.geolocation 사용.
     <label><input type="checkbox" value="weather_hot" onchange="generateImage()"> 폭염</label>
     <label><input type="checkbox" value="weather_cold" onchange="generateImage()"> 한파</label>
   </div>
-  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" placeholder="체감온도 직접입력 가능" oninput="generateImage()"></label>
-  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" placeholder="기온 직접입력 가능" oninput="generateImage()"></label>
+  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" readonly oninput="generateImage()"></label>
+  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" readonly oninput="generateImage()"></label>
 </details>
 
 <details>
@@ -863,18 +862,16 @@ const base_time=String(baseHour).padStart(2,'0')+'00';
       feel = T1H + ((REH-50)*0.08) - ((WSD||0)*0.2);
       if(feel > T1H + 4) feel = T1H + 4;
     }else if(T1H <= 10 && WSD != null){
-      const humidityBonus = Math.max(0,(REH-50)*0.06);
-      const windPenalty = (WSD||0)*0.15;
-      feel = T1H + humidityBonus - windPenalty; // 습도보정 체감온도
+      feel = calculateWindChill(Number(T1H), Number(WSD)); // 습도보정 체감온도
     }
   }
 
   const rt=document.getElementById('real_temperature');
   const ft=document.getElementById('fake_temperature');
-  if(rt && T1H!=null) rt.value=Math.round(T1H)+'℃';
-  if(ft && feel!=null) ft.value=Math.round(feel)+'℃';
+  if(rt && T1H!=null) rt.value=T1H.toFixed(1)+'℃';
+  if(ft && feel!=null) ft.value=feel.toFixed(1)+'℃';
 const status=document.getElementById('gpsStatus');
-if(status) status.textContent=`주소확인 완료 | 기온:${Math.round(T1H) ?? '-'}℃ | 습도:${REH ?? '-'}% | 풍속:${WSD ?? '-'}m/s`;
+if(status) status.textContent=`주소확인 완료 | 기온:${T1H?.toFixed?.(1) ?? '-'}℃ | 습도:${REH ?? '-'}% | 풍속:${WSD ?? '-'}m/s`;
 if(typeof generateImage==='function') generateImage();
 
   const q=v=>document.querySelector(`input[value="${v}"]`);
@@ -983,7 +980,7 @@ document.addEventListener('visibilitychange',()=>{
 function calcFeelTempV22(t,w){
  t=parseFloat(t)||0;
  w=Math.max(parseFloat(w)||0.1,0.1);
- return Math.round(13.12 + 0.6215*t - 11.37*Math.pow(w,0.16) + 0.3965*t*Math.pow(w,0.16));
+ return (13.12 + 0.6215*t - 11.37*Math.pow(w,0.16) + 0.3965*t*Math.pow(w,0.16)).toFixed(1);
 }
 
 function updateV222Status(temp,hum,wind,obs){
@@ -1001,8 +998,8 @@ function updateV222Status(temp,hum,wind,obs){
 
  const rt=document.getElementById('real_temperature');
  const ft=document.getElementById('fake_temperature');
- if(rt && !window.manualTempLock) rt.value=Math.round(temp)+'℃';
- if(ft && !window.manualTempLock) ft.value=Math.round(feel)+'℃';
+ if(rt) rt.value=temp;
+ if(ft) ft.value=feel;
 }
 
 document.addEventListener('visibilitychange',()=>{
@@ -1272,11 +1269,11 @@ function updateWeatherStatusV26(obs,temp,feel,hum,wind){
   const finalFeel=result.value;
 
   if(tempInput && temp!=null){
-      tempInput.value=Number(temp).Math.round(T1H)+'℃';
+      tempInput.value=Number(temp).toFixed(1)+'℃';
   }
 
   if(feelInput && finalFeel!=null){
-      feelInput.value=Number(finalFeel).Math.round(T1H)+'℃';
+      feelInput.value=Number(finalFeel).toFixed(1)+'℃';
   }
 
   el.innerHTML =
@@ -1293,7 +1290,192 @@ function updateWeatherStatusV26(obs,temp,feel,hum,wind){
 }
 </script>
 
+
+<script>
+function autoWeatherCheck(T1H,WSD,PTY,feel){
+ const rain=document.querySelector('[value="weather_rain"]');
+ const wind=document.querySelector('[value="weather_wind"]');
+ const hot=document.querySelector('[value="weather_hot"]');
+ const cold=document.querySelector('[value="weather_cold"]');
+ if(rain) rain.checked=Number(PTY)>0;
+ if(wind) wind.checked=Number(WSD)>=10;
+ if(hot) hot.checked=Number(feel)>=33;
+ if(cold) cold.checked=Number(feel)<=-12;
+}
+</script>
+
+<!-- V26.5 KMA Backup API Patch -->
+<script>
+async function getAsosWeather(stn){
+  const now=new Date();
+  const tm2=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+
+            String(now.getDate()).padStart(2,'0')+
+            String(now.getHours()).padStart(2,'0')+'00';
+
+  const url='https://apihub.kma.go.kr/api/typ01/url/kma_sfctm3.php?tm1='+tm2+
+            '&tm2='+tm2+'&stn='+stn+'&authKey=인증키';
+  return fetch(url).then(r=>r.text());
+}
+
+async function getWeatherSafe(){
+  try{
+    if(typeof v11AutoFill==='function'){
+      await v11AutoFill();
+    }
+  }catch(e){
+    console.log('UltraSrtNcst 실패, ASOS 백업 사용');
+    await getAsosWeather(143);
+  }
+}
+</script>
+
+<!-- V26.6 최적화 패치 -->
+<script>
+// 30분 자동 갱신
+if(window.__weatherTimer) clearInterval(window.__weatherTimer);
+window.__weatherTimer = setInterval(function(){
+    if(typeof getWeatherSafe === 'function'){
+        getWeatherSafe();
+    }
+}, 1800000);
+
+// 앱 복귀 시 재조회
+document.addEventListener('visibilitychange', function(){
+    if(!document.hidden && typeof getWeatherSafe === 'function'){
+        getWeatherSafe();
+    }
+});
+
+// 최초 실행
+window.addEventListener('load', function(){
+    if(typeof getWeatherSafe === 'function'){
+        getWeatherSafe();
+    }
+});
+</script>
+
+<!-- V27.0 통합판 패치 -->
+<script>
+const KMA_API_KEY = "0oFfQOEiRXmBX0DhInV5eQ";
+
+function autoWeatherCheckV27(T1H,WSD,PTY,feel){
+  const q=v=>document.querySelector('[value="'+v+'"]');
+  if(q('weather_rain')) q('weather_rain').checked = Number(PTY)>0;
+  if(q('weather_wind')) q('weather_wind').checked = Number(WSD)>=10;
+  if(q('weather_hot')) q('weather_hot').checked = Number(feel)>=33;
+  if(q('weather_cold')) q('weather_cold').checked = Number(feel)<=-12;
+}
+
+async function getWeatherSafeV27(){
+  try{
+    if(typeof v11AutoFill==='function') await v11AutoFill();
+  }catch(e){
+    console.log('기상조회 오류',e);
+  }
+}
+</script>
+
+<!-- V27.1 Weather Integration Patch -->
+<script>
+const KMA_API_KEY_V271 = "0oFfQOEiRXmBX0DhInV5eQ";
+
+function autoWeatherCheckV271(temp, wind, pty, feel){
+  const q = (v)=>document.querySelector('[value="'+v+'"]');
+
+  if(q("weather_wind")) q("weather_wind").checked = Number(wind) >= 10;
+  if(q("weather_rain")) q("weather_rain").checked = Number(pty) > 0;
+  if(q("weather_hot")) q("weather_hot").checked = Number(feel) >= 33;
+  if(q("weather_cold")) q("weather_cold").checked = Number(feel) <= -12;
+
+  if(q("weather_clear")) q("weather_clear").checked = Number(pty) === 0;
+}
+
+function applyWeatherV271(temp, wind, humidity, pty){
+  const feel = calculateWindChill(Number(temp), Number(wind));
+
+  const rt = document.getElementById("real_temperature");
+  const ft = document.getElementById("fake_temperature");
+
+  if(rt) rt.value = Number(temp).toFixed(1) + "℃";
+  if(ft) ft.value = Number(feel).toFixed(1) + "℃";
+
+  autoWeatherCheckV271(temp, wind, pty, feel);
+
+  if(typeof generateImage === "function"){
+      generateImage();
+  }
+}
+
+async function weatherRefreshV271(){
+  try{
+    if(typeof v11AutoFill === "function"){
+      await v11AutoFill();
+    }
+  }catch(e){
+    console.log("V27.1 Weather Refresh Error", e);
+  }
+}
+
+if(window.__weatherTimerV271){
+  clearInterval(window.__weatherTimerV271);
+}
+
+window.__weatherTimerV271 = setInterval(
+  weatherRefreshV271,
+  1800000
+);
+
+document.addEventListener("visibilitychange", ()=>{
+  if(!document.hidden){
+    weatherRefreshV271();
+  }
+});
+</script>
+
+
+<!-- V28.0 실시간기상 확장패치 -->
+<script>
+function dfs_xy_conv(lat, lon){
+  return {nx:89, ny:90}; // 대구 기본값(추후 실변환 교체)
+}
+
+function showWeatherWarning(msg){
+  let el=document.getElementById('weatherWarning');
+  if(!el){
+    el=document.createElement('div');
+    el.id='weatherWarning';
+    el.style.cssText='background:#ffeb3b;padding:8px;margin:8px 0;font-weight:bold;border-radius:6px;';
+    document.body.insertBefore(el, document.body.firstChild);
+  }
+  el.textContent=msg;
+}
+
+function evaluateWeatherRisk(feel, wind){
+  if(feel>=33) showWeatherWarning('⚠ 폭염 작업중지 검토');
+  else if(feel<=-12) showWeatherWarning('⚠ 한파 작업중지 검토');
+  else if(wind>=10) showWeatherWarning('⚠ 강풍 작업중지 검토');
+}
+
+window.weatherRefreshV28 = async function(){
+  try{
+    if(typeof weatherRefreshV271==='function'){
+      await weatherRefreshV271();
+    }
+    const rt=document.getElementById('real_temperature');
+    const ft=document.getElementById('fake_temperature');
+    const wind=0;
+    const feel=parseFloat((ft?.value||'').replace('℃',''))||0;
+    evaluateWeatherRisk(feel, wind);
+  }catch(e){
+    console.log(e);
+  }
+}
+</script>
 </body>
+
+
+
+
 </html>
 
 
