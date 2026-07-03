@@ -82,8 +82,8 @@ GPS는 기존 navigator.geolocation 사용.
     <label><input type="checkbox" value="weather_hot" onchange="generateImage()"> 폭염</label>
     <label><input type="checkbox" value="weather_cold" onchange="generateImage()"> 한파</label>
   </div>
-  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" readonly oninput="generateImage()"></label>
-  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" readonly oninput="generateImage()"></label>
+  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" placeholder="체감온도 직접입력 가능" oninput="generateImage()"></label>
+  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" placeholder="기온 직접입력 가능" oninput="generateImage()"></label>
 </details>
 
 <details>
@@ -863,10 +863,10 @@ const base_time=String(baseHour).padStart(2,'0')+'00';
 
   const rt=document.getElementById('real_temperature');
   const ft=document.getElementById('fake_temperature');
-  if(rt && T1H!=null) rt.value=T1H.toFixed(1)+'℃';
-  if(ft && feel!=null) ft.value=feel.toFixed(1)+'℃';
+  if(rt && T1H!=null) rt.value=T1H.Math.round(T1H)+'℃';
+  if(ft && feel!=null) ft.value=feel.Math.round(T1H)+'℃';
 const status=document.getElementById('gpsStatus');
-if(status) status.textContent=`주소확인 완료 | 기온:${T1H?.toFixed?.(1) ?? '-'}℃ | 습도:${REH ?? '-'}% | 풍속:${WSD ?? '-'}m/s`;
+if(status) status.textContent=`주소확인 완료 | 기온:${Math.round(T1H) ?? '-'}℃ | 습도:${REH ?? '-'}% | 풍속:${WSD ?? '-'}m/s`;
 if(typeof generateImage==='function') generateImage();
 
   const q=v=>document.querySelector(`input[value="${v}"]`);
@@ -1264,11 +1264,11 @@ function updateWeatherStatusV26(obs,temp,feel,hum,wind){
   const finalFeel=result.value;
 
   if(tempInput && temp!=null){
-      tempInput.value=Number(temp).toFixed(1)+'℃';
+      tempInput.value=Number(temp).Math.round(T1H)+'℃';
   }
 
   if(feelInput && finalFeel!=null){
-      feelInput.value=Number(finalFeel).toFixed(1)+'℃';
+      feelInput.value=Number(finalFeel).Math.round(T1H)+'℃';
   }
 
   el.innerHTML =
