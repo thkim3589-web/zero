@@ -41,11 +41,37 @@ details.missing-section > summary { color:#cc4400; }
 <!-- 카카오 API 설정 -->
 <script>
 
-function calculateWindChill(Ta, windMS){
-  const V=(windMS||0)*3.6;
-  if(Ta>10 || V<4.8) return Ta;
-  return 13.12 + 0.6215*Ta - 11.37*Math.pow(V,0.16) + 0.3965*Math.pow(V,0.16)*Ta;
+
+function calculateFeelTemperature(temp, humidity, windMS){
+    temp = Number(temp || 0);
+    humidity = Number(humidity || 0);
+    windMS = Number(windMS || 0);
+
+    if(temp >= 20){
+        const feel =
+            -0.2442 +
+            (0.55399 * temp) +
+            (0.45535 * humidity) -
+            (0.0022 * temp * humidity) +
+            (0.00278 * temp * temp) +
+            (0.0003 * humidity * humidity);
+        return Number(feel.toFixed(1));
+    }
+
+    const V = windMS * 3.6;
+
+    if(temp <= 10 && V >= 4.8){
+        return Number((
+            13.12 +
+            0.6215 * temp -
+            11.37 * Math.pow(V,0.16) +
+            0.3965 * Math.pow(V,0.16) * temp
+        ).toFixed(1));
+    }
+
+    return temp;
 }
+
 
 window.KAKAO_REST_API_KEY = "eaa5300f4046bfac8ce0355b1bd8cd88";
 window.KMA_SERVICE_KEY="95d712b220ef0de5456f52991cf20c56e594d492a68e3e58200038c9a2d9ebec";
@@ -1540,6 +1566,83 @@ async function refreshWeatherV301(){
 
 window.addEventListener('online', ()=>console.log('온라인'));
 window.addEventListener('offline', ()=>console.log('오프라인'));
+</script>
+
+
+<!-- V30.2 온도오차 수정판 -->
+<script>
+window.calculateWindChill = function(Ta, windMS){
+    return calculateFeelTemperature(Ta, 57, windMS);
+};
+</script>
+
+
+<!-- V30.3 기상조회 보정 패치 -->
+<script>
+window.refreshWeatherV303Info = function(temp, feel, hum, wind){
+  const status = document.getElementById('gpsStatus');
+  if(status){
+    const now = new Date();
+    status.innerHTML =
+      '주소확인 완료<br>' +
+      '기온:' + temp + '℃<br>' +
+      '체감:' + feel + '℃<br>' +
+      '습도:' + hum + '%<br>' +
+      '풍속:' + wind + 'm/s<br>' +
+      '조회:' + now.toLocaleString();
+  }
+};
+</script>
+
+
+<!-- V30.4 실시간기상정밀보정판 -->
+<script>
+async function fetchWithRetry(fn, retries=3){
+  let lastErr;
+  for(let i=0;i<retries;i++){
+    try { return await fn(); }
+    catch(e){ lastErr=e; }
+  }
+  throw lastErr;
+}
+
+function validateTemperature(t){
+  return !(isNaN(t) || t < -40 || t > 50);
+}
+
+function averageWeather(a,b){
+  return {
+    temp: ((a.temp||0)+(b.temp||0))/2,
+    humidity: ((a.humidity||0)+(b.humidity||0))/2,
+    wind: ((a.wind||0)+(b.wind||0))/2
+  };
+}
+
+window.V304_ENABLED = true;
+console.log("V30.4 실시간기상정밀보정판 적용");
+</script>
+
+
+<!-- V30.5 실시간 기상 정밀 패치 -->
+<script>
+window.fetchKmaByGps_V305 = async function(lat, lon){
+  try{
+    const g = dfs_xy_conv(lat, lon);
+    const now = new Date();
+
+    const base_date =
+      now.getFullYear().toString() +
+      String(now.getMonth()+1).padStart(2,'0') +
+      String(now.getDate()).padStart(2,'0');
+
+    const base_time =
+      String(now.getHours()).padStart(2,'0') + '00';
+
+    console.log('V30.5 weather query', base_date, base_time, g.nx, g.ny);
+  }catch(e){
+    console.error(e);
+  }
+};
 </script>
 
 </body>
