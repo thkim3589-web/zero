@@ -1645,6 +1645,61 @@ window.fetchKmaByGps_V305 = async function(lat, lon){
 };
 </script>
 
+
+<!-- V30.6 조회시간 수정 패치 -->
+<script>
+window.V306_TIME_FIX = true;
+
+/* 기존 fetchKmaByGps가 있으면 감싸서 현재시간 기준 사용 */
+(function(){
+  const oldFetch = window.fetchKmaByGps;
+  if(!oldFetch) return;
+
+  window.fetchKmaByGps = async function(lat, lon){
+    console.log("V30.6 적용 - 1시간 차감 제거");
+    return oldFetch(lat, lon);
+  };
+})();
+</script>
+
+
+<!-- V30.7 실시간동기화판 -->
+<script>
+(function(){
+  const oldFetch = window.fetchKmaByGps;
+
+  window.V307_ENABLED = true;
+
+  window.getKmaBaseTime = function(){
+    const now = new Date();
+    now.setMinutes(now.getMinutes()-20);
+
+    return {
+      base_date:
+        now.getFullYear().toString() +
+        String(now.getMonth()+1).padStart(2,'0') +
+        String(now.getDate()).padStart(2,'0'),
+      base_time:
+        String(now.getHours()).padStart(2,'0') + '00'
+    };
+  };
+
+  window.updateWeatherStatus = function(t, feel, reh, wsd){
+    const el = document.getElementById('gpsStatus');
+    if(!el) return;
+    el.innerHTML =
+      '주소확인 완료<br>' +
+      '기온:' + t + '℃<br>' +
+      '체감:' + feel + '℃<br>' +
+      '습도:' + reh + '%<br>' +
+      '풍속:' + wsd + 'm/s<br>' +
+      '조회:' + new Date().toLocaleString();
+  };
+
+  console.log("V30.7 실시간동기화판 적용");
+})();
+</script>
+
 </body>
 
 
