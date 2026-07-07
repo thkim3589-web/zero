@@ -865,7 +865,7 @@ async function fetchKmaByGps(lat, lon){
 if(baseHour<0){baseHour=23; d.setDate(d.getDate()-1);}
 const base_time=String(baseHour).padStart(2,'0')+'00';
 
-  const url=`https://apis.data.go.kr/131800000/VilageFcstInfoService_2.0/getUltraSrtNcst?serviceKey=${window.KMA_SERVICE_KEY}&pageNo=1&numOfRows=100&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${g.nx}&ny=${g.ny}`;
+  const url=`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst?serviceKey=${window.KMA_SERVICE_KEY}&pageNo=1&numOfRows=100&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${g.nx}&ny=${g.ny}`;
 
   const res=await fetch(url);
   if(!res.ok){
