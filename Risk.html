@@ -87,7 +87,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V26.1 체감온도 이중검증판</b><br>
+<b>V31.1 현장안정화판</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -865,7 +865,7 @@ async function fetchKmaByGps(lat, lon){
 if(baseHour<0){baseHour=23; d.setDate(d.getDate()-1);}
 const base_time=String(baseHour).padStart(2,'0')+'00';
 
-  const url=`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst?serviceKey=${window.KMA_SERVICE_KEY}&pageNo=1&numOfRows=100&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${g.nx}&ny=${g.ny}`;
+  const url=`https://apis.data.go.kr/131800000/VilageFcstInfoService_2.0/getUltraSrtNcst?serviceKey=${window.KMA_SERVICE_KEY}&pageNo=1&numOfRows=100&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${g.nx}&ny=${g.ny}`;
 
   const res=await fetch(url);
   const data=await res.json();
@@ -902,7 +902,7 @@ if(typeof generateImage==='function') generateImage();
 
   const q=v=>document.querySelector(`input[value="${v}"]`);
   if(q('weather_clear')) q('weather_clear').checked = RN1===0;
-  if(q('weather_rain')) q('weather_rain').checked = RN1>0;
+  // 비/눈 자동체크 제거
   if(q('weather_wind')) q('weather_wind').checked = (WSD||0)>=10;
   if(q('weather_hot')) q('weather_hot').checked = (feel||0)>=35;
   if(q('weather_cold')) q('weather_cold').checked = (feel||0)<=-12;
@@ -918,7 +918,7 @@ function autoWeatherCheckV19(T1H,REH,WSD,PTY){
    const cbs=[...document.querySelectorAll('input[type="checkbox"]')];
    const find=(v)=>cbs.find(x=>x.value===v);
    if(find('weather_wind')) find('weather_wind').checked=(WSD>=8);
-   if(find('weather_rain')) find('weather_rain').checked=(PTY>0);
+   // 비/눈 자동체크 제거
    if(find('weather_hot')) find('weather_hot').checked=(T1H>=33);
    if(find('weather_cold')) find('weather_cold').checked=(T1H<=-12);
  }catch(e){console.log(e);}
@@ -927,7 +927,7 @@ function autoWeatherCheckV19(T1H,REH,WSD,PTY){
 
 
 <script>
-// 5분마다 자동 갱신
+// 30분마다 자동 갱신
 setInterval(function(){
     if(typeof v11AutoFill === 'function'){
         v11AutoFill();
@@ -943,7 +943,7 @@ setInterval(function(){
               String(now.getMinutes()).padStart(2,'0');
         }
     }
-}, 60000);
+}, 1800000);
 </script>
 
 
@@ -1043,7 +1043,7 @@ function updateWeatherStatusV23(temp, feel, hum, wind, obs){
  const el=document.getElementById('gpsStatus');
  if(!el) return;
  const now=new Date();
- el.innerHTML=`<b>V26.1 체감온도 이중검증판</b><br>
+ el.innerHTML=`<b>V31.1 현장안정화판</b><br>
  관측소 : ${obs||'GPS 기반'}<br>
  기온 : ${temp}℃<br>
  체감 : ${feel}℃<br>
@@ -1128,7 +1128,7 @@ function updateWeatherStatusV243(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V26.1 체감온도 이중검증판</b><br>' +
+   '<b>V31.1 현장안정화판</b><br>' +
    '관측소 : ' + (obs || '자동선택') + '<br>' +
    '기온 : ' + (temp || '-') + '℃<br>' +
    '체감 : ' + (feel || '-') + '℃<br>' +
@@ -1158,7 +1158,7 @@ function updateWeatherStatusV244(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V26.1 체감온도 이중검증판</b><br>' +
+   '<b>V31.1 현장안정화판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
@@ -1174,7 +1174,7 @@ function updateWeatherStatusV25(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V26.1 체감온도 이중검증판</b><br>' +
+   '<b>V31.1 현장안정화판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
@@ -1223,7 +1223,7 @@ function updateWeatherStatusV25(obs,temp,feel,hum,wind){
   const obsDisplay = obs || '조회 실패(위치확인요망)';
 
   el.innerHTML =
-   '<b>V26.1 체감온도 이중검증판</b><br>' +
+   '<b>V31.1 현장안정화판</b><br>' +
    '관측소 : ' + obsDisplay + '<br>' +
    '기온 : ' + (temp ?? '-') + '℃<br>' +
    '체감 : ' + (feel ?? '-') + '℃<br>' +
@@ -1303,7 +1303,7 @@ function updateWeatherStatusV26(obs,temp,feel,hum,wind){
   }
 
   el.innerHTML =
-      '<b>V26.1 체감온도 이중검증판</b><br>' +
+      '<b>V31.1 현장안정화판</b><br>' +
       '관측소 : ' + (obs || '자동선택') + '<br>' +
       '기온 : ' + temp + '℃<br>' +
       '체감 : ' + finalFeel + '℃<br>' +
@@ -1323,7 +1323,7 @@ function autoWeatherCheck(T1H,WSD,PTY,feel){
  const wind=document.querySelector('[value="weather_wind"]');
  const hot=document.querySelector('[value="weather_hot"]');
  const cold=document.querySelector('[value="weather_cold"]');
- if(rain) rain.checked=Number(PTY)>0;
+ // 비/눈 자동체크 제거
  if(wind) wind.checked=Number(WSD)>=10;
  if(hot) hot.checked=Number(feel)>=33;
  if(cold) cold.checked=Number(feel)<=-12;
@@ -1386,7 +1386,7 @@ const KMA_API_KEY = "0oFfQOEiRXmBX0DhInV5eQ";
 
 function autoWeatherCheckV27(T1H,WSD,PTY,feel){
   const q=v=>document.querySelector('[value="'+v+'"]');
-  if(q('weather_rain')) q('weather_rain').checked = Number(PTY)>0;
+  // 비/눈 자동체크 제거
   if(q('weather_wind')) q('weather_wind').checked = Number(WSD)>=10;
   if(q('weather_hot')) q('weather_hot').checked = Number(feel)>=33;
   if(q('weather_cold')) q('weather_cold').checked = Number(feel)<=-12;
@@ -1409,7 +1409,7 @@ function autoWeatherCheckV271(temp, wind, pty, feel){
   const q = (v)=>document.querySelector('[value="'+v+'"]');
 
   if(q("weather_wind")) q("weather_wind").checked = Number(wind) >= 10;
-  if(q("weather_rain")) q("weather_rain").checked = Number(pty) > 0;
+  // 비/눈 자동체크 제거
   if(q("weather_hot")) q("weather_hot").checked = Number(feel) >= 33;
   if(q("weather_cold")) q("weather_cold").checked = Number(feel) <= -12;
 
@@ -1730,6 +1730,11 @@ document.addEventListener('DOMContentLoaded', function(){
   if(ft){ ft.readOnly=false; ft.disabled=false; ft.removeAttribute('readonly'); ft.removeAttribute('disabled'); }
 });
 </script>
+
+<script>
+window.__autoFillRunning = false;
+</script>
+
 </body>
 
 
