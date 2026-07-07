@@ -928,22 +928,7 @@ function autoWeatherCheckV19(T1H,REH,WSD,PTY){
 
 <script>
 // 30분마다 자동 갱신
-setInterval(function(){
-    if(typeof v11AutoFill === 'function'){
-        v11AutoFill();
-
-        const st = document.getElementById('gpsStatus');
-        if(st){
-            const now = new Date();
-            st.innerHTML += '<br>마지막 갱신: ' +
-              now.getFullYear() + '-' +
-              String(now.getMonth()+1).padStart(2,'0') + '-' +
-              String(now.getDate()).padStart(2,'0') + ' ' +
-              String(now.getHours()).padStart(2,'0') + ':' +
-              String(now.getMinutes()).padStart(2,'0');
-        }
-    }
-}, 1800000);
+/* V32.0 중복 자동갱신 제거 */
 </script>
 
 
@@ -994,11 +979,8 @@ function showWeatherPanelV221(obs,temp,feel,hum,wind){
  최종갱신 : ${now.toLocaleString()}`;
 }
 
-document.addEventListener('visibilitychange',()=>{
- if(!document.hidden && typeof v11AutoFill==='function'){
-   v11AutoFill();
- }
-});
+
+/* V32.0 중복 visibilitychange 제거 */
 </script>
 
 
@@ -1028,13 +1010,9 @@ function updateV222Status(temp,hum,wind,obs){
  if(ft) ft.value=feel;
 }
 
-document.addEventListener('visibilitychange',()=>{
- if(!document.hidden && typeof v11AutoFill==='function'){ v11AutoFill(); }
-});
 
-setInterval(()=>{
- if(typeof v11AutoFill==='function'){ v11AutoFill(); }
-},1200000);
+/* V32.0 중복 visibilitychange 제거 */
+/* V32.1 통합엔진으로 대체 */
 </script>
 
 
@@ -1069,17 +1047,9 @@ function updateWeatherStatusV24(obs,temp,feel,hum,wind){
  '최종갱신 : ' + new Date().toLocaleString();
 }
 
-document.addEventListener('visibilitychange', function(){
- if(!document.hidden && typeof v11AutoFill==='function'){
-   v11AutoFill();
- }
-});
 
-setInterval(function(){
- if(typeof v11AutoFill==='function'){
-   v11AutoFill();
- }
-},1200000);
+/* V32.0 중복 visibilitychange 제거 */
+/* V32.0 중복 자동갱신 제거 */
 </script>
 
 
@@ -1183,11 +1153,8 @@ function updateWeatherStatusV25(obs,temp,feel,hum,wind){
    '최종갱신 : '+new Date().toLocaleString();
 }
 
-document.addEventListener('visibilitychange', function(){
-  if(!document.hidden && typeof v11AutoFill==='function'){
-    v11AutoFill();
-  }
-});
+
+/* V32.0 중복 visibilitychange 제거 */
 </script>
 
 
@@ -1250,9 +1217,7 @@ function updateWeatherStatusV25(obs,temp,feel,hum,wind){
   if(typeof generateImage==='function') generateImage();
 }
 
-setInterval(function(){
-  if(typeof v11AutoFill==='function') v11AutoFill();
-},1200000);
+/* V32.0 중복 자동갱신 제거 */
 </script>
 
 
@@ -1366,12 +1331,8 @@ window.__weatherTimer = setInterval(function(){
 }, 1800000);
 
 // 앱 복귀 시 재조회
-document.addEventListener('visibilitychange', function(){
-    if(!document.hidden && typeof getWeatherSafe === 'function'){
-        getWeatherSafe();
-    }
-});
 
+/* V32.0 중복 visibilitychange 제거 */
 // 최초 실행
 window.addEventListener('load', function(){
     if(typeof getWeatherSafe === 'function'){
@@ -1451,11 +1412,8 @@ window.__weatherTimerV271 = setInterval(
   1800000
 );
 
-document.addEventListener("visibilitychange", ()=>{
-  if(!document.hidden){
-    weatherRefreshV271();
-  }
-});
+
+/* V32.0 중복 visibilitychange 제거 */
 </script>
 
 
@@ -1735,7 +1693,305 @@ document.addEventListener('DOMContentLoaded', function(){
 window.__autoFillRunning = false;
 </script>
 
+
+<script>
+if(window.__WeatherRefreshTimer){
+    clearInterval(window.__WeatherRefreshTimer);
+}
+
+window.__WeatherRefreshTimer = setInterval(function(){
+    if(typeof v11AutoFill === 'function'){
+        v11AutoFill();
+    }
+}, 1800000);
+
+document.addEventListener('visibilitychange', function(){
+    if(!document.hidden && typeof v11AutoFill === 'function'){
+        v11AutoFill();
+    }
+});
+</script>
+
+<!-- V32.2 AWS→기상청→캐시 통합 엔진 -->
+<script>
+function saveWeatherCache(temp, feel, hum, wind, source){
+ localStorage.setItem('WEATHER_CACHE', JSON.stringify({
+   temp, feel, hum, wind, source,
+   time:new Date().toISOString()
+ }));
+}
+
+function loadWeatherCache(){
+ try{
+   const c = localStorage.getItem('WEATHER_CACHE');
+   if(!c) return null;
+
+   const data = JSON.parse(c);
+
+   const diff = Date.now() - new Date(data.time).getTime();
+
+   if(diff > 10800000) return null; // 3시간
+
+   return data;
+ }catch(e){
+   return null;
+ }
+}
+
+window.getWeatherFinal = async function(){
+
+ try{
+   if(typeof getAWSWeather === 'function'){
+      const aws = await getAWSWeather();
+      if(aws){
+         saveWeatherCache(
+            aws.temp, aws.feel,
+            aws.hum, aws.wind,
+            'AWS'
+         );
+         return aws;
+      }
+   }
+ }catch(e){}
+
+ try{
+   if(typeof v11AutoFill === 'function'){
+      await v11AutoFill();
+   }
+ }catch(e){}
+
+ const cache = loadWeatherCache();
+ if(cache){
+    cache.source = (cache.source || '캐시') + ' (캐시)';
+    return cache;
+ }
+
+ return null;
+};
+</script>
+
+
+<!-- V32.3 GPS 이동감지 + 갱신시간 표시 -->
+<script>
+function shouldRefreshWeather(lat, lon){
+    try{
+        const last = JSON.parse(localStorage.getItem('LAST_GPS') || 'null');
+
+        if(!last){
+            localStorage.setItem('LAST_GPS', JSON.stringify({lat,lon}));
+            return true;
+        }
+
+        const distance =
+            Math.sqrt(
+                Math.pow(lat-last.lat,2)+
+                Math.pow(lon-last.lon,2)
+            ) * 111000;
+
+        if(distance >= 100){
+            localStorage.setItem('LAST_GPS', JSON.stringify({lat,lon}));
+            return true;
+        }
+
+        return false;
+    }catch(e){
+        return true;
+    }
+}
+
+window.updateWeatherStatusV323 = function(obs,temp,feel,hum,wind){
+    const el=document.getElementById('gpsStatus');
+    if(!el) return;
+
+    const now=new Date();
+
+    el.innerHTML =
+      '<b>V32.3 GPS최적화판</b><br>' +
+      '관측소 : ' + (obs || '자동선택') + '<br>' +
+      '기온 : ' + (temp || '-') + '℃<br>' +
+      '체감 : ' + (feel || '-') + '℃<br>' +
+      '습도 : ' + (hum || '-') + '%<br>' +
+      '풍속 : ' + (wind || '-') + 'm/s<br>' +
+      '최종갱신 : ' + now.toLocaleString();
+};
+</script>
+
+
+<!-- V32.4 AWS 자동선택 + 오프라인 + 로그 -->
+<script>
+window.AWS_STATIONS = [
+ {name:'부산', code:159, lat:35.1796, lon:129.0756},
+ {name:'울산', code:152, lat:35.5384, lon:129.3114},
+ {name:'대구', code:143, lat:35.8714, lon:128.6014},
+ {name:'포항', code:138, lat:36.0190, lon:129.3435},
+ {name:'창원', code:155, lat:35.2281, lon:128.6811}
+];
+
+function nearestAWS(lat, lon){
+ let best=null, dist=999999;
+ AWS_STATIONS.forEach(s=>{
+   const d=Math.sqrt((lat-s.lat)**2 + (lon-s.lon)**2);
+   if(d<dist){ dist=d; best=s; }
+ });
+ return best;
+}
+
+function saveWeatherLog(msg){
+ let logs=JSON.parse(localStorage.getItem('WEATHER_LOG')||'[]');
+ logs.unshift(new Date().toLocaleString()+' '+msg);
+ logs=logs.slice(0,20);
+ localStorage.setItem('WEATHER_LOG', JSON.stringify(logs));
+}
+
+window.addEventListener('offline',()=>{
+ const el=document.getElementById('gpsStatus');
+ const cache=localStorage.getItem('WEATHER_CACHE');
+ if(el && cache){
+   el.innerHTML='<b>오프라인 모드</b><br>마지막 관측값 사용중';
+ }
+});
+
+window.__GPS_OPTIONS = {
+ enableHighAccuracy:false,
+ timeout:15000,
+ maximumAge:300000
+};
+</script>
+
+
+<!-- V32.5 최종 날씨엔진 -->
+<script>
+window.WEATHER_ENGINE_VERSION = "V32.5";
+
+function autoWeatherJudge(temp, feel, wind, rain){
+    const q=v=>document.querySelector('input[value="'+v+'"]');
+    if(q('weather_clear')) q('weather_clear').checked = !rain;
+    if(q('weather_rain')) q('weather_rain').checked = !!rain;
+    if(q('weather_wind')) q('weather_wind').checked = Number(wind||0) >= 10;
+    if(q('weather_hot')) q('weather_hot').checked = Number(feel||0) >= 35;
+    if(q('weather_cold')) q('weather_cold').checked = Number(feel||0) <= -12;
+}
+
+window.addEventListener('online', ()=>{
+    if(typeof v11AutoFill==='function') v11AutoFill();
+});
+
+window.recoverGpsWeather = function(){
+    try{
+        const cache = localStorage.getItem('WEATHER_CACHE');
+        if(cache){
+            const c = JSON.parse(cache);
+            const st = document.getElementById('gpsStatus');
+            if(st){
+                st.innerHTML =
+                '<b>V32.5 복구모드</b><br>' +
+                '자료출처 : ' + (c.source||'캐시') + '<br>' +
+                '기온 : ' + c.temp + '℃<br>' +
+                '체감 : ' + c.feel + '℃';
+            }
+        }
+    }catch(e){}
+};
+</script>
+
+
+<!-- V33.0 최종 안정화 엔진 -->
+<script>
+window.RISK_VERSION="V33.0";
+
+function unifiedRefresh(){
+    if(typeof v11AutoFill === 'function'){
+        try{ v11AutoFill(); }catch(e){ console.log(e); }
+    }
+}
+
+if(window.__V33Timer){
+    clearInterval(window.__V33Timer);
+}
+
+window.__V33Timer = setInterval(unifiedRefresh, 1800000);
+
+window.addEventListener('online', unifiedRefresh);
+
+console.log("V33.0 Final Engine Loaded");
+</script>
+
+
+<!-- V33.1 경량화 패치 -->
+<script>
+['__weatherTimer','__weatherTimerV271','__V320UnifiedTimer']
+.forEach(function(v){
+  try{
+    if(window[v]) clearInterval(window[v]);
+  }catch(e){}
+});
+
+console.log('V33.1 Lightweight Patch Loaded');
+</script>
+
+
+<!-- V34.0 리팩토링 준비판 -->
+<script>
+window.RISK_VERSION="V34.0";
+
+// 중복 타이머 정리
+['__weatherTimer','__weatherTimerV271','__V320UnifiedTimer','__WeatherRefreshTimer']
+.forEach(function(v){
+    try{
+        if(window[v]) clearInterval(window[v]);
+    }catch(e){}
+});
+
+// 단일 통합 엔진
+window.__V34UnifiedTimer = setInterval(function(){
+    if(typeof unifiedRefresh === 'function'){
+        unifiedRefresh();
+    }else if(typeof v11AutoFill === 'function'){
+        v11AutoFill();
+    }
+}, 1800000);
+
+console.log('V34.0 Refactoring Ready');
+</script>
+
+
+<!-- V35.0 Ultimate 현장안정화판 -->
+<script>
+window.RISK_VERSION="V35.0 Ultimate";
+
+window.RISK_CONFIG = {
+  weatherRefreshMin:30,
+  gpsMoveMeter:100,
+  cacheHours:3,
+  offlineEnabled:true
+};
+
+function riskWeatherRefresh(){
+  try{
+    if(typeof getWeatherFinal === 'function'){
+      return getWeatherFinal();
+    }
+    if(typeof v11AutoFill === 'function'){
+      return v11AutoFill();
+    }
+  }catch(e){
+    console.log(e);
+  }
+}
+
+window.addEventListener('visibilitychange',()=>{
+  if(!document.hidden) riskWeatherRefresh();
+});
+
+window.addEventListener('online',()=>{
+  riskWeatherRefresh();
+});
+
+console.log('V35.0 Ultimate Loaded');
+</script>
+
 </body>
+
 
 
 
@@ -1743,3 +1999,14 @@ window.__autoFillRunning = false;
 </html>
 
 
+
+
+<script>
+if(window.__V320UnifiedTimer){ clearInterval(window.__V320UnifiedTimer); }
+
+window.__V320UnifiedTimer = setInterval(function(){
+    if(typeof v11AutoFill === 'function'){
+        v11AutoFill();
+    }
+},1800000);
+</script>
