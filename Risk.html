@@ -868,6 +868,9 @@ const base_time=String(baseHour).padStart(2,'0')+'00';
   const url=`https://apis.data.go.kr/131800000/VilageFcstInfoService_2.0/getUltraSrtNcst?serviceKey=${window.KMA_SERVICE_KEY}&pageNo=1&numOfRows=100&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${g.nx}&ny=${g.ny}`;
 
   const res=await fetch(url);
+  if(!res.ok){
+    throw new Error('기상청 API 오류:'+res.status);
+  }
   const data=await res.json();
 
   let T1H=null, REH=null, WSD=null, RN1=0;
@@ -908,7 +911,8 @@ if(typeof generateImage==='function') generateImage();
   if(q('weather_cold')) q('weather_cold').checked = (feel||0)<=-12;
 }
 
-window.addEventListener('load',()=>{ v11AutoFill(); });
+window.__weatherLoading=false;
+window.addEventListener('load',()=>{ if(!window.__weatherLoading){window.__weatherLoading=true; v11AutoFill(); setTimeout(()=>window.__weatherLoading=false,5000);} });
 </script>
 
 
