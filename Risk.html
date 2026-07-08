@@ -1,3 +1,4 @@
+<!-- V36.2 상태함수 제거판 -->
 <!DOCTYPE html>
 <!-- build v4.1: missing-highlight / seasonal hot+cold / per-field temp+special -->
 <html lang="ko">
@@ -959,12 +960,7 @@ function updateWeatherStatus(temp, feel, hum, wind){
 
 
 <script>
-function updateWeatherStatusV22(temp, feel, hum, wind){
- const st=document.getElementById('gpsStatus');
- if(!st) return;
- const now=new Date();
- st.innerHTML='관측정보<br>기온 : '+temp+'℃<br>체감 : '+feel+'℃<br>습도 : '+hum+'%<br>풍속 : '+wind+'m/s<br>최종갱신 : '+now.toLocaleTimeString();
-}
+
 </script>
 
 
@@ -1021,35 +1017,13 @@ function updateV222Status(temp,hum,wind,obs){
 
 
 <script>
-function updateWeatherStatusV23(temp, feel, hum, wind, obs){
- const el=document.getElementById('gpsStatus');
- if(!el) return;
- const now=new Date();
- el.innerHTML=`<b>V31.1 현장안정화판</b><br>
- 관측소 : ${obs||'GPS 기반'}<br>
- 기온 : ${temp}℃<br>
- 체감 : ${feel}℃<br>
- 습도 : ${hum}%<br>
- 풍속 : ${wind}m/s<br>
- 최종갱신 : ${now.toLocaleString()}`;
-}
+
 </script>
 
 
 <!-- V24 AWS 실측 준비판 패치 -->
 <script>
-function updateWeatherStatusV24(obs,temp,feel,hum,wind){
- const el=document.getElementById('gpsStatus');
- if(!el) return;
- el.innerHTML =
- '<b>V24.1 AWS관측소연동준비판</b><br>' +
- '관측소 : ' + (obs||'GPS 기반') + '<br>' +
- '기온 : ' + (temp||'-') + '℃<br>' +
- '체감 : ' + (feel||'-') + '℃<br>' +
- '습도 : ' + (hum||'-') + '%<br>' +
- '풍속 : ' + (wind||'-') + 'm/s<br>' +
- '최종갱신 : ' + new Date().toLocaleString();
-}
+
 
 
 /* V32.0 중복 visibilitychange 제거 */
@@ -1073,18 +1047,7 @@ function findNearestAWSV241(lat, lon){
  return best;
 }
 
-function updateWeatherStatusV241(obs,temp,feel,hum,wind){
- const el=document.getElementById('gpsStatus');
- if(!el) return;
- el.innerHTML =
- '<b>V24.1 AWS관측소연동준비판</b><br>' +
- '관측소 : '+(obs||'자동선택')+'<br>' +
- '기온 : '+(temp||'-')+'℃<br>' +
- '체감 : '+(feel||'-')+'℃<br>' +
- '습도 : '+(hum||'-')+'%<br>' +
- '풍속 : '+(wind||'-')+'m/s<br>' +
- '최종갱신 : '+new Date().toLocaleString();
-}
+
 </script>
 
 
@@ -1098,19 +1061,7 @@ function autoWeatherCheck(temp, wind){
   if(windy) windy.checked = Number(wind) >= 10;
 }
 
-function updateWeatherStatusV243(obs,temp,feel,hum,wind){
-  const el=document.getElementById('gpsStatus');
-  if(!el) return;
-  el.innerHTML =
-   '<b>V31.1 현장안정화판</b><br>' +
-   '관측소 : ' + (obs || '자동선택') + '<br>' +
-   '기온 : ' + (temp || '-') + '℃<br>' +
-   '체감 : ' + (feel || '-') + '℃<br>' +
-   '습도 : ' + (hum || '-') + '%<br>' +
-   '풍속 : ' + (wind || '-') + 'm/s<br>' +
-   '최종갱신 : ' + new Date().toLocaleString();
-  autoWeatherCheck(temp, wind);
-}
+
 </script>
 
 
@@ -1128,34 +1079,12 @@ function gpsMovedV244(lat, lon){
   return moved;
 }
 
-function updateWeatherStatusV244(obs,temp,feel,hum,wind){
-  const el=document.getElementById('gpsStatus');
-  if(!el) return;
-  el.innerHTML =
-   '<b>V31.1 현장안정화판</b><br>' +
-   '관측소 : '+(obs||'자동선택')+'<br>' +
-   '기온 : '+(temp||'-')+'℃<br>' +
-   '체감 : '+(feel||'-')+'℃<br>' +
-   '습도 : '+(hum||'-')+'%<br>' +
-   '풍속 : '+(wind||'-')+'m/s<br>' +
-   '최종갱신 : '+new Date().toLocaleString();
-}
+
 </script>
 
 
 <script>
-function updateWeatherStatusV25(obs,temp,feel,hum,wind){
-  const el=document.getElementById('gpsStatus');
-  if(!el) return;
-  el.innerHTML =
-   '<b>V31.1 현장안정화판</b><br>' +
-   '관측소 : '+(obs||'자동선택')+'<br>' +
-   '기온 : '+(temp||'-')+'℃<br>' +
-   '체감 : '+(feel||'-')+'℃<br>' +
-   '습도 : '+(hum||'-')+'%<br>' +
-   '풍속 : '+(wind||'-')+'m/s<br>' +
-   '최종갱신 : '+new Date().toLocaleString();
-}
+
 
 
 /* V32.0 중복 visibilitychange 제거 */
@@ -1184,42 +1113,7 @@ function autoWeatherCheckV251(temp, wind){
 
 
 <script>
-function updateWeatherStatusV25(obs,temp,feel,hum,wind){
-  const el=document.getElementById('gpsStatus');
-  const feelInput=document.getElementById('fake_temperature');
-  const realInput=document.getElementById('real_temperature');
 
-  if(!el) return;
-
-  const obsDisplay = obs || '조회 실패(위치확인요망)';
-
-  el.innerHTML =
-   '<b>V31.1 현장안정화판</b><br>' +
-   '관측소 : ' + obsDisplay + '<br>' +
-   '기온 : ' + (temp ?? '-') + '℃<br>' +
-   '체감 : ' + (feel ?? '-') + '℃<br>' +
-   '습도 : ' + (hum ?? '-') + '%<br>' +
-   '풍속 : ' + (wind ?? '-') + 'm/s<br>' +
-   '최종갱신 : ' + new Date().toLocaleString();
-
-  if(realInput && temp != null){
-      realInput.value = Number(temp).toFixed(1);
-  }
-
-  if(feelInput && feel != null){
-      feelInput.value = Number(feel).toFixed(1);
-  }
-
-  const hot=document.querySelector('input[value="weather_hot"]');
-  const cold=document.querySelector('input[value="weather_cold"]');
-  const windChk=document.querySelector('input[value="weather_wind"]');
-
-  if(hot) hot.checked = Number(temp) >= 33;
-  if(cold) cold.checked = Number(temp) <= -12;
-  if(windChk) windChk.checked = Number(wind) >= 10;
-
-  if(typeof generateImage==='function') generateImage();
-}
 
 /* V32.0 중복 자동갱신 제거 */
 </script>
