@@ -1,3 +1,4 @@
+<!-- V36.4 visibility 정리판 -->
 <!-- V36.3 타이머정리판 -->
 <!DOCTYPE html>
 <!-- build v4.1: missing-highlight / seasonal hot+cold / per-field temp+special -->
@@ -88,7 +89,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V31.1 현장안정화판</b><br>
+<b>V36.4 visibility정리판</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -1026,7 +1027,7 @@ function updateWeatherStatusV23(temp, feel, hum, wind, obs){
  const el=document.getElementById('gpsStatus');
  if(!el) return;
  const now=new Date();
- el.innerHTML=`<b>V31.1 현장안정화판</b><br>
+ el.innerHTML=`<b>V36.4 visibility정리판</b><br>
  관측소 : ${obs||'GPS 기반'}<br>
  기온 : ${temp}℃<br>
  체감 : ${feel}℃<br>
@@ -1103,7 +1104,7 @@ function updateWeatherStatusV243(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V31.1 현장안정화판</b><br>' +
+   '<b>V36.4 visibility정리판</b><br>' +
    '관측소 : ' + (obs || '자동선택') + '<br>' +
    '기온 : ' + (temp || '-') + '℃<br>' +
    '체감 : ' + (feel || '-') + '℃<br>' +
@@ -1133,7 +1134,7 @@ function updateWeatherStatusV244(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V31.1 현장안정화판</b><br>' +
+   '<b>V36.4 visibility정리판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
@@ -1149,7 +1150,7 @@ function updateWeatherStatusV25(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V31.1 현장안정화판</b><br>' +
+   '<b>V36.4 visibility정리판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
@@ -1195,7 +1196,7 @@ function updateWeatherStatusV25(obs,temp,feel,hum,wind){
   const obsDisplay = obs || '조회 실패(위치확인요망)';
 
   el.innerHTML =
-   '<b>V31.1 현장안정화판</b><br>' +
+   '<b>V36.4 visibility정리판</b><br>' +
    '관측소 : ' + obsDisplay + '<br>' +
    '기온 : ' + (temp ?? '-') + '℃<br>' +
    '체감 : ' + (feel ?? '-') + '℃<br>' +
@@ -1273,7 +1274,7 @@ function updateWeatherStatusV26(obs,temp,feel,hum,wind){
   }
 
   el.innerHTML =
-      '<b>V31.1 현장안정화판</b><br>' +
+      '<b>V36.4 visibility정리판</b><br>' +
       '관측소 : ' + (obs || '자동선택') + '<br>' +
       '기온 : ' + temp + '℃<br>' +
       '체감 : ' + finalFeel + '℃<br>' +
