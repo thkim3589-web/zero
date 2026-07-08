@@ -89,7 +89,7 @@ GPS는 기존 navigator.geolocation 사용.
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V36.4 visibility정리판</b><br>
+<b>V36.5 Final 클린업판</b><br>
 <span id="gpsStatus">대기중</span><br>
 <button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
 </div>
@@ -961,81 +961,19 @@ function updateWeatherStatus(temp, feel, hum, wind){
 
 
 <script>
-function updateWeatherStatusV22(temp, feel, hum, wind){
- const st=document.getElementById('gpsStatus');
- if(!st) return;
- const now=new Date();
- st.innerHTML='관측정보<br>기온 : '+temp+'℃<br>체감 : '+feel+'℃<br>습도 : '+hum+'%<br>풍속 : '+wind+'m/s<br>최종갱신 : '+now.toLocaleTimeString();
-}
-</script>
+/* V36.5 deprecated */ <!-- V36.5 제거된 중복 날씨 엔진 -->
 
 
 <script>
-function showWeatherPanelV221(obs,temp,feel,hum,wind){
- const st=document.getElementById('gpsStatus');
- if(!st) return;
- const now=new Date();
- st.innerHTML=`
- <b>관측정보</b><br>
- 관측소 : ${obs||'GPS기반'}<br>
- 기온 : ${temp}℃<br>
- 체감 : ${feel}℃<br>
- 습도 : ${hum}%<br>
- 풍속 : ${wind}m/s<br>
- 최종갱신 : ${now.toLocaleString()}`;
-}
-
-
-/* V32.0 중복 visibilitychange 제거 */
-</script>
+/* V36.5 deprecated */ <!-- V36.5 제거된 중복 날씨 엔진 -->
 
 
 <script>
-function calcFeelTempV22(t,w){
- t=parseFloat(t)||0;
- w=Math.max(parseFloat(w)||0.1,0.1);
- return (13.12 + 0.6215*t - 11.37*Math.pow(w,0.16) + 0.3965*t*Math.pow(w,0.16)).toFixed(1);
-}
-
-function updateV222Status(temp,hum,wind,obs){
- const st=document.getElementById('gpsStatus');
- if(!st) return;
- const feel=calcFeelTempV22(temp,wind);
- const now=new Date().toLocaleString();
- st.innerHTML=`<b>V22.2 실시간 관측정보</b><br>
- 관측소 : ${obs||'GPS기반'}<br>
- 기온 : ${temp}℃<br>
- 체감 : ${feel}℃<br>
- 습도 : ${hum}%<br>
- 풍속 : ${wind}m/s<br>
- 최종갱신 : ${now}`;
-
- const rt=document.getElementById('real_temperature');
- const ft=document.getElementById('fake_temperature');
- if(rt) rt.value=temp;
- if(ft) ft.value=feel;
-}
-
-
-/* V32.0 중복 visibilitychange 제거 */
-/* V32.1 통합엔진으로 대체 */
-</script>
+/* V36.5 deprecated */ <!-- V36.5 제거된 중복 날씨 엔진 -->
 
 
 <script>
-function updateWeatherStatusV23(temp, feel, hum, wind, obs){
- const el=document.getElementById('gpsStatus');
- if(!el) return;
- const now=new Date();
- el.innerHTML=`<b>V36.4 visibility정리판</b><br>
- 관측소 : ${obs||'GPS 기반'}<br>
- 기온 : ${temp}℃<br>
- 체감 : ${feel}℃<br>
- 습도 : ${hum}%<br>
- 풍속 : ${wind}m/s<br>
- 최종갱신 : ${now.toLocaleString()}`;
-}
-</script>
+/* V36.5 deprecated */ <!-- V36.5 제거된 중복 날씨 엔진 -->
 
 
 <!-- V24 AWS 실측 준비판 패치 -->
@@ -1104,7 +1042,7 @@ function updateWeatherStatusV243(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V36.4 visibility정리판</b><br>' +
+   '<b>V36.5 Final 클린업판</b><br>' +
    '관측소 : ' + (obs || '자동선택') + '<br>' +
    '기온 : ' + (temp || '-') + '℃<br>' +
    '체감 : ' + (feel || '-') + '℃<br>' +
@@ -1134,7 +1072,7 @@ function updateWeatherStatusV244(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V36.4 visibility정리판</b><br>' +
+   '<b>V36.5 Final 클린업판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
@@ -1150,7 +1088,7 @@ function updateWeatherStatusV25(obs,temp,feel,hum,wind){
   const el=document.getElementById('gpsStatus');
   if(!el) return;
   el.innerHTML =
-   '<b>V36.4 visibility정리판</b><br>' +
+   '<b>V36.5 Final 클린업판</b><br>' +
    '관측소 : '+(obs||'자동선택')+'<br>' +
    '기온 : '+(temp||'-')+'℃<br>' +
    '체감 : '+(feel||'-')+'℃<br>' +
@@ -1196,7 +1134,7 @@ function updateWeatherStatusV25(obs,temp,feel,hum,wind){
   const obsDisplay = obs || '조회 실패(위치확인요망)';
 
   el.innerHTML =
-   '<b>V36.4 visibility정리판</b><br>' +
+   '<b>V36.5 Final 클린업판</b><br>' +
    '관측소 : ' + obsDisplay + '<br>' +
    '기온 : ' + (temp ?? '-') + '℃<br>' +
    '체감 : ' + (feel ?? '-') + '℃<br>' +
@@ -1274,7 +1212,7 @@ function updateWeatherStatusV26(obs,temp,feel,hum,wind){
   }
 
   el.innerHTML =
-      '<b>V36.4 visibility정리판</b><br>' +
+      '<b>V36.5 Final 클린업판</b><br>' +
       '관측소 : ' + (obs || '자동선택') + '<br>' +
       '기온 : ' + temp + '℃<br>' +
       '체감 : ' + finalFeel + '℃<br>' +
