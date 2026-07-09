@@ -899,8 +899,8 @@ const base_time=String(baseHour).padStart(2,'0')+'00';
 
   const rt=document.getElementById('real_temperature');
   const ft=document.getElementById('fake_temperature');
-  if(rt && T1H!=null) rt.value=T1H.toFixed(1)+'℃';
-  if(ft && feel!=null){ ft.value=feel.toFixed(1)+'℃'; autoCheckHeatWave(); }
+  if(rt && T1H!=null) rt.value=Math.round(T1H)+'℃';
+  if(ft && feel!=null){ ft.value=Math.round(feel)+'℃'; autoCheckHeatWave(); }
 const status=document.getElementById('gpsStatus');
 if(status) status.textContent=`주소확인 완료 | 기온:${T1H?.toFixed?.(1) ?? '-'}℃ | 습도:${REH ?? '-'}% | 풍속:${WSD ?? '-'}m/s`;
 if(typeof generateImage==='function') generateImage();
