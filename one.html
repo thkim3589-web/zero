@@ -57,6 +57,16 @@
             </div>
         </section>
 
+
+        <!-- 관리번호 입력 카드 -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200/80 space-y-3">
+            <label for="manageNo" class="text-sm font-bold text-gray-500 flex items-center gap-1.5 uppercase tracking-wider">
+                <i class="fa-solid fa-hashtag text-blue-500"></i> 관리번호
+            </label>
+            <input type="text" id="manageNo" placeholder="예: 달서CD1776"
+                   class="w-full bg-gray-50 border-2 border-gray-200 focus:border-blue-500 focus:bg-white rounded-xl py-3 px-4 text-lg font-semibold text-gray-800 transition-all focus:outline-none">
+        </section>
+
         <!-- 3. 심도 입력 카드 -->
         <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200/80 space-y-3">
             <label for="depth" class="text-sm font-bold text-gray-500 flex items-center gap-1.5 uppercase tracking-wider">
@@ -178,7 +188,7 @@ function refreshStats(){
     <span class="text-xs bg-gray-100 text-gray-700 font-bold px-2 py-1 rounded">No.${arr.length-i}</span>
     <span class="text-xs text-gray-500">${r.time}</span>
   </div>
-  <div class="text-sm font-medium text-gray-800">${r.address||'주소 없음'}</div>
+  <div class="text-sm font-medium text-gray-800">${r.manageNo?'<div class="text-xs font-bold text-blue-600 mb-1">관리번호 : '+r.manageNo+'</div>':''}${r.address||'주소 없음'}</div>
 </div>
 <div class="text-right whitespace-nowrap">
   <span class="text-3xl font-black text-gray-900">${Number(r.depth).toFixed(2)}</span><span class="text-base font-bold"> m</span>
@@ -214,7 +224,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 const time=`${now.getFullYear()}. ${String(now.getMonth()+1).padStart(2,'0')}. ${String(now.getDate()).padStart(2,'0')}. ${now.getHours()<12?'오전':'오후'} ${String((now.getHours()%12)||12).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
 const roadAddr=document.getElementById('roadAddr')?.textContent||'';
 const jibunAddr=document.getElementById('jibunAddr')?.textContent||'';
-arr.push({depth:v,time:time,address:addr,roadAddr:roadAddr,jibunAddr:jibunAddr,latitude:currentLat,longitude:currentLng,accuracy:currentAcc});
+const manageNo=document.getElementById('manageNo')?.value||'';
+arr.push({manageNo:manageNo,depth:v,time:time,address:addr,roadAddr:roadAddr,jibunAddr:jibunAddr,latitude:currentLat,longitude:currentLng,accuracy:currentAcc});
      saveRecords(arr);
      refreshStats();
      alert('저장되었습니다.');
@@ -294,6 +305,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    if(!data.length){alert('내보낼 데이터가 없습니다.');return;}
    const rows=data.map((r,i)=>({
 번호:i+1,
+관리번호:r.manageNo||'',
 도로명주소:r.roadAddr||r.address||'',
 지번주소:r.jibunAddr||'',
 심도_m:r.depth,
@@ -489,6 +501,23 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
   }
   autoGps();
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+ const KEY='manage_no_v43';
+ const manage=document.getElementById('manageNo');
+ if(!manage) return;
+
+ manage.value=localStorage.getItem(KEY)||'';
+
+ manage.addEventListener('input',()=>{
+   localStorage.setItem(KEY,manage.value);
+ });
+
+ const oldLoad=window.loadRecords;
 });
 </script>
 
