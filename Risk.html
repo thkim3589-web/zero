@@ -900,7 +900,7 @@ const base_time=String(baseHour).padStart(2,'0')+'00';
   const rt=document.getElementById('real_temperature');
   const ft=document.getElementById('fake_temperature');
   if(rt && T1H!=null) rt.value=T1H.toFixed(1)+'℃';
-  if(ft && feel!=null) ft.value=feel.toFixed(1)+'℃';
+  if(ft && feel!=null){ ft.value=feel.toFixed(1)+'℃'; autoCheckHeatWave(); }
 const status=document.getElementById('gpsStatus');
 if(status) status.textContent=`주소확인 완료 | 기온:${T1H?.toFixed?.(1) ?? '-'}℃ | 습도:${REH ?? '-'}% | 풍속:${WSD ?? '-'}m/s`;
 if(typeof generateImage==='function') generateImage();
@@ -1267,4 +1267,24 @@ async function getWeatherSafe(){
 <!-- V26.6 최적화 패치 -->
 <script>
 // 30분 자동 갱신
+
+
+
+
+function autoCheckHeatWave(){
+  const el=document.getElementById('fake_temperature');
+  const hot=document.querySelector('input[value="weather_hot"]');
+  if(!el || !hot) return;
+
+  const temp=parseFloat(String(el.value).replace('℃','').trim());
+  if(isNaN(temp)) return;
+
+  hot.checked = temp >= 34;
+}
+
+document.addEventListener('input', function(e){
+  if(e.target && e.target.id==='fake_temperature'){
+    autoCheckHeatWave();
+  }
+});
 
