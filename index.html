@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>심도측정 시스템 V42.0 (Kakao)</title>
+    <title>심도측정 시스템 V49.0 (Kakao)</title>
     <!-- Tailwind CSS CDN 및 FontAwesome 아이콘 적용 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,7 +19,7 @@
     <!-- 1. 상단 고정 헤더 -->
     <header class="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm">
         <h1 class="text-lg font-bold text-blue-600 flex items-center gap-2">
-            <i class="fa-solid fa-compass-drafting"></i> 심도측정 <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">V42.0</span>
+            <i class="fa-solid fa-compass-drafting"></i> 심도측정 <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">V49.0</span>
         </h1>
         <div class="flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full text-sm font-medium text-gray-700">
             <i class="fa-solid fa-circle-user text-gray-500"></i>
@@ -143,7 +143,7 @@
 <script>
 // V35.1 준비 코드
 document.addEventListener('DOMContentLoaded',()=>{
- console.log('V42.0 준비 완료');
+ console.log('V49.0 준비 완료');
 });
 </script>
 
@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
  backupBtn.onclick=()=>{
    const data={
-     version:'V42.0',
+     version:'V49.0',
      user:localStorage.getItem('depth_user_name')||'',
      records:JSON.parse(localStorage.getItem('depth_records_v42')||'[]')
    };
@@ -521,5 +521,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 
+
+<button id="installBtn" style="position:fixed;right:15px;bottom:90px;z-index:9999;">앱설치</button>
 </body>
 </html>
