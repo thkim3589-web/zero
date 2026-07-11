@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>심도측정 시스템 V42.0 (Kakao)</title>
+    <!-- Tailwind CSS CDN 및 FontAwesome 아이콘 적용 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 모바일 환경에서 텍스트 드래그 방지 및 터치 최적화 */
+        body { -webkit-tap-highlight-color: transparent; user-select: none; }
+        .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 80px); }
+    </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased safe-bottom">
+
+    <!-- 1. 상단 고정 헤더 -->
+    <header class="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm">
+        <h1 class="text-lg font-bold text-blue-600 flex items-center gap-2">
+            <i class="fa-solid fa-compass-drafting"></i> 심도측정 <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">V42.0</span>
+        </h1>
+        <div class="flex items-center gap-1.5 bg-gray-100 px-3 py-1 rounded-full text-sm font-medium text-gray-700">
+            <i class="fa-solid fa-circle-user text-gray-500"></i>
+            <span id="userNameDisplay"></span>
+            <button type="button" id="changeUserBtn" class="ml-2 text-blue-600 text-xs border px-2 py-0.5 rounded">변경</button>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 영역 -->
+    <main class="max-w-md mx-auto p-4 space-y-4">
+
+        <!-- 2. 위치 및 주소 카드 (원터치 GPS 통합) -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200/80 space-y-3">
+            <h2 class="text-sm font-bold text-gray-500 flex items-center gap-1.5 uppercase tracking-wider">
+                <i class="fa-solid fa-location-dot text-blue-500"></i> 위치 및 주소 정보
+            </h2>
+            
+            <!-- GPS 수집 버튼 (주소조회 통합 컴포넌트) -->
+            <button type="button" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-3 px-4 rounded-lg text-sm transition-all flex items-center justify-between border border-blue-200 active:scale-[0.99]">
+<div class="flex items-center gap-2">
+<i class="fa-solid fa-location-crosshairs text-base animate-pulse"></i>
+<span>현재 위치(GPS) 자동 가져오기</span>
+</div>
+<div class="flex items-center gap-2">
+<span id="gpsModeText">OFF</span>
+<input type="checkbox" id="autoGpsMode" class="w-5 h-5">
+</div>
+</button>
+
+            <!-- 주소 매핑 결과 창 -->
+            <div class="bg-gray-50 p-3 rounded-lg space-y-2 text-sm border border-gray-100">
+                <div class="flex justify-between items-start">
+                    <span class="text-gray-400 w-16 font-medium">도로명</span>
+                    <span class="text-gray-700 flex-1 font-medium"><span id="roadAddr">도로명 주소를 불러오는 중...</span></span>
+                </div>
+                <div class="border-t border-gray-200/60 my-1.5"></div>
+                <div class="flex justify-between items-start">
+                    <span class="text-gray-400 w-16 font-medium">지번</span>
+                    <span class="text-gray-600 flex-1 text-xs font-mono"><span id="jibunAddr">지번을 불러오는 중...</span></span></div><div class="border-t border-gray-200/60 my-1.5"></div><div class="flex justify-between items-start"><span class="text-gray-400 w-16 font-medium">GPS</span><span class="text-gray-600 flex-1 text-xs font-mono"><span id="gpsCoord">GPS를 불러오는 중...</span></span>
+                </div>
+            </div>
+        
+<div id="gpsStatus" class="text-center text-sm font-bold text-red-500 mt-2">GPS 대기중</div>
+
+</section>
+
+        
+        <!-- 관리번호 입력 카드 -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200/80 space-y-3">
+            <label for="manageNo" class="text-sm font-bold text-gray-500 flex items-center gap-1.5 uppercase tracking-wider">
+                <i class="fa-solid fa-hashtag text-blue-500"></i> 관리번호 입력
+            </label>
+            <input type="text" id="manageNo" placeholder="예: 달서CD1776"
+                   class="w-full bg-gray-50 border-2 border-gray-200 focus:border-blue-500 focus:bg-white rounded-xl py-3 px-4 text-base font-bold text-gray-800 transition-all focus:outline-none">
+        </section>
+
+<!-- 3. 심도 입력 카드 -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200/80 space-y-3">
+            <label for="depth" class="text-sm font-bold text-gray-500 flex items-center gap-1.5 uppercase tracking-wider">
+                <i class="fa-solid fa-ruler-vertical text-blue-500"></i> 측정 심도 입력
+            </label>
+            <div class="relative flex items-center">
+                <input type="number" id="depth" step="0.01" placeholder="0.00" 
+                       class="w-full bg-gray-50 border-2 border-gray-200 focus:border-blue-500 focus:bg-white rounded-xl py-3.5 px-4 text-2xl font-bold text-gray-800 transition-all text-right pr-12 focus:outline-none">
+                <span class="absolute right-4 text-lg font-bold text-gray-400">m</span>
+            </div>
+        </section>
+
+<!-- 7. 하단 고정 메인 액션 버튼 (CTA) -->
+    <div class="bg-white p-3 mt-3">
+        <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-base active:scale-[0.98]">
+            <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+            심도 데이터 저장하기
+        </button>
+    </div>
+
+
+        <!-- 4. 오늘의 통계 대시보드 -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200/80 space-y-3">
+            <h2 class="text-sm font-bold text-gray-500 flex items-center gap-1.5 uppercase tracking-wider">
+                <i class="fa-solid fa-chart-simple text-blue-500"></i> 오늘의 측정 현황
+            </h2>
+            <div class="grid grid-cols-3 gap-2">
+                <div class="bg-gray-50 p-2.5 rounded-lg text-center border border-gray-100">
+                    <p class="text-xs text-gray-400 font-medium mb-0.5">총 건수</p>
+                    <p class="text-lg font-bold text-gray-800">2 <span class="text-xs font-normal text-gray-500">건</span></p>
+                </div>
+                <div class="bg-blue-50/50 p-2.5 rounded-lg text-center border border-blue-50">
+                    <p class="text-xs text-blue-500 font-medium mb-0.5">평균 심도</p>
+                    <p class="text-lg font-bold text-blue-600">1.15<span class="text-xs font-normal text-blue-500">m</span></p>
+                </div>
+                <div class="bg-gray-50 p-2.5 rounded-lg text-center border border-gray-100">
+                    <p class="text-xs text-gray-400 font-medium mb-0.5">최대/최소</p>
+                    <p class="text-sm font-bold text-gray-700 mt-1">1.20 / 1.10</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 모바일 최적화 카드형 리스트 -->
+        <section class="space-y-2">
+            <div class="flex justify-between items-center px-1">
+                <h2 class="text-sm font-bold text-gray-500 flex items-center gap-1.5 uppercase tracking-wider">
+                    <i class="fa-solid fa-list-ul text-blue-500"></i> 최근 저장 이력
+                </h2>
+                <span id="lastSavedTime" class="ml-auto text-xs text-gray-400 text-right"></span>
+            </div>
+            <!-- 리스트 제어 서브 버튼 -->
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button class="py-2 px-3 border border-gray-300 text-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-50 active:bg-gray-100">
+                    <i class="fa-solid fa-trash-can mr-1"></i> 선택 삭제
+                </button>
+                <button class="py-2 px-3 border border-red-200 text-red-500 rounded-lg text-xs font-semibold hover:bg-red-50 active:bg-red-100">
+                    <i class="fa-solid fa-dumpster-fire mr-1"></i> 전체 삭제
+                </button>
+            </div>
+        </section>
+
+        <!-- 6. 유틸리티 관리 영역 (백업/엑셀) -->
+        <section class="pt-2 pb-6 border-t border-gray-200/80 grid grid-cols-3 gap-2 text-center text-xs text-gray-500 font-medium">
+            <button class="hover:text-blue-600 py-1.5"><i class="fa-solid fa-floppy-disk mr-1"></i>데이터 백업</button>
+            <button class="hover:text-blue-600 py-1.5"><i class="fa-solid fa-file-arrow-up mr-1"></i>데이터 복원</button>
+            <button class="hover:text-green-600 py-1.5 font-semibold text-green-600"><i class="fa-solid fa-file-excel mr-1"></i>엑셀 내보내기</button>
+        </section>
+
+    </main>
+
+    
+
+
+<script>
+// V35.1 준비 코드
+document.addEventListener('DOMContentLoaded',()=>{
+ console.log('V35.1 준비 완료');
+});
+</script>
+
+
+<script>
+let currentLat='';
+let currentLng='';
+let currentAcc='';
+const DEPTH_KEY='depth_records_v35';
+
+function loadRecords(){
+  return JSON.parse(localStorage.getItem(DEPTH_KEY)||'[]');
+}
+function saveRecords(arr){
+  localStorage.setItem(DEPTH_KEY,JSON.stringify(arr));
+}
+function refreshStats(){
+  const arr=loadRecords();
+  const nums=arr.map(x=>Number(x.depth)).filter(x=>!isNaN(x));
+  const ps=document.querySelectorAll('p');
+  if(nums.length){
+    const avg=(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(2);
+    const max=Math.max(...nums).toFixed(2);
+    const min=Math.min(...nums).toFixed(2);
+    ps.forEach(p=>{
+      if(p.textContent.includes('총 건수')) p.nextElementSibling.innerHTML=`${nums.length} <span class="text-xs">건</span>`;
+      if(p.textContent.includes('평균 심도')) p.nextElementSibling.innerHTML=`${avg}<span class="text-xs">m</span>`;
+      if(p.textContent.includes('최대/최소')) p.nextElementSibling.textContent=`${max} / ${min}`;
+    });
+  }
+  const sec=[...document.querySelectorAll('section')].find(s=>s.textContent.includes('최근 저장 이력'));
+  if(sec){
+    sec.querySelectorAll('.record-item').forEach(e=>e.remove());
+    arr.slice().reverse().forEach((r,i)=>{
+      const d=document.createElement('div');
+      d.className='record-item bg-white p-3 rounded-xl shadow-sm border border-gray-200 mt-2';
+      d.innerHTML=`
+<div class="flex items-start gap-3">
+<input type="checkbox" class="w-5 h-5 mt-1">
+<div class="flex-1">
+  <div class="flex items-center gap-2 mb-1">
+    <span class="text-xs bg-gray-100 text-gray-700 font-bold px-2 py-1 rounded">No.${arr.length-i}</span>
+    <span class="text-xs text-gray-500">${r.time}</span>
+  </div>
+  <div class="text-sm font-medium text-gray-800">${r.manageNo ? '['+r.manageNo+'] ' : ''}${r.address||'주소 없음'}</div>
+</div>
+<div class="text-right whitespace-nowrap">
+  <span class="text-3xl font-black text-gray-900">${Number(r.depth).toFixed(2)}</span><span class="text-base font-bold"> m</span>
+</div>
+</div>`;
+      sec.insertBefore(d,sec.querySelector('.grid'));
+    const lastSaved=document.getElementById('lastSavedTime');
+    if(lastSaved){
+      if(arr.length){
+        const dateOnly=arr[arr.length-1].time.split('오전')[0].split('오후')[0].trim();
+        lastSaved.textContent='최근 저장 : '+dateOnly;
+      }else{
+        lastSaved.textContent='';
+      }
+    }
+
+    });
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+
+ const btn=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('심도 데이터 저장'));
+ const input=document.getElementById('depth');
+ if(btn&&input){
+   btn.addEventListener('click',()=>{
+     const v=parseFloat(input.value);
+     if(isNaN(v)){alert('심도를 입력하세요.');return;}
+     const arr=loadRecords();
+     const addr=(document.body.innerText.match(/대구광역시[^\n]*/)||[''])[0];const now=new Date();
+const time=`${now.getFullYear()}. ${String(now.getMonth()+1).padStart(2,'0')}. ${String(now.getDate()).padStart(2,'0')}. ${now.getHours()<12?'오전':'오후'} ${String((now.getHours()%12)||12).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+const manageNo=document.getElementById('manageNo')?.value||'';
+arr.push({manageNo,depth:v,time:time,address:addr,latitude:currentLat,longitude:currentLng,accuracy:currentAcc});
+     saveRecords(arr);
+     refreshStats();
+     alert('저장되었습니다.');
+     input.value='';
+   });
+ }
+ refreshStats();
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+ const gpsBtn=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('현재 위치'));
+ if(gpsBtn){
+  gpsBtn.addEventListener('click',()=>{
+   if(!navigator.geolocation){alert('GPS를 지원하지 않습니다.');return;}
+   navigator.geolocation.getCurrentPosition(pos=>{
+      currentLat=pos.coords.latitude.toFixed(6); currentLng=pos.coords.longitude.toFixed(6); currentAcc=Math.round(pos.coords.accuracy); alert(`GPS 취득 완료\n위도:${currentLat}\n경도:${currentLng}\n정확도:±${currentAcc}m`);
+   },()=>alert('위치 권한을 허용해주세요.'));
+  });
+ }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const KEY='depth_user_name';
+  const nameSpan=document.getElementById('userNameDisplay');
+  const btn=document.getElementById('changeUserBtn');
+  function load(){
+    const n=localStorage.getItem(KEY)||'김태호';
+    nameSpan.textContent=n;
+  }
+  load();
+  btn.addEventListener('click',()=>{
+    const current=localStorage.getItem(KEY)||'김태호';
+    const v=prompt('사용자명을 입력하세요.',current);
+    if(v && v.trim()){
+      localStorage.setItem(KEY,v.trim());
+      load();
+    }
+  });
+});
+</script><script>
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const sec=[...document.querySelectorAll('section')].find(s=>s.textContent.includes('최근 저장 이력'));
+  if(!sec) return;
+  const buttons=sec.querySelectorAll('.grid button');
+  if(buttons.length<2) return;
+  const selBtn=buttons[0], allBtn=buttons[1];
+
+  function redraw(){ refreshStats(); }
+
+  selBtn.addEventListener('click',()=>{
+    let arr=loadRecords();
+    const checks=[...sec.querySelectorAll('.record-item input[type=checkbox], .bg-white input[type=checkbox]')];
+    if(arr.length===0){ alert('삭제할 데이터가 없습니다.'); return; }
+    const rev=arr.slice().reverse();
+    const kept=[];
+    rev.forEach((r,i)=>{
+      if(!(checks[i] && checks[i].checked)) kept.push(r);
+    });
+    saveRecords(kept.reverse());
+    redraw();
+    alert('선택한 항목을 삭제했습니다.');
+  });
+
+  allBtn.addEventListener('click',()=>{
+    if(!confirm('모든 데이터를 삭제하시겠습니까?')) return;
+    localStorage.removeItem(DEPTH_KEY);
+    redraw();
+    alert('전체 삭제되었습니다.');
+  });
+});
+
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+ const excelBtn=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('엑셀'));
+ if(!excelBtn) return;
+ excelBtn.addEventListener('click',()=>{
+   const data=loadRecords();
+   if(!data.length){alert('내보낼 데이터가 없습니다.');return;}
+   const rows=data.map((r,i)=>({번호:i+1,관리번호:r.manageNo||'',주소:r.address||'',심도_m:r.depth,측정시간:r.time,위도:r.latitude||'',경도:r.longitude||'',GPS정확도_m:r.accuracy||''}));
+   const ws=XLSX.utils.json_to_sheet(rows);
+   const wb=XLSX.utils.book_new();
+   XLSX.utils.book_append_sheet(wb,ws,'심도측정');
+   XLSX.writeFile(wb,'심도측정자료.xlsx');
+ });
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+ const backupBtn=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('데이터 백업'));
+ const restoreBtn=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('데이터 복원'));
+ if(!backupBtn||!restoreBtn) return;
+
+ backupBtn.onclick=()=>{
+   const data={
+     version:'V38.3',
+     user:localStorage.getItem('depth_user_name')||'',
+     records:JSON.parse(localStorage.getItem('depth_records_v35')||'[]')
+   };
+   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+   const a=document.createElement('a');
+   a.href=URL.createObjectURL(blob);
+   const d=new Date();
+   const f=`심도측정_백업_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}${String(d.getSeconds()).padStart(2,'0')}.json`;
+   a.download=f;
+   a.click();
+   URL.revokeObjectURL(a.href);
+ };
+
+ const input=document.createElement('input');
+ input.type='file';
+ input.accept='.json';
+ input.style.display='none';
+ document.body.appendChild(input);
+
+ restoreBtn.onclick=()=>input.click();
+
+ input.onchange=(e)=>{
+   const file=e.target.files[0];
+   if(!file) return;
+   const fr=new FileReader();
+   fr.onload=()=>{
+     try{
+       const obj=JSON.parse(fr.result);
+       if(!obj.records) throw Error();
+       if(!confirm('기존 데이터를 복원 데이터로 덮어쓰시겠습니까?')) return;
+       localStorage.setItem('depth_records_v35',JSON.stringify(obj.records));
+       if(obj.user) localStorage.setItem('depth_user_name',obj.user);
+       alert('복원이 완료되었습니다. 화면을 새로고침합니다.');
+       location.reload();
+     }catch{
+       alert('올바른 백업 파일이 아닙니다.');
+     }
+   };
+   fr.readAsText(file);
+ };
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const input=document.getElementById('depth');
+  const saveWrap=[...document.querySelectorAll('button')]
+      .find(b=>b.textContent.includes('심도 데이터 저장하기'))?.parentElement;
+  const depthSection=input?.closest('section');
+  if(!input||!saveWrap||!depthSection) return;
+
+  function moveBelowInput(){
+    depthSection.insertAdjacentElement('afterend', saveWrap);
+  }
+  function moveBottom(){
+    document.body.appendChild(saveWrap);
+    saveWrap.style.position='fixed';
+    saveWrap.style.left='0';
+    saveWrap.style.right='0';
+    saveWrap.style.bottom='0';
+    saveWrap.style.maxWidth='28rem';
+    saveWrap.style.margin='0 auto';
+    saveWrap.style.zIndex='999';
+    saveWrap.style.background='rgba(255,255,255,.95)';
+    saveWrap.style.borderTop='1px solid #ddd';
+  }
+
+  input.addEventListener('focus', moveBelowInput);
+  input.addEventListener('blur', ()=>setTimeout(moveBottom,100));
+
+  if(window.visualViewport){
+    visualViewport.addEventListener('resize',()=>{
+      if(visualViewport.height < window.innerHeight-120){
+        moveBelowInput();
+      }else{
+        moveBottom();
+      }
+    });
+  }
+  moveBottom();
+});
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const btn=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('심도 데이터 저장하기'));
+  if(!btn||!window.visualViewport) return;
+  const wrap=btn.parentElement;
+
+  function updatePosition(){
+    const vv=window.visualViewport;
+    const keyboardOpen=vv.height < window.innerHeight-120;
+    if(keyboardOpen){
+      wrap.style.position='fixed';
+      wrap.style.left='0';
+      wrap.style.right='0';
+      wrap.style.maxWidth='28rem';
+      wrap.style.margin='0 auto';
+      wrap.style.bottom=(window.innerHeight-vv.height-vv.offsetTop+10)+'px';
+      wrap.style.zIndex='9999';
+      wrap.style.transition='bottom .15s ease';
+    }else{
+      wrap.style.position='fixed';
+      wrap.style.left='0';
+      wrap.style.right='0';
+      wrap.style.bottom='0';
+      wrap.style.maxWidth='28rem';
+      wrap.style.margin='0 auto';
+    }
+  }
+
+  visualViewport.addEventListener('resize',updatePosition);
+  visualViewport.addEventListener('scroll',updatePosition);
+  window.addEventListener('resize',updatePosition);
+  updatePosition();
+});
+</script>
+
+
+<script>
+async function reverseGeocode(lat,lng){
+ const road=document.getElementById('roadAddr');
+ const jibun=document.getElementById('jibunAddr');
+ const gps=document.getElementById('gpsCoord');
+
+ gps.textContent=`${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+ try{
+   const response=await fetch(
+    `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lng}&y=${lat}`,
+    {
+      headers:{
+        Authorization:'KakaoAK YOUR_REST_API_KEY'
+      }
+    }
+   );
+
+   const data=await response.json();
+
+   if(data.documents && data.documents.length){
+      const doc=data.documents[0];
+      road.textContent=doc.road_address?.address_name || doc.address?.address_name || '도로명 주소 없음';
+      jibun.textContent=doc.address?.address_name || '지번 주소 없음';
+      return;
+   }
+ }catch(e){}
+
+ road.textContent='카카오 주소 조회 실패';
+ jibun.textContent='인터넷 또는 API 설정 확인';
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ const gpsBtn=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('현재 위치'));
+ if(gpsBtn){
+  gpsBtn.addEventListener('click',()=>{
+   navigator.geolocation.getCurrentPosition(p=>{
+    reverseGeocode(p.coords.latitude,p.coords.longitude);
+   },()=>alert('위치 권한을 허용해주세요.'));
+  });
+ }
+});
+</script>
+
+
+<script>
+const GPS_MODE_KEY='AUTO_GPS_MODE';
+let gpsWatchTimer=null,gpsTryCount=0;
+
+function loadGpsMode(){
+ const chk=document.getElementById('autoGpsMode');
+ const txt=document.getElementById('gpsModeText');
+ const mode=localStorage.getItem(GPS_MODE_KEY)==='true';
+ if(!chk) return;
+ chk.checked=mode;
+ txt.textContent=mode?'ON':'OFF';
+ chk.onchange=()=>{
+   localStorage.setItem(GPS_MODE_KEY,chk.checked);
+   txt.textContent=chk.checked?'ON':'OFF';
+ };
+}
+
+function updateGpsStatus(){
+ const s=document.getElementById('gpsStatus');
+ if(!s||!currentAcc) return;
+ if(currentAcc<=15){s.textContent=`저장 가능 (±${currentAcc}m)`;s.style.color='green';}
+ else{s.textContent=`재측정중 (±${currentAcc}m)`;s.style.color='red';}
+}
+
+function measureGPS(){
+ navigator.geolocation.getCurrentPosition(async(p)=>{
+   currentLat=p.coords.latitude.toFixed(6);
+   currentLng=p.coords.longitude.toFixed(6);
+   currentAcc=Math.round(p.coords.accuracy);
+   await reverseGeocode(p.coords.latitude,p.coords.longitude);
+   updateGpsStatus();
+   if(currentAcc<=15 && gpsWatchTimer){
+      clearInterval(gpsWatchTimer);
+      gpsWatchTimer=null;
+   }
+ },console.error,{enableHighAccuracy:true,timeout:10000,maximumAge:0});
+}
+
+function startAutoGps(){
+ if(gpsWatchTimer) clearInterval(gpsWatchTimer);
+ gpsTryCount=0;
+ measureGPS();
+ gpsWatchTimer=setInterval(()=>{
+   gpsTryCount++;
+   if(gpsTryCount>=30){clearInterval(gpsWatchTimer);gpsWatchTimer=null;return;}
+   measureGPS();
+ },1000);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+ loadGpsMode();
+ const gpsBtn=[...document.querySelectorAll('button')].find(b=>b.textContent.includes('현재 위치'));
+ if(gpsBtn){
+   gpsBtn.addEventListener('click',()=>{
+      if(document.getElementById('autoGpsMode')?.checked) startAutoGps();
+      else measureGPS();
+   });
+ }
+ setTimeout(()=>{
+   if(document.getElementById('autoGpsMode')?.checked) startAutoGps();
+ },1000);
+});
+</script>
+
+
+<script>
+const MANAGE_NO_KEY='depth_manage_no';
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const manage=document.getElementById('manageNo');
+  if(!manage) return;
+
+  manage.value=localStorage.getItem(MANAGE_NO_KEY)||'';
+
+  manage.addEventListener('input',()=>{
+    localStorage.setItem(MANAGE_NO_KEY,manage.value);
+  });
+});
+</script>
+
+</body>
+</html>
