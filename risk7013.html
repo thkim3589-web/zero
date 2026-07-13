@@ -41,13 +41,13 @@ details.missing-section > summary { color:#cc4400; }
 <body>
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
-<button type="button" id="refreshLocationWeather" class="save-btn" style="background:#28a745;">위치·기상 갱신</button>
+<button type="button" id="refreshLocationWeather" class="save-btn" style="background:#28a745;">위치 갱신</button>
 
 
 <p class="fixed-note">도급사명: SKO (고정)</p>
 <label>시작일시 <input type="datetime-local" id="start_date" oninput="generateImage()"></label>
 <label>종료일시 <input type="datetime-local" id="end_date" oninput="generateImage()"></label>
-<label><span>국소명(주소) <span style="color:red">*</span></span> <input type="text" id="location" oninput="generateImage()"></label>
+<label><span>국소명(주소) <span style="color:red">*</span></span> <input type="text" id="location" placeholder="도로명주소 + 지번 자동입력" oninput="generateImage()"></label>
 <label><span>작업공종 <span style="color:red">*</span></span>
   <div class="combo">
     <input type="text" id="what_do" placeholder="작업공종 선택 또는 검색" autocomplete="off" oninput="onWorkInput()" onfocus="openWorkList()" onclick="openWorkList()">
@@ -66,8 +66,8 @@ details.missing-section > summary { color:#cc4400; }
     <label><input type="checkbox" value="weather_hot" onchange="generateImage()"> 폭염</label>
     <label><input type="checkbox" value="weather_cold" onchange="generateImage()"> 한파</label>
   </div>
-  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" oninput="generateImage()"></label>
-  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" oninput="generateImage()"></label>
+  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" placeholder="수동입력" oninput="generateImage()"></label>
+  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" placeholder="수동입력" oninput="generateImage()"></label><div id="weather_update_time" style="font-size:12px;color:#666;">기상조회 : 대기중</div>
 </details>
 
 <details>
@@ -736,22 +736,10 @@ async function loadCurrentLocationWeather() {
                     const loc = document.getElementById("location");
                     if(loc) loc.value = address;
                 }
-
-                const weatherRes = await fetch(
-                    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature`
-                );
-
-                const weatherData = await weatherRes.json();
-
-                const realTemp = document.getElementById("real_temperature");
-                const fakeTemp = document.getElementById("fake_temperature");
-
-                if(realTemp) realTemp.value = weatherData.current.temperature_2m + "℃"; updateWeatherChecks(Number(weatherData.current.temperature_2m));
-                if(fakeTemp) fakeTemp.value = weatherData.current.apparent_temperature + "℃";
-
                 if(typeof generateImage === "function"){
                     generateImage();
                 }
+
 
             } catch(e){
                 console.error("위치/날씨 조회 실패", e);
@@ -775,6 +763,30 @@ function updateWeatherChecks(temp){
  const cold=document.querySelector('input[value="weather_cold"]');
  if(hot) hot.checked = temp >= 35;
  if(cold) cold.checked = temp <= -12;
+}
+
+
+
+// ===== V5.2 준비: 기상청 실황값 사용 =====
+// 기온(T1H) -> real_temperature
+// 체감온도 -> 기상청 체감값 사용
+// 폭염 기준 35도, 한파 기준 -12도
+window.KMA_HOT_THRESHOLD = 35;
+window.KMA_COLD_THRESHOLD = -12;
+
+
+async function loadKmaWeather(){
+    console.log('기상청 API 승인 후 연동 예정');
+}
+
+
+async function loadKmaWeather(){
+  const now = new Date();
+  const el = document.getElementById('weather_update_time');
+  if(el){
+    el.textContent = '기상조회 : ' + now.toLocaleString('ko-KR');
+  }
+  console.log('기상청 API 연동 준비 완료');
 }
 
 </script>
