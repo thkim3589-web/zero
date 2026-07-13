@@ -854,5 +854,28 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 </script>
 
+
+<script>
+const KMA_AUTH_KEY="0oFfQOEiRXmBX0DhInV5eQ";
+
+function updateWeatherChecks(temp){
+  const boxes=document.querySelectorAll('input[type="checkbox"]');
+  boxes.forEach(b=>{
+    if(b.value==="weather_hot") b.checked=(temp>=35);
+    if(b.value==="weather_cold") b.checked=(temp<=-12);
+  });
+}
+
+async function applyWeatherTemp(temp){
+  const t=document.getElementById("real_temperature");
+  const f=document.getElementById("fake_temperature");
+  if(t) t.value=temp.toFixed(1)+"℃";
+  if(f) f.value=temp.toFixed(1)+"℃";
+  updateWeatherChecks(temp);
+}
+
+console.log("KMA V6.0 hook installed");
+</script>
+
 </body>
 </html>
