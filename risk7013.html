@@ -837,15 +837,20 @@ async function refreshLocationAndWeather(){
       const loc = document.getElementById('location');
 
       if(loc){
-        loc.value = road ? `${road} (${jibun})` : jibun;
+        if(jibun){
+          loc.value = jibun;
+        }else if(road){
+          loc.value = road;
+        }else{
+          loc.value = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        }
       }
     }catch(e){
       console.error('주소조회 실패', e);
     }
 
     // 기상청 API 연결 위치
-    console.log('KMA weather hook ready', lat, lon);
-  });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
@@ -874,7 +879,34 @@ async function applyWeatherTemp(temp){
   updateWeatherChecks(temp);
 }
 
-console.log("KMA V6.0 hook installed");
+</script>
+
+
+<script>
+const KMA_AUTH_KEY = "0oFfQOEiRXmBX0DhInV5eQ";
+
+async function kmaWeatherStub(lat, lon){
+  const stamp = document.getElementById("weather_update_time");
+  if(stamp) stamp.textContent = "기상조회 : " + new Date().toLocaleString("ko-KR");
+
+  // V6.1 실제 연동 위치
+  console.log("KMA XY", lat, lon);
+
+  // 테스트용 자동 입력
+  const temp = 31.5;
+  const feel = 31.7;
+
+  const rt = document.getElementById("real_temperature");
+  const ft = document.getElementById("fake_temperature");
+
+  if(rt) rt.value = temp + "℃";
+  if(ft) ft.value = feel + "℃";
+
+  document.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+    if(cb.value==="weather_hot") cb.checked = temp >= 35;
+    if(cb.value==="weather_cold") cb.checked = temp <= -12;
+  });
+}
 </script>
 
 </body>
