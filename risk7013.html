@@ -790,5 +790,69 @@ async function loadKmaWeather(){
 }
 
 </script>
+
+<script>
+async function refreshLocationAndWeather(){
+  try{
+    const t = document.getElementById('weather_update_time');
+    if(t) t.textContent = '기상조회 : ' + new Date().toLocaleString('ko-KR');
+
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition((pos)=>{
+        console.log('GPS', pos.coords.latitude, pos.coords.longitude);
+      });
+    }
+
+    // TODO: 카카오 역지오코딩 연동
+    // TODO: 기상청 API 연동
+    // TODO: 기온 자동입력
+    // TODO: 폭염(35℃), 한파(-12℃) 자동체크
+  }catch(e){
+    console.error(e);
+  }
+}
+</script>
+
+
+<script>
+const KAKAO_REST_API_KEY = "eaa5300f4046bfac8ce0355b1bd8cd88";
+
+async function refreshLocationAndWeather(){
+  const stamp = document.getElementById('weather_update_time');
+  if(stamp) stamp.textContent = '기상조회 : ' + new Date().toLocaleString('ko-KR');
+
+  navigator.geolocation.getCurrentPosition(async (pos)=>{
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+
+    try{
+      const res = await fetch(
+        `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lon}&y=${lat}`,
+        {headers:{Authorization:`KakaoAK ${KAKAO_REST_API_KEY}`}}
+      );
+      const data = await res.json();
+
+      const road = data.documents?.[0]?.road_address?.address_name || '';
+      const jibun = data.documents?.[0]?.address?.address_name || '';
+      const loc = document.getElementById('location');
+
+      if(loc){
+        loc.value = road ? `${road} (${jibun})` : jibun;
+      }
+    }catch(e){
+      console.error('주소조회 실패', e);
+    }
+
+    // 기상청 API 연결 위치
+    console.log('KMA weather hook ready', lat, lon);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const btn = document.getElementById('refreshLocationWeather');
+  if(btn) btn.onclick = refreshLocationAndWeather;
+});
+</script>
+
 </body>
 </html>
