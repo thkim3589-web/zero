@@ -86,13 +86,13 @@ async function getWeatherSafe(){
 
 async function v11AutoFill(){
  const status=document.getElementById('gpsStatus');
- if(status) status.textContent='GPS 조회중...';
+ if(status) status.textContent='GPS 조회중...'; console.log('GPS 시작');
  navigator.geolocation.getCurrentPosition(async p=>{
    const lat=p.coords.latitude, lon=p.coords.longitude;
    const acc=Math.round(p.coords.accuracy||0);
-   const addr=await reverseGeocode(lat,lon);
+   if(status) status.textContent='GPS 성공 / 주소 조회중...'; const addr=await reverseGeocode(lat,lon);
    const station=findNearestStation(lat,lon);
-   const weather=await fetchKmaByGps(lat,lon);
+   if(status) status.textContent='주소 성공 / 날씨 조회중...'; const weather=await fetchKmaByGps(lat,lon);
    const temp=Number(weather.temp||25);
    const hum=Number(weather.humidity||60);
    const wind=Number(weather.wind||1.5);
@@ -119,7 +119,7 @@ async function v11AutoFill(){
    autoCheckWeather(feel,wind);
    updateWeatherAlert(feel,wind,weather.rain||0);
 
-   if(status) status.textContent='주소확인 완료';
+   if(status) status.textContent='GPS·주소·날씨 조회 완료';
  },()=>{if(status) status.textContent='위치 권한 허용 필요';},
  {enableHighAccuracy:true,timeout:15000,maximumAge:0});
 }
@@ -160,7 +160,10 @@ function autoCheckWeather(feel, wind){
   if(strong) strong.checked = wind >= 10;
 }
 
+
 window.addEventListener('load',()=>setTimeout(v11AutoFill,1000));
+document.addEventListener('DOMContentLoaded',()=>setTimeout(v11AutoFill,1500));
+
 
 document.addEventListener('DOMContentLoaded',()=>{
  const btn=document.getElementById('refreshBtn');
