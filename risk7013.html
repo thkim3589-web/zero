@@ -75,24 +75,47 @@ async function getWeatherSafe(){
   return {temp:25, humidity:60, wind:1.5, station:"대구기상대"};
 }
 
-function v11AutoFill(){
+
+async function v11AutoFill(){
  const status=document.getElementById('gpsStatus');
  if(status) status.textContent='GPS 조회중...';
- navigator.geolocation.getCurrentPosition(
-  p=>{
+ navigator.geolocation.getCurrentPosition(async p=>{
    const lat=p.coords.latitude, lon=p.coords.longitude;
+   const acc=Math.round(p.coords.accuracy||0);
+   const addr=await reverseGeocode(lat,lon);
+   const station=findNearestStation(lat,lon);
+   const weather=await fetchKmaByGps(lat,lon);
+   const temp=Number(weather.temp||25);
+   const hum=Number(weather.humidity||60);
+   const wind=Number(weather.wind||1.5);
+   const feel=calculateFeelTemperature(temp,hum,wind);
+
    const rt=document.getElementById('real_temperature');
    const ft=document.getElementById('fake_temperature');
-   if(rt) rt.value='25℃';
-   if(ft) ft.value=calculateFeelTemperature(25,60,1.5)+'℃';
+   if(rt) rt.value=temp+'℃';
+   if(ft) ft.value=feel+'℃';
+
    const loc=document.getElementById('location');
-   if(loc && !loc.value) loc.value=`GPS(${lat.toFixed(5)}, ${lon.toFixed(5)})`;
-   if(status) status.textContent=`주소확인 완료 | 기온:25℃ | 습도:60% | 풍속:1.5m/s`;
-  },
-  ()=>{ if(status) status.textContent='위치 권한 허용 필요'; },
-  {enableHighAccuracy:true,timeout:15000,maximumAge:0}
- );
+   if(loc) loc.value=addr;
+
+   const gpsAcc=document.getElementById('gpsAccuracy');
+   if(gpsAcc) gpsAcc.textContent='GPS 정확도 : '+acc+'m';
+
+   const rainInfo=document.getElementById('rainInfo');
+   if(rainInfo) rainInfo.textContent='강수량 : '+(weather.rain||0)+' mm';
+
+   const upd=document.getElementById('weather_update_time');
+   if(upd) upd.innerHTML='관측소 : '+station.name+'('+station.stn+')';
+
+   autoCheckRain(weather.rain||0);
+   autoCheckWeather(feel,wind);
+   updateWeatherAlert(feel,wind,weather.rain||0);
+
+   if(status) status.textContent='주소확인 완료';
+ },()=>{if(status) status.textContent='위치 권한 허용 필요';},
+ {enableHighAccuracy:true,timeout:15000,maximumAge:0});
 }
+
 
 function dfs_xy_conv(lat, lon){
   return {nx:89, ny:90}; // 대구 기본값(백업)
