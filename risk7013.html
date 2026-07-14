@@ -197,9 +197,12 @@ async function fetchKmaByGps(lat, lon){
     const res = await fetch(url);
     const json = await res.json();
 
-    const items = json?.response?.body?.items?.item || [];
+    const items = json?.response?.body?.items?.item;
+    if(!items || items.length===0){
+      throw new Error("기상청 데이터 없음");
+    }
 
-    let temp=25, humidity=60, wind=1.5, rain=0;
+    let temp=null, humidity=null, wind=null, rain=0;
 
     items.forEach(item=>{
       switch(item.category){
@@ -221,10 +224,10 @@ async function fetchKmaByGps(lat, lon){
     console.error("기상청 조회 실패", err);
 
     return {
-      temp:25,
-      humidity:60,
-      wind:1.5,
-      rain:0,
+      temp:"-",
+      humidity:"-",
+      wind:"-",
+      rain:"-",
       station:"조회실패",
       updateTime:"오류"
     };
