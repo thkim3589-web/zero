@@ -36,6 +36,12 @@ details.missing-section > summary { color:#cc4400; }
 .save-btn { background:#007bff; color:#fff; padding:12px; border:none; border-radius:4px; font-weight:bold; cursor:pointer; }
 #result-container { margin-top:20px; width:100%; text-align:center; }
 #final-image { width:100%; height:auto; border:2px solid #333; border-radius:4px; box-shadow:0 4px 10px rgba(0,0,0,0.2); }
+
+.toast-msg{
+position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+background:#1976d2;color:#fff;padding:12px 18px;border-radius:12px;
+z-index:9999;font-weight:bold;display:none;
+}
 </style>
 
 <script>
@@ -96,7 +102,30 @@ async function v11AutoFill(){
    const temp=Number(weather.temp||25);
    const hum=Number(weather.humidity||60);
    const wind=Number(weather.wind||1.5);
-   const feel=calculateFeelTemperature(temp,hum,wind);
+   
+const feel=calculateFeelTemperature(temp,hum,wind);
+const rain=Number(weather.rain||0);
+
+const el=(id)=>document.getElementById(id);
+
+if(el('cardTemp')) el('cardTemp').innerHTML=temp>=33?'🔴 '+temp+'℃':temp>=26?'🟠 '+temp+'℃':'🟢 '+temp+'℃';
+if(el('cardFeel')) el('cardFeel').innerHTML=feel>=35?'🔴 '+feel+'℃':feel>=30?'🟠 '+feel+'℃':'🟢 '+feel+'℃';
+if(el('cardHum')) el('cardHum').textContent=hum+'%';
+if(el('cardWind')) el('cardWind').textContent=wind+'m/s';
+if(el('cardRain')) el('cardRain').textContent=rain+'mm';
+
+const clearBox=document.querySelector('input[value="weather_clear"]');
+const rainBox=document.querySelector('input[value="weather_rain"]');
+const hotBox=document.querySelector('input[value="weather_hot"]');
+const coldBox=document.querySelector('input[value="weather_cold"]');
+const windBox=document.querySelector('input[value="weather_wind"]');
+
+if(clearBox) clearBox.checked=rain===0;
+if(rainBox) rainBox.checked=rain>0;
+if(hotBox) hotBox.checked=temp>=33;
+if(coldBox) coldBox.checked=temp<=0;
+if(windBox) windBox.checked=wind>=8;
+
 
    const rt=document.getElementById('real_temperature');
    const ft=document.getElementById('fake_temperature');
@@ -107,7 +136,10 @@ async function v11AutoFill(){
    if(loc) loc.value=addr;
 
    const gpsAcc=document.getElementById('gpsAccuracy');
-   if(gpsAcc) gpsAcc.textContent='GPS 정확도 : '+acc+'m';
+   if(gpsAcc){
+gpsAcc.textContent='GPS 정확도 : '+acc+'m';
+gpsAcc.style.color=(acc<=10?'#0a8f08':acc<=30?'#ff9800':'#d32f2f');
+}
 
    const rainInfo=document.getElementById('rainInfo');
    if(rainInfo) rainInfo.textContent='강수량 : '+(weather.rain||0)+' mm';
@@ -120,6 +152,7 @@ async function v11AutoFill(){
    updateWeatherAlert(feel,wind,weather.rain||0);
 
    if(status) status.innerHTML='📍 주소확인 완료<br>📡 GPS 정확도 : '+acc+'m<br>🌧 강수량 : '+(weather.rain||0)+'mm<br>🏢 관측소 : '+station.name+'('+station.stn+')';
+const t=document.getElementById('toastMsg'); if(t){t.style.display='block';t.innerText='현장정보 갱신 완료';setTimeout(()=>t.style.display='none',2000);}
     if(navigator.vibrate){navigator.vibrate([80,40,80]);}
  },()=>{
     if(status) status.textContent='❌ 위치 권한 허용 필요';
@@ -246,10 +279,10 @@ function updateWeatherAlert(feel, wind, rain){
 </script>
 
 </head>
-<body>
+<body><div id='toastMsg' class='toast-msg'></div>
 
 
-<div id="debugStatusCard" style="margin:8px 0;padding:10px;background:#e8f4ff;border-radius:10px;border-left:5px solid #1976d2;">
+<div id="debugStatusCard" style="display:none;">
 <b>상태</b>
 <div id="debugStatusText">시스템 준비완료</div>
 </div>
@@ -285,7 +318,16 @@ function updateWeatherAlert(feel, wind, rain){
 
 <details id="sec_weather" open>
   <summary>기상현황 / 온도 <span style="color:red">*</span></summary>
-  <div class="checkbox-group">
+  
+<div id="weatherCard" style="background:#f8fbff;border:1px solid #d7e7ff;border-radius:14px;padding:14px;margin-bottom:12px;line-height:2;font-size:16px;font-weight:700;">
+<div>🌡 기온 <span id="cardTemp">조회중...</span></div>
+<div>🤒 체감온도 <span id="cardFeel">조회중...</span></div>
+<div>💧 습도 <span id="cardHum">조회중...</span></div>
+<div>🌬 풍속 <span id="cardWind">조회중...</span></div>
+<div>🌧 강수량 <span id="cardRain">조회중...</span></div>
+</div>
+<div class="checkbox-group">
+
     <label><input type="checkbox" value="weather_clear" onchange="generateImage()"> 맑음</label>
     <label><input type="checkbox" value="weather_wind" onchange="generateImage()"> 강풍</label>
     <label><input type="checkbox" value="weather_rain" onchange="generateImage()"> 비/눈</label>
