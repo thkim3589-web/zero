@@ -53,12 +53,6 @@ function calculateFeelTemperature(temp, humidity, wind){
   feel = Math.max(temp-5, Math.min(temp+8, feel));
   return Math.round(feel*10)/10;
 }
- const V=windMS*3.6;
- if(temp<=10 && V>=4.8){
-   return Number((13.12+0.6215*temp-11.37*Math.pow(V,0.16)+0.3965*Math.pow(V,0.16)*temp).toFixed(1));
- }
- return temp;
-}
 
 
 async function reverseGeocode(lat, lon){
