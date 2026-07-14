@@ -168,71 +168,70 @@ function dfs_xy_conv(lat, lon){
   return {nx:89, ny:90}; // 대구 기본값(백업)
 }
 
+
 async function fetchKmaByGps(lat, lon){
 
   try{
 
-    const {nx, ny} = dfs_xy_conv(lat, lon);
+    const stationId = 143;
 
     const now = new Date();
-    const base = new Date(now.getTime() - 60*60*1000);
+    now.setHours(now.getHours()-1);
 
-    const yyyy = base.getFullYear();
-    const mm = String(base.getMonth()+1).padStart(2,'0');
-    const dd = String(base.getDate()).padStart(2,'0');
-    const hh = String(base.getHours()).padStart(2,'0');
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth()+1).padStart(2,'0');
+    const dd = String(now.getDate()).padStart(2,'0');
+    const hh = String(now.getHours()).padStart(2,'0');
 
-    const baseDate = `${yyyy}${mm}${dd}`;
-    const baseTime = `${hh}00`;
+    const tm = `${yyyy}${mm}${dd}${hh}00`;
 
     const url =
-      "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst" +
-      "?serviceKey=" + encodeURIComponent(window.KMA_SERVICE_KEY) +
-      "&pageNo=1&numOfRows=100&dataType=JSON" +
-      "&base_date=" + baseDate +
-      "&base_time=" + baseTime +
-      "&nx=" + nx +
-      "&ny=" + ny;
+      `https://apihub.kma.go.kr/api/typ01/url/kma_sfctm2.php?tm=${tm}&stn=${stationId}&authKey=0oFfQOEiRXmBX0DhInV5eQ`;
 
-    const res = await fetch(url);
-    const json = await res.json();
+    const txt = await fetch(url).then(r=>r.text());
 
-    const items = json?.response?.body?.items?.item;
-    if(!items || items.length===0){
-      throw new Error("기상청 데이터 없음");
+    const lines = txt.split('\n');
+
+    let temp='-';
+    let hum='-';
+    let wind='-';
+    let rain='0';
+
+    for(const line of lines){
+      if(!line || line.startsWith('#')) continue;
+
+      const cols = line.trim().split(/\s+/);
+      if(cols.length < 20) continue;
+
+      temp = parseFloat(cols[11]);
+      hum  = parseFloat(cols[13]);
+      wind = parseFloat(cols[3]);
+      rain = parseFloat(cols[15]) || 0;
+      break;
     }
 
-    let temp=null, humidity=null, wind=null, rain=0;
-
-    items.forEach(item=>{
-      switch(item.category){
-        case "T1H": temp = Number(item.obsrValue); break;
-        case "REH": humidity = Number(item.obsrValue); break;
-        case "WSD": wind = Number(item.obsrValue); break;
-        case "RN1": rain = parseFloat(item.obsrValue) || 0; break;
-      }
-    });
-
     return {
-      temp, humidity, wind, rain,
-      station:"기상청",
-      updateTime:new Date().toLocaleTimeString()
+      temp,
+      humidity:hum,
+      wind,
+      rain,
+      station:'대구(143)'
     };
 
   }catch(err){
 
-    console.error("기상청 조회 실패", err);
+    console.error(err);
 
     return {
-      temp:"-",
-      humidity:"-",
-      wind:"-",
-      rain:"-",
-      station:"조회실패",
-      updateTime:"오류"
+      temp:'-',
+      humidity:'-',
+      wind:'-',
+      rain:'-',
+      station:'조회실패'
     };
   }
 }
+
 
 function autoCheckRain(rain){
   const rainBox=document.querySelector('input[value="weather_rain"]');
