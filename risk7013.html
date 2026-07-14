@@ -311,7 +311,7 @@ function updateWeatherAlert(feel, wind, rain){
 
 <div style="background:#e8f4ff;padding:12px;margin:8px 0;border-radius:12px;border-left:5px solid #1976d2;">
 <b>최근접 관측소 정보</b><br>
-<span id="gpsStatus" style="display:block;padding:12px;background:#ffffff;border-radius:10px;font-weight:bold;color:#333;line-height:1.8;">조회 대기중...</span><br>
+<span id="gpsStatus" style="display:block;padding:12px;background:#ffffff;border-radius:10px;font-weight:bold;color:#333;line-height:1.8;font-size:14px;font-weight:700;line-height:1.7;">조회 대기중...</span><br>
 <button id="refreshBtn" style="width:100%;height:52px;border:none;border-radius:12px;background:linear-gradient(135deg,#1976d2,#0d47a1);color:#fff;font-size:16px;font-weight:700;">📍 현장정보 갱신</button>
 </div>
 
@@ -333,13 +333,6 @@ function updateWeatherAlert(feel, wind, rain){
 <details id="sec_weather" open>
   <summary>기상현황 / 온도 <span style="color:red">*</span></summary>
   
-<div id="weatherCard" style="background:#f8fbff;border:1px solid #d7e7ff;border-radius:14px;padding:14px;margin-bottom:12px;line-height:2;font-size:16px;font-weight:700;">
-<div>🌡 기온 <span id="cardTemp">조회중...</span></div>
-<div>🤒 체감온도 <span id="cardFeel">조회중...</span></div>
-<div>💧 습도 <span id="cardHum">조회중...</span></div>
-<div>🌬 풍속 <span id="cardWind">조회중...</span></div>
-<div>🌧 강수량 <span id="cardRain">조회중...</span></div>
-</div>
 <div class="checkbox-group">
 
     <label><input type="checkbox" value="weather_clear" onchange="generateImage()"> 맑음</label>
