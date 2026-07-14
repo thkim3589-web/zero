@@ -151,7 +151,7 @@ gpsAcc.style.color=(acc<=10?'#0a8f08':acc<=30?'#ff9800':'#d32f2f');
    autoCheckWeather(feel,wind);
    updateWeatherAlert(feel,wind,weather.rain||0);
 
-   if(status) status.innerHTML='📍 주소확인 완료<br>📡 GPS 정확도 : '+acc+'m<br>🌧 강수량 : '+(weather.rain||0)+'mm<br>🏢 관측소 : '+station.name+'('+station.stn+')';
+   if(status) status.innerHTML='📍'+addr.split(' ').slice(-2).join(' ')+' &nbsp; 📡'+acc+'m &nbsp; 🏢'+station.stn+'<br><br>🌡'+temp+'℃ &nbsp; 🤒'+feel+'℃ &nbsp; 💧'+hum+'% &nbsp; 🌬'+wind+'m/s &nbsp; 🌧'+rain+'mm';
 const t=document.getElementById('toastMsg'); if(t){t.style.display='block';t.innerText='현장정보 갱신 완료';setTimeout(()=>t.style.display='none',2000);}
     if(navigator.vibrate){navigator.vibrate([80,40,80]);}
  },()=>{
