@@ -101,11 +101,11 @@ async function v11AutoFill(){
    if(status) status.textContent='GPS 성공 / 주소 조회중...'; const addr=await reverseGeocode(lat,lon);
    const station=findNearestStation(lat,lon);
    if(status) status.textContent='주소 성공 / 날씨 조회중...'; const weather=await fetchKmaByGps(lat,lon);
-   const temp=Number(weather.temp||25);
-   const hum=Number(weather.humidity||60);
-   const wind=Number(weather.wind||1.5);
+   const temp=(weather.temp==null||weather.temp==='-'||isNaN(weather.temp))?null:Number(weather.temp);
+   const hum=(weather.humidity==null||weather.humidity==='-'||isNaN(weather.humidity))?null:Number(weather.humidity);
+   const wind=(weather.wind==null||weather.wind==='-'||isNaN(weather.wind))?null:Number(weather.wind);
    
-const feel=calculateFeelTemperature(temp,hum,wind);
+const feel=(temp===null)?'-':calculateFeelTemperature(temp,hum,wind);
 const rain=Number(weather.rain||0);
 
 const el=(id)=>document.getElementById(id);
@@ -131,8 +131,8 @@ if(windBox) windBox.checked=wind>=8;
 
    const rt=document.getElementById('real_temperature');
    const ft=document.getElementById('fake_temperature');
-   if(rt) rt.value=temp+'℃';
-   if(ft) ft.value=feel+'℃';
+   if(rt) rt.value=(temp===null?'-':temp+'℃');
+   if(ft) ft.value=(feel==='-'?'-':feel+'℃');
 
    const loc=document.getElementById('location');
    if(loc) loc.value=addr;
@@ -153,7 +153,7 @@ gpsAcc.style.color=(acc<=10?'#0a8f08':acc<=30?'#ff9800':'#d32f2f');
    autoCheckWeather(feel,wind);
    updateWeatherAlert(feel,wind,weather.rain||0);
 
-   if(status) status.innerHTML='📍'+addr.split(' ').slice(-2).join(' ')+' &nbsp; 📡'+acc+'m &nbsp; 🏢'+station.stn+'<br><br>🌡'+temp+'℃ &nbsp; 🤒'+feel+'℃ &nbsp; 💧'+hum+'% &nbsp; 🌬'+wind+'m/s &nbsp; 🌧'+rain+'mm';
+   if(status) status.innerHTML='📍'+addr.split(' ').slice(-2).join(' ')+' &nbsp; 📡'+acc+'m &nbsp; 🏢'+station.stn+'<br><br>🌡'+(temp??'-')+(temp===null?'':'℃')+' &nbsp; 🤒'+feel+(feel==='-'?'':'℃')+' &nbsp; 💧'+(hum??'-')+'% &nbsp; 🌬'+(wind??'-')+'m/s &nbsp; 🌧'+rain+'mm';
 const t=document.getElementById('toastMsg'); if(t){t.style.display='block';t.innerText='현장정보 갱신 완료';setTimeout(()=>t.style.display='none',2000);}
     if(navigator.vibrate){navigator.vibrate([80,40,80]);}
  },()=>{
