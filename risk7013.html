@@ -903,7 +903,84 @@ async function kmaWeatherStub(lat, lon){
   if(ft) ft.value = feel + "℃";
 
   document.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
-    if(cb.value==="weather_hot") cb.checked = temp >= 35;
+    if(cb.value==="weather_hot") cb.checked = temp >= 35;async function fetchWeather(lat, lon) {
+
+  /* 1. 위경도 → 기상청 격자 */
+
+  const xyUrl =
+    `https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-dfs_xy_lonlat` +
+    `?lon=${lon}` +
+    `&lat=${lat}` +
+    `&help=0` +
+    `&authKey=${KMA_AUTH_KEY}`;
+
+  const xyText = await (await fetch(xyUrl)).text();
+
+  const xMatch = xyText.match(/x\s*=\s*(\d+)/i);
+  const yMatch = xyText.match(/y\s*=\s*(\d+)/i);
+
+  if (!xMatch || !yMatch) {
+    throw new Error("격자 변환 실패");
+  }
+
+  const nx = xMatch[1];
+  const ny = yMatch[1];
+
+  /* 2. 현재 발표시각 생성 */
+
+  const now = new Date();
+
+  const yyyy = now.getFullYear();
+  const MM = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(Math.floor(now.getMinutes() / 10) * 10).padStart(2, "0");
+
+  const tmfc = `${yyyy}${MM}${dd}${hh}${mm}`;
+
+  /* 3. 실황 조회 */
+
+  const weatherUrl =
+    `https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-dfs_odam_grd` +
+    `?tmfc=${tmfc}` +
+    `&vars=T1H,REH` +
+    `&authKey=${KMA_AUTH_KEY}`;
+
+  const weatherText =
+    await (await fetch(weatherUrl)).text();
+
+  /* 4. 기온/습도 추출 */
+
+  const tempMatch =
+    weatherText.match(/T1H[^0-9-]*([-]?\d+\.?\d*)/);
+
+  const rehMatch =
+    weatherText.match(/REH[^0-9-]*([-]?\d+\.?\d*)/);
+
+  if (!tempMatch) {
+    throw new Error("기온 데이터 없음");
+  }
+
+  const temp = parseFloat(tempMatch[1]);
+
+  const reh =
+    rehMatch
+      ? parseFloat(rehMatch[1])
+      : 50;
+
+  /* 5. 체감온도 계산 */
+
+  const feel =
+    temp + (0.33 * (reh / 100) * 6) - 4;
+
+  return {
+    temp,
+    reh,
+    feel,
+    nx,
+    ny
+  };
+}
     if(cb.value==="weather_cold") cb.checked = temp <= -12;
   });
 }
