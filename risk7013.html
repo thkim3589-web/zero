@@ -169,18 +169,65 @@ function dfs_xy_conv(lat, lon){
 }
 
 async function fetchKmaByGps(lat, lon){
+
   try{
-    const now=new Date();
+
+    const {nx, ny} = dfs_xy_conv(lat, lon);
+
+    const now = new Date();
+    const base = new Date(now.getTime() - 60*60*1000);
+
+    const yyyy = base.getFullYear();
+    const mm = String(base.getMonth()+1).padStart(2,'0');
+    const dd = String(base.getDate()).padStart(2,'0');
+    const hh = String(base.getHours()).padStart(2,'0');
+
+    const baseDate = `${yyyy}${mm}${dd}`;
+    const baseTime = `${hh}00`;
+
+    const url =
+      "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst" +
+      "?serviceKey=" + encodeURIComponent(window.KMA_SERVICE_KEY) +
+      "&pageNo=1&numOfRows=100&dataType=JSON" +
+      "&base_date=" + baseDate +
+      "&base_time=" + baseTime +
+      "&nx=" + nx +
+      "&ny=" + ny;
+
+    const res = await fetch(url);
+    const json = await res.json();
+
+    const items = json?.response?.body?.items?.item || [];
+
+    let temp=25, humidity=60, wind=1.5, rain=0;
+
+    items.forEach(item=>{
+      switch(item.category){
+        case "T1H": temp = Number(item.obsrValue); break;
+        case "REH": humidity = Number(item.obsrValue); break;
+        case "WSD": wind = Number(item.obsrValue); break;
+        case "RN1": rain = parseFloat(item.obsrValue) || 0; break;
+      }
+    });
+
+    return {
+      temp, humidity, wind, rain,
+      station:"기상청",
+      updateTime:new Date().toLocaleTimeString()
+    };
+
+  }catch(err){
+
+    console.error("기상청 조회 실패", err);
+
     return {
       temp:25,
       humidity:60,
       wind:1.5,
       rain:0,
-      station:"대구기상대",
-      updateTime:now.toLocaleTimeString()
+      station:"조회실패",
+      updateTime:"오류"
     };
-  }catch(e){
-    return {temp:0,humidity:0,wind:0,rain:0,station:"조회실패",updateTime:"오류"};
   }
 }
 
