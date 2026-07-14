@@ -1162,3 +1162,19 @@ const KMA_AUTH_KEY = "0oFfQOEiRXmBX0DhInV5eQ";
 
 </body>
 </html>
+
+<script>
+window.parseKmaText=function(txt){
+ const lines=txt.split('\n');
+ let hi=-1,di=-1;
+ for(let i=0;i<lines.length;i++){
+  const l=lines[i].trim();
+  if(l.startsWith('#YYMMDDHHMI')||l.includes('YYMMDDHHMI STN')){hi=i;continue;}
+  if(hi>-1 && l && !l.startsWith('#')){di=i;break;}
+ }
+ if(hi<0||di<0) return null;
+ const headers=lines[hi].replace(/^#/,'').trim().split(/\s+/);
+ const cols=lines[di].trim().split(/\s+/);
+ return {temp:parseFloat(cols[headers.indexOf('TA')]),humidity:parseFloat(cols[headers.indexOf('HM')]),wind:parseFloat(cols[headers.indexOf('WS')]),rain:parseFloat(cols[headers.indexOf('RN')])||0};
+};
+</script>
