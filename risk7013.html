@@ -100,22 +100,23 @@ function dfs_xy_conv(lat, lon){
 
 async function fetchKmaByGps(lat, lon){
   try{
+    const now=new Date();
     return {
       temp:25,
       humidity:60,
       wind:1.5,
+      rain:0,
       station:"대구기상대",
-      updateTime:new Date().toLocaleTimeString()
+      updateTime:now.toLocaleTimeString()
     };
   }catch(e){
-    return {
-      temp:25,
-      humidity:60,
-      wind:1.5,
-      station:"대구기상대",
-      updateTime:"조회실패"
-    };
+    return {temp:0,humidity:0,wind:0,rain:0,station:"조회실패",updateTime:"오류"};
   }
+}
+
+function autoCheckRain(rain){
+  const rainBox=document.querySelector('input[value="weather_rain"]');
+  if(rainBox) rainBox.checked = rain > 0;
 }
 
 function autoCheckWeather(feel, wind){
@@ -129,17 +130,74 @@ function autoCheckWeather(feel, wind){
 }
 
 window.addEventListener('load',()=>setTimeout(v11AutoFill,1000));
+
+document.addEventListener('DOMContentLoaded',()=>{
+ const btn=document.getElementById('refreshBtn');
+ if(btn){
+   btn.addEventListener('click', async ()=>{
+     const status=document.getElementById('gpsStatus');
+     if(status) status.textContent='위치·주소·날씨 조회중...';
+     if(typeof v11AutoFill==='function'){
+       await v11AutoFill();
+     }
+   });
+ }
+});
+
+/* ===== V8.2 Ultimate Weather Engine ===== */
+
+const STATIONS=[
+{name:"서울",stn:108,lat:37.57,lon:126.97},
+{name:"대구",stn:143,lat:35.88,lon:128.65},
+{name:"부산",stn:159,lat:35.10,lon:129.03},
+{name:"광주",stn:156,lat:35.17,lon:126.89},
+{name:"대전",stn:133,lat:36.35,lon:127.38}
+];
+
+function findNearestStation(lat,lon){
+ let nearest=STATIONS[0], min=999999;
+ STATIONS.forEach(s=>{
+   const d=Math.hypot(lat-s.lat,lon-s.lon);
+   if(d<min){min=d; nearest=s;}
+ });
+ return nearest;
+}
+
+function dfs_xy_conv(lat, lon){
+ const RE=6371.00877, GRID=5.0, SLAT1=30.0, SLAT2=60.0;
+ const OLON=126.0, OLAT=38.0, XO=43, YO=136;
+ const DEGRAD=Math.PI/180.0;
+ const re=RE/GRID;
+ const slat1=SLAT1*DEGRAD, slat2=SLAT2*DEGRAD;
+ const olon=OLON*DEGRAD, olat=OLAT*DEGRAD;
+ let sn=Math.tan(Math.PI*0.25+slat2*0.5)/Math.tan(Math.PI*0.25+slat1*0.5);
+ sn=Math.log(Math.cos(slat1)/Math.cos(slat2))/Math.log(sn);
+ let sf=Math.tan(Math.PI*0.25+slat1*0.5);
+ sf=Math.pow(sf,sn)*Math.cos(slat1)/sn;
+ let ro=Math.tan(Math.PI*0.25+olat*0.5);
+ ro=re*sf/Math.pow(ro,sn);
+ let ra=Math.tan(Math.PI*0.25+lat*DEGRAD*0.5);
+ ra=re*sf/Math.pow(ra,sn);
+ let theta=lon*DEGRAD-olon;
+ if(theta>Math.PI) theta-=2*Math.PI;
+ if(theta<-Math.PI) theta+=2*Math.PI;
+ theta*=sn;
+ return {nx:Math.floor(ra*Math.sin(theta)+XO+0.5),
+         ny:Math.floor(ro-ra*Math.cos(theta)+YO+0.5)};
+}
+
 </script>
 
 </head>
 <body>
+<button id="refreshBtn">🔄 현장정보 갱신</button>
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
-<button type="button" id="refreshLocationWeather" class="save-btn" style="background:#28a745;">위치 갱신</button>
+
 <div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
 <b>최근접 관측소 정보</b><br>
 <span id="gpsStatus">조회 대기중...</span><br>
-<button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
+
 </div>
 
 
@@ -167,7 +225,7 @@ window.addEventListener('load',()=>setTimeout(v11AutoFill,1000));
     <label><input type="checkbox" value="weather_cold" onchange="generateImage()"> 한파</label>
   </div>
   <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" placeholder="수동입력" oninput="generateImage()"></label>
-  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" placeholder="수동입력" oninput="generateImage()"></label><div id="weather_update_time" style="font-size:12px;color:#666;">기상조회 : 대기중</div>
+  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" placeholder="수동입력" oninput="generateImage()"></label><div id="weather_update_time" style="font-size:12px;color:#666;">관측소 : 대기중</div>
 </details>
 
 <details>
