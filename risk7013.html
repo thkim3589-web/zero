@@ -186,10 +186,33 @@ function dfs_xy_conv(lat, lon){
          ny:Math.floor(ro-ra*Math.cos(theta)+YO+0.5)};
 }
 
+
+function loadLastWeather(){
+  try{
+    const cache=localStorage.getItem("LAST_WEATHER");
+    return cache ? JSON.parse(cache) : null;
+  }catch(e){ return null; }
+}
+
+function updateWeatherAlert(feel, wind, rain){
+  const box=document.getElementById("weatherAlert");
+  if(!box) return;
+  const msg=[];
+  if(feel>=35) msg.push("폭염 주의");
+  if(wind>=10) msg.push("강풍 주의");
+  if(rain>0) msg.push("강수 중");
+  box.textContent=msg.join(" / ");
+}
+
 </script>
 
 </head>
 <body>
+
+<div id="gpsAccuracy">GPS 정확도 : -</div>
+<div id="rainInfo">강수량 : -</div>
+<div id="weatherAlert" style="font-weight:bold;color:red;"></div>
+
 <button id="refreshBtn">🔄 현장정보 갱신</button>
 <h2>현장 위험성 평가표(전송) 작성</h2>
 <div class="form">
