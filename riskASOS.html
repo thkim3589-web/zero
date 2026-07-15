@@ -230,10 +230,12 @@ async function fetchKmaByGps(lat, lon){
 
     console.log("ASOS RAW =", row);
 
-    const temp = Number(row[24]);
-    const humidity = Number(row[26]);
-    const wind = Number(row[4]);
-    const rain = Number(row[30]) || 0;
+    const temp = Number(row[11]);      // TA
+    const humidity = Number(row[13]);  // HM
+    const wind = Number(row[3]);       // WS
+
+    let rain = Number(row[15]);        // RN
+    if(isNaN(rain) || rain < 0) rain = 0;
 
     return {
       temp: isNaN(temp) ? null : temp,
