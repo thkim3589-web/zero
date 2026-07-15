@@ -190,17 +190,16 @@ async function fetchKmaByGps(lat, lon){
       + `&ny=${grid.ny}`
       + `&serviceKey=${encodeURIComponent(window.KMA_SERVICE_KEY)}`;
 
-    const xmlText = await fetch(url).then(r=>r.text());
-console.log('KMA XML', xmlText);
-
-    const parser = new DOMParser();
-    const xml = parser.parseFromString(xmlText,"text/xml");
+    const json = await fetch(url).then(r=>r.json());
+console.log('KMA JSON', json);
 
     let temp=null, humidity=null, wind=null, rain=0;
 
-    xml.querySelectorAll("item").forEach(item=>{
-      const cat = item.querySelector("category")?.textContent;
-      const val = item.querySelector("obsrValue")?.textContent;
+    const items = json?.response?.body?.items?.item || [];
+
+    items.forEach(item=>{
+      const cat = item.category;
+      const val = item.obsrValue;
 
       if(cat==="T1H") temp=parseFloat(val);
       if(cat==="REH") humidity=parseFloat(val);
