@@ -108,7 +108,7 @@ const rain=Number(weather.rain||0);
 
 const el=(id)=>document.getElementById(id);
 
-if(el('cardTemp')) el('cardTemp').innerHTML=temp>=33?'🔴 '+temp+'℃':temp>=26?'🟠 '+temp+'℃':'🟢 '+temp+'℃';
+if(el('cardTemp')) el('cardTemp').innerHTML=temp>=35?'🔴 '+temp+'℃':temp>=30?'🟠 '+temp+'℃':'🟢 '+temp+'℃';
 if(el('cardFeel')) el('cardFeel').innerHTML=feel>=35?'🔴 '+feel+'℃':feel>=30?'🟠 '+feel+'℃':'🟢 '+feel+'℃';
 if(el('cardHum')) el('cardHum').textContent=hum+'%';
 if(el('cardWind')) el('cardWind').textContent=wind+'m/s';
@@ -250,14 +250,14 @@ function autoCheckRain(rain){
   if(rainBox) rainBox.checked = rain > 0;
 }
 
-function autoCheckWeather(feel, wind){
+function autoCheckWeather(temp, wind){
   const hot=document.querySelector('input[value="weather_hot"]');
   const cold=document.querySelector('input[value="weather_cold"]');
   const strong=document.querySelector('input[value="weather_wind"]');
 
-  if(hot) hot.checked = temp >= 35;
-  if(cold) cold.checked = feel <= -12;
-  if(strong) strong.checked = wind >= 10;
+  if(hot) hot.checked = Number(temp) >= 35;
+  if(cold) cold.checked = Number(temp) <= 0;
+  if(strong) strong.checked = Number(wind) >= 10;
 }
 
 
