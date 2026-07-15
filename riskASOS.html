@@ -228,12 +228,19 @@ async function fetchKmaByGps(lat, lon){
 
     const row = lines[lines.length-1].trim().split(/\s+/);
 
+    console.log("ASOS RAW =", row);
+
+    const temp = Number(row[24]);
+    const humidity = Number(row[26]);
+    const wind = Number(row[4]);
+    const rain = Number(row[30]) || 0;
+
     return {
-      temp     : parseFloat(row[11]),
-      humidity : parseFloat(row[13]),
-      wind     : parseFloat(row[3]),
-      rain     : parseFloat(row[15]) || 0,
-      station  : station.name
+      temp: isNaN(temp) ? null : temp,
+      humidity: isNaN(humidity) ? null : humidity,
+      wind: isNaN(wind) ? null : wind,
+      rain: isNaN(rain) ? 0 : rain,
+      station: station.name
     };
 
   }catch(err){
