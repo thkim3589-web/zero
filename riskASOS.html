@@ -220,7 +220,7 @@ async function fetchKmaByGps(lat, lon){
 
     const txt = await fetch(url).then(r=>r.text());
 
-    const lines = txt.split('\n').filter(v => /^\d{10}/.test(v.trim()));
+    const lines = txt.split('\n').filter(v => /^\d{12}/.test(v.trim()));
 
     if(!lines.length){
       throw new Error('관측자료 없음');
