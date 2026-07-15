@@ -66,7 +66,8 @@ function calculateFeelTemperature(temp, humidity, wind){
   wind=Number(wind)||0;
   let feel=temp;
   if(temp >= 27){
-    feel = temp + (humidity-40)*0.05 - wind*0.2;
+    /* 체감온도 편차 축소 */
+    feel = temp + (humidity-40)*0.03 - wind*0.10;
   }
   feel = Math.max(temp-5, Math.min(temp+8, feel));
   return Math.round(feel*10)/10;
