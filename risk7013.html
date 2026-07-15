@@ -163,7 +163,7 @@ gpsAcc.style.color=(acc<=10?'#0a8f08':acc<=30?'#ff9800':'#d32f2f');
    if(upd) upd.innerHTML='관측소 : '+station.name+'('+station.stn+')';
 
    autoCheckRain(weather.rain||0);
-   autoCheckWeather(feel,wind);
+   autoCheckWeather(temp,wind);
    updateWeatherAlert(feel,wind,weather.rain||0);
 
    if(status) status.innerHTML='📍'+addr.split(' ').slice(-2).join(' ')+' &nbsp; 📡'+acc+'m &nbsp; 🏢'+station.stn+'<br><br>🌡'+(temp??'-')+(temp===null?'':'℃')+' &nbsp; 🤒'+feel+(feel==='-'?'':'℃')+' &nbsp; 💧'+(hum??'-')+'% &nbsp; 🌬'+(wind??'-')+'m/s &nbsp; 🌧'+rain+'mm';
@@ -255,7 +255,7 @@ function autoCheckWeather(feel, wind){
   const cold=document.querySelector('input[value="weather_cold"]');
   const strong=document.querySelector('input[value="weather_wind"]');
 
-  if(hot) hot.checked = feel >= 35;
+  if(hot) hot.checked = temp >= 35;
   if(cold) cold.checked = feel <= -12;
   if(strong) strong.checked = wind >= 10;
 }
