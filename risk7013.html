@@ -46,7 +46,7 @@ z-index:9999;font-weight:bold;display:none;
 
 <script>
 window.KAKAO_REST_API_KEY="eaa5300f4046bfac8ce0355b1bd8cd88";
-window.KMA_SERVICE_KEY="95d712b220ef0de5456f52991cf20c56e594d492a68e3e5820";
+window.KMA_SERVICE_KEY="95d712b220ef0de5456f52991cf20c56e594d492a68e3e58200038c9a2d9ebec";
 let manualTemp = false;
 let manualFeel = false;
 
@@ -221,6 +221,10 @@ async function fetchKmaByGps(lat, lon){
     }
 
     const items = json?.response?.body?.items?.item || [];
+    console.log('KMA ITEMS COUNT', items.length);
+    if(items.length===0){
+      console.error('기상청 데이터 없음', json);
+    }
 
     items.forEach(item=>{
       const cat = item.category;
