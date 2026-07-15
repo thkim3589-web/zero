@@ -108,7 +108,7 @@ const rain=Number(weather.rain||0);
 
 const el=(id)=>document.getElementById(id);
 
-if(el('cardTemp')) el('cardTemp').innerHTML=temp>=35?'🔴 '+temp+'℃':temp>=30?'🟠 '+temp+'℃':'🟢 '+temp+'℃';
+if(el('cardTemp')) el('cardTemp').innerHTML=temp>=35?'🔴 '+temp.toFixed(1)+'℃':temp>=30?'🟠 '+temp.toFixed(1)+'℃':'🟢 '+temp.toFixed(1)+'℃';
 if(el('cardFeel')) el('cardFeel').innerHTML=feel>=35?'🔴 '+feel+'℃':feel>=30?'🟠 '+feel+'℃':'🟢 '+feel+'℃';
 if(el('cardHum')) el('cardHum').textContent=hum+'%';
 if(el('cardWind')) el('cardWind').textContent=wind+'m/s';
