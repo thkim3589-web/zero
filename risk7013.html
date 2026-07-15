@@ -132,7 +132,22 @@ if(windBox) windBox.checked=wind>=8;
    if(rt) rt.value=(temp===null?'-':temp+'℃');
    if(ft) ft.value=(feel==='-'?'-':feel+'℃');
 
-   const loc=document.getElementById('location');
+   
+    const startEl=document.getElementById('start_date');
+    const endEl=document.getElementById('end_date');
+    if(startEl && endEl){
+      const nowDt=new Date();
+      const endDt=new Date(nowDt.getTime()+2*60*60*1000);
+      const fmt=(d)=>{
+        const p=(n)=>String(n).padStart(2,'0');
+        return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+      };
+      startEl.value=fmt(nowDt);
+      endEl.value=fmt(endDt);
+    }
+
+
+const loc=document.getElementById('location');
    if(loc) loc.value=addr;
 
    const gpsAcc=document.getElementById('gpsAccuracy');
@@ -190,10 +205,20 @@ async function fetchKmaByGps(lat, lon){
       + `&ny=${grid.ny}`
       + `&serviceKey=${encodeURIComponent(window.KMA_SERVICE_KEY)}`;
 
-    const json = await fetch(url).then(r=>r.json());
-console.log('KMA JSON', json);
+    const res = await fetch(url);
+    const json = await res.json();
+    console.log('KMA URL', url);
+    console.log('KMA JSON', json);
 
     let temp=null, humidity=null, wind=null, rain=0;
+
+    const resultCode = json?.response?.header?.resultCode;
+    const resultMsg = json?.response?.header?.resultMsg;
+
+    if(resultCode && resultCode !== '00'){
+      console.error('KMA ERROR', resultCode, resultMsg);
+      return {temp:null, humidity:null, wind:null, rain:0, station:'API오류:'+resultCode};
+    }
 
     const items = json?.response?.body?.items?.item || [];
 
