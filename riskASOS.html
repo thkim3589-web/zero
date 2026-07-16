@@ -230,11 +230,11 @@ async function fetchKmaByGps(lat, lon){
 
     console.log("ASOS RAW =", row);
 
-    const temp = Number(row[12]);      // TA
-    const humidity = Number(row[14]);  // HM
-    const wind = Number(row[4]);       // WS
+    const temp = Number(row[11]);      // TA
+    const humidity = Number(row[13]);  // HM
+    const wind = Number(row[3]);       // WS
 
-    let rain = Number(row[16]);        // RN
+    let rain = Number(row[15]);        // RN
     if(isNaN(rain) || rain < 0) rain = 0;
 
     return {
@@ -247,6 +247,7 @@ async function fetchKmaByGps(lat, lon){
 
   }catch(err){
 
+    alert('ASOS 오류 : ' + err);
     console.error('ASOS 조회 오류', err);
 
     return {
