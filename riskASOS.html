@@ -180,7 +180,7 @@ gpsAcc.style.color=(acc<=10?'#0a8f08':acc<=30?'#ff9800':'#d32f2f');
    if(status){
 const tempText=(temp===null?'-':Number(temp).toFixed(1));
 const feelText=(feel==='-'?'-':Number(feel).toFixed(1));
-status.innerHTML='📍'+addr.split(' ').slice(-2).join(' ')+' &nbsp; 📡'+acc+'m &nbsp; 🏢'+station.stn+'<br><br>🌡 <span class="temp-num">'+tempText+'℃</span> &nbsp; 🤒 <span class="temp-num">'+feelText+'℃</span> &nbsp; 💧'+(hum??'-')+'% &nbsp; 🌬'+(wind??'-')+'m/s &nbsp; 🌧'+rain+'mm';
+status.innerHTML='📍'+addr.split(' ').slice(-2).join(' ')+' &nbsp; 📡'+acc+'m &nbsp; 🏢'+station.name+'('+station.stn+')'+'<br><br>🌡 <span class="temp-num">'+tempText+'℃</span> &nbsp; 🤒 <span class="temp-num">'+feelText+'℃</span> &nbsp; 💧'+(hum??'-')+'% &nbsp; 🌬'+(wind??'-')+'m/s &nbsp; 🌧'+rain+'mm';
 }
 const t=document.getElementById('toastMsg'); if(t){t.style.display='block';t.innerText='현장정보 갱신 완료';setTimeout(()=>t.style.display='none',2000);}
     if(navigator.vibrate){navigator.vibrate([80,40,80]);}
@@ -221,10 +221,7 @@ async function fetchKmaByGps(lat, lon){
       + `&serviceKey=${encodeURIComponent(window.KMA_SERVICE_KEY)}`;
 
     const res = await fetch(url);
-    if(!res.ok){ alert('KMA HTTP 오류 : ' + res.status); }
     const json = await res.json();
-    console.log('KMA RAW', json);
-    alert('KMA resultCode : ' + (json?.response?.header?.resultCode || '없음'));
     console.log('KMA URL', url);
     console.log('KMA JSON', json);
 
@@ -311,13 +308,42 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 /* ===== V8.2 Ultimate Weather Engine ===== */
 
+
 const STATIONS=[
-{name:"서울",stn:108,lat:37.57,lon:126.97},
-{name:"대구",stn:143,lat:35.88,lon:128.65},
-{name:"부산",stn:159,lat:35.10,lon:129.03},
-{name:"광주",stn:156,lat:35.17,lon:126.89},
-{name:"대전",stn:133,lat:36.35,lon:127.38}
+{name:"속초",stn:90,lat:38.25,lon:128.56},
+{name:"북춘천",stn:93,lat:37.95,lon:127.75},
+{name:"철원",stn:95,lat:38.15,lon:127.30},
+{name:"대관령",stn:100,lat:37.68,lon:128.72},
+{name:"춘천",stn:101,lat:37.90,lon:127.73},
+{name:"강릉",stn:105,lat:37.75,lon:128.89},
+{name:"서울기상관측소",stn:108,lat:37.57,lon:126.97},
+{name:"인천",stn:112,lat:37.48,lon:126.63},
+{name:"원주",stn:114,lat:37.34,lon:127.95},
+{name:"수원",stn:119,lat:37.27,lon:127.01},
+{name:"충주",stn:127,lat:36.97,lon:127.95},
+{name:"청주",stn:131,lat:36.64,lon:127.44},
+{name:"대전기상대",stn:133,lat:36.35,lon:127.38},
+{name:"추풍령",stn:135,lat:36.22,lon:128.00},
+{name:"안동",stn:136,lat:36.57,lon:128.71},
+{name:"포항",stn:138,lat:36.03,lon:129.38},
+{name:"군산",stn:140,lat:35.99,lon:126.76},
+{name:"대구기상대",stn:143,lat:35.88,lon:128.65},
+{name:"전주",stn:146,lat:35.82,lon:127.15},
+{name:"울산",stn:152,lat:35.56,lon:129.32},
+{name:"광주기상대",stn:156,lat:35.17,lon:126.89},
+{name:"부산기상관측소",stn:159,lat:35.10,lon:129.03},
+{name:"목포",stn:165,lat:34.82,lon:126.38},
+{name:"여수",stn:168,lat:34.74,lon:127.74},
+{name:"흑산도",stn:169,lat:34.69,lon:125.45},
+{name:"완도",stn:170,lat:34.39,lon:126.70},
+{name:"고창",stn:172,lat:35.35,lon:126.60},
+{name:"제주",stn:184,lat:33.51,lon:126.53},
+{name:"고산",stn:185,lat:33.29,lon:126.16},
+{name:"성산",stn:188,lat:33.39,lon:126.88},
+{name:"서귀포",stn:189,lat:33.25,lon:126.56},
+{name:"진주",stn:192,lat:35.16,lon:128.04}
 ];
+
 
 function findNearestStation(lat,lon){
  let nearest=STATIONS[0], min=999999;
