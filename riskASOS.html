@@ -56,6 +56,7 @@ z-index:9999;font-weight:bold;display:none;
 
 <script>
 window.KAKAO_REST_API_KEY="eaa5300f4046bfac8ce0355b1bd8cd88";
+window.KMA_SERVICE_KEY="95d712b220ef0de5456f52991cf20c56e594d492a68e3e58200038c9a2d9ebec";
 let manualTemp = false;
 let manualFeel = false;
 
@@ -195,68 +196,68 @@ const t=document.getElementById('toastMsg'); if(t){t.style.display='block';t.inn
 
 
 
-
 async function fetchKmaByGps(lat, lon){
-
   try{
-
-    const station = findNearestStation(lat, lon);
+    const grid = dfs_xy_conv(lat, lon);
 
     const now = new Date();
-    now.setMinutes(0,0,0);
+    now.setHours(now.getHours()-1);
 
-    const tm =
+    const baseDate =
       now.getFullYear() +
       String(now.getMonth()+1).padStart(2,'0') +
-      String(now.getDate()).padStart(2,'0') +
-      String(now.getHours()).padStart(2,'0') +
-      "00";
+      String(now.getDate()).padStart(2,'0');
+
+    const baseTime =
+      String(now.getHours()).padStart(2,'0') + '00';
 
     const url =
-      `https://apihub.kma.go.kr/api/typ01/url/kma_sfctm2.php`
-      + `?tm=${tm}`
-      + `&stn=${station.stn}`
-      + `&authKey=0oFfQOEiRXmBX0DhInV5eQ`;
+      `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst`
+      + `?pageNo=1&numOfRows=1000&dataType=JSON`
+      + `&base_date=${baseDate}`
+      + `&base_time=${baseTime}`
+      + `&nx=${grid.nx}`
+      + `&ny=${grid.ny}`
+      + `&serviceKey=${encodeURIComponent(window.KMA_SERVICE_KEY)}`;
 
-    const txt = await fetch(url).then(r=>r.text());
+    const res = await fetch(url);
+    if(!res.ok){ alert('KMA HTTP 오류 : ' + res.status); }
+    const json = await res.json();
+    console.log('KMA RAW', json);
+    alert('KMA resultCode : ' + (json?.response?.header?.resultCode || '없음'));
+    console.log('KMA URL', url);
+    console.log('KMA JSON', json);
 
-    const lines = txt.split('\n').filter(v => /^\d{12}/.test(v.trim()));
+    let temp=null, humidity=null, wind=null, rain=0;
 
-    if(!lines.length){
-      throw new Error('관측자료 없음');
+    const resultCode = json?.response?.header?.resultCode;
+    const resultMsg = json?.response?.header?.resultMsg;
+
+    if(resultCode && resultCode !== '00'){
+      console.error('KMA ERROR', resultCode, resultMsg);
+      return {temp:null, humidity:null, wind:null, rain:0, station:'API오류:'+resultCode};
     }
 
-    const row = lines[lines.length-1].trim().split(/\s+/);
+    const items = json?.response?.body?.items?.item || [];
+    console.log('KMA ITEMS COUNT', items.length);
+    if(items.length===0){
+      console.error('기상청 데이터 없음', json);
+    }
 
-    console.log("ASOS RAW =", row);
+    items.forEach(item=>{
+      const cat = item.category;
+      const val = item.obsrValue;
 
-    const temp = Number(row[11]);      // TA
-    const humidity = Number(row[13]);  // HM
-    const wind = Number(row[3]);       // WS
+      if(cat==="T1H") temp=parseFloat(val);
+      if(cat==="REH") humidity=parseFloat(val);
+      if(cat==="WSD") wind=parseFloat(val);
+      if(cat==="RN1") rain=parseFloat(val)||0;
+    });
 
-    let rain = Number(row[15]);        // RN
-    if(isNaN(rain) || rain < 0) rain = 0;
-
-    return {
-      temp: isNaN(temp) ? null : temp,
-      humidity: isNaN(humidity) ? null : humidity,
-      wind: isNaN(wind) ? null : wind,
-      rain: isNaN(rain) ? 0 : rain,
-      station: station.name
-    };
-
+    return {temp, humidity, wind, rain, station:'초단기실황'};
   }catch(err){
-
-    alert('ASOS 오류 : ' + err);
-    console.error('ASOS 조회 오류', err);
-
-    return {
-      temp:null,
-      humidity:null,
-      wind:null,
-      rain:0,
-      station:'조회실패'
-    };
+    console.error("UltraSrtNcst 오류",err);
+    return {temp:null, humidity:null, wind:null, rain:0, station:'조회실패'};
   }
 }
 
@@ -310,81 +311,13 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 /* ===== V8.2 Ultimate Weather Engine ===== */
 
-
 const STATIONS=[
 {name:"서울",stn:108,lat:37.57,lon:126.97},
-{name:"백령도",stn:102,lat:37.97,lon:124.63},
-{name:"동두천",stn:98,lat:37.90,lon:127.06},
-{name:"파주",stn:99,lat:37.89,lon:126.77},
-{name:"인천",stn:112,lat:37.48,lon:126.62},
-{name:"수원",stn:119,lat:37.27,lon:127.01},
-{name:"양평",stn:202,lat:37.49,lon:127.49},
-{name:"이천",stn:203,lat:37.26,lon:127.48},
-{name:"춘천",stn:101,lat:37.90,lon:127.74},
-{name:"철원",stn:95,lat:38.15,lon:127.30},
-{name:"원주",stn:114,lat:37.34,lon:127.95},
-{name:"인제",stn:211,lat:38.06,lon:128.17},
-{name:"홍천",stn:212,lat:37.68,lon:127.88},
-{name:"태백",stn:216,lat:37.17,lon:128.98},
-{name:"정선",stn:217,lat:37.38,lon:128.66},
-{name:"강릉",stn:105,lat:37.75,lon:128.89},
-{name:"동해",stn:106,lat:37.50,lon:129.12},
-{name:"속초",stn:90,lat:38.25,lon:128.56},
-{name:"대관령",stn:100,lat:37.68,lon:128.76},
-{name:"청주",stn:131,lat:36.64,lon:127.44},
-{name:"충주",stn:127,lat:36.97,lon:127.95},
-{name:"제천",stn:221,lat:37.14,lon:128.19},
-{name:"보은",stn:226,lat:36.49,lon:127.73},
-{name:"추풍령",stn:135,lat:36.22,lon:127.99},
-{name:"대전",stn:133,lat:36.35,lon:127.38},
-{name:"천안",stn:232,lat:36.78,lon:127.12},
-{name:"서산",stn:129,lat:36.78,lon:126.49},
-{name:"보령",stn:235,lat:36.33,lon:126.56},
-{name:"부여",stn:236,lat:36.27,lon:126.92},
-{name:"전주",stn:146,lat:35.82,lon:127.15},
-{name:"군산",stn:140,lat:35.98,lon:126.76},
-{name:"부안",stn:243,lat:35.73,lon:126.72},
-{name:"정읍",stn:245,lat:35.56,lon:126.85},
-{name:"남원",stn:247,lat:35.41,lon:127.38},
-{name:"광주",stn:156,lat:35.17,lon:126.89},
-{name:"목포",stn:165,lat:34.82,lon:126.38},
-{name:"흑산도",stn:169,lat:34.68,lon:125.45},
-{name:"완도",stn:170,lat:34.39,lon:126.70},
-{name:"여수",stn:168,lat:34.74,lon:127.74},
-{name:"순천",stn:174,lat:35.07,lon:127.24},
-{name:"고흥",stn:262,lat:34.61,lon:127.28},
-{name:"장흥",stn:260,lat:34.68,lon:126.91},
-{name:"해남",stn:261,lat:34.55,lon:126.57},
 {name:"대구",stn:143,lat:35.88,lon:128.65},
-{name:"포항",stn:138,lat:36.03,lon:129.38},
-{name:"안동",stn:136,lat:36.57,lon:128.71},
-{name:"상주",stn:137,lat:36.41,lon:128.16},
-{name:"울진",stn:130,lat:36.99,lon:129.41},
-{name:"영주",stn:272,lat:36.87,lon:128.52},
-{name:"문경",stn:273,lat:36.63,lon:128.15},
-{name:"봉화",stn:271,lat:36.89,lon:128.73},
-{name:"의성",stn:278,lat:36.35,lon:128.69},
-{name:"영덕",stn:277,lat:36.53,lon:129.41},
-{name:"청송",stn:276,lat:36.44,lon:129.06},
-{name:"구미",stn:279,lat:36.13,lon:128.32},
-{name:"영천",stn:281,lat:35.97,lon:128.94},
 {name:"부산",stn:159,lat:35.10,lon:129.03},
-{name:"울산",stn:152,lat:35.56,lon:129.32},
-{name:"창원",stn:155,lat:35.17,lon:128.57},
-{name:"통영",stn:162,lat:34.85,lon:128.43},
-{name:"거제",stn:294,lat:34.89,lon:128.60},
-{name:"진주",stn:192,lat:35.16,lon:128.04},
-{name:"밀양",stn:288,lat:35.49,lon:128.74},
-{name:"합천",stn:285,lat:35.57,lon:128.17},
-{name:"거창",stn:284,lat:35.67,lon:127.91},
-{name:"산청",stn:289,lat:35.41,lon:127.88},
-{name:"남해",stn:295,lat:34.81,lon:127.93},
-{name:"제주",stn:184,lat:33.51,lon:126.53},
-{name:"고산",stn:185,lat:33.29,lon:126.16},
-{name:"성산",stn:188,lat:33.39,lon:126.88},
-{name:"서귀포",stn:189,lat:33.25,lon:126.56}
+{name:"광주",stn:156,lat:35.17,lon:126.89},
+{name:"대전",stn:133,lat:36.35,lon:127.38}
 ];
-
 
 function findNearestStation(lat,lon){
  let nearest=STATIONS[0], min=999999;
