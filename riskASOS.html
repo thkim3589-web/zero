@@ -109,6 +109,7 @@ async function v11AutoFill(){
    const acc=Math.round(p.coords.accuracy||0);
    if(status) status.textContent='GPS 성공 / 주소 조회중...'; const addr=await reverseGeocode(lat,lon);
    const station=findNearestStation(lat,lon);
+    const stationDist=distanceKm(lat,lon,station.lat,station.lon).toFixed(1);
    if(status) status.textContent='주소 성공 / 날씨 조회중...'; const weather=await fetchKmaByGps(lat,lon);
    const temp=(weather.temp==null||weather.temp==='-'||isNaN(weather.temp))?null:Number(weather.temp);
    const hum=(weather.humidity==null||weather.humidity==='-'||isNaN(weather.humidity))?null:Number(weather.humidity);
@@ -180,7 +181,11 @@ gpsAcc.style.color=(acc<=10?'#0a8f08':acc<=30?'#ff9800':'#d32f2f');
    if(status){
 const tempText=(temp===null?'-':Number(temp).toFixed(1));
 const feelText=(feel==='-'?'-':Number(feel).toFixed(1));
-status.innerHTML='📍'+addr.split(' ').slice(-2).join(' ')+' &nbsp; 📡'+acc+'m &nbsp; 🏢'+station.name+'('+station.stn+')'+'<br><br>🌡 <span class="temp-num">'+tempText+'℃</span> &nbsp; 🤒 <span class="temp-num">'+feelText+'℃</span> &nbsp; 💧'+(hum??'-')+'% &nbsp; 🌬'+(wind??'-')+'m/s &nbsp; 🌧'+rain+'mm';
+status.innerHTML='📍'+addr.split(' ').slice(-2).join(' ')
++'<br>📡 GPS ±'+acc+'m'
++'<br>🏢 ASOS '+station.name+'('+station.stn+')'
++'<br>📏 '+stationDist+'km'
++'<br><br>🌡 <span class="temp-num">'+tempText+'℃</span> &nbsp; 🤒 <span class="temp-num">'+feelText+'℃</span> &nbsp; 💧'+(hum??'-')+'% &nbsp; 🌬'+(wind??'-')+'m/s &nbsp; 🌧'+rain+'mm';
 }
 const t=document.getElementById('toastMsg'); if(t){t.style.display='block';t.innerText='현장정보 갱신 완료';setTimeout(()=>t.style.display='none',2000);}
     if(navigator.vibrate){navigator.vibrate([80,40,80]);}
@@ -344,6 +349,14 @@ const STATIONS=[
 {name:"진주",stn:192,lat:35.16,lon:128.04}
 ];
 
+
+function distanceKm(lat1, lon1, lat2, lon2){
+  const R=6371;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
 
 function findNearestStation(lat,lon){
  let nearest=STATIONS[0], min=999999;
