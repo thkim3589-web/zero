@@ -32,7 +32,7 @@ summary { font-weight:bold; cursor:pointer; padding:5px 0; }
 .missing { background:#fff3cd !important; border:1px solid #ff8c00 !important; }
 details.missing-section { border:2px solid #ff8c00; background:#fff8e1; }
 details.missing-section > summary { color:#cc4400; }
-.iphone-notice { font-size:12px; color:#d9534f; text-align:center; margin:10px 0; }
+.iphone-notice { font-size:13px; color:#d9534f; text-align:center; margin:10px 0; }
 .save-btn { background:#007bff; color:#fff; padding:12px; border:none; border-radius:4px; font-weight:bold; cursor:pointer; }
 #result-container { margin-top:20px; width:100%; text-align:center; }
 #final-image { width:100%; height:auto; border:2px solid #333; border-radius:4px; box-shadow:0 4px 10px rgba(0,0,0,0.2); }
@@ -109,7 +109,6 @@ async function v11AutoFill(){
    const acc=Math.round(p.coords.accuracy||0);
    if(status) status.textContent='GPS 성공 / 주소 조회중...'; const addr=await reverseGeocode(lat,lon);
    const station=findNearestStation(lat,lon);
-    const stationDist=distanceKm(lat,lon,station.lat,station.lon).toFixed(1);
    if(status) status.textContent='주소 성공 / 날씨 조회중...'; const weather=await fetchKmaByGps(lat,lon);
    const temp=(weather.temp==null||weather.temp==='-'||isNaN(weather.temp))?null:Number(weather.temp);
    const hum=(weather.humidity==null||weather.humidity==='-'||isNaN(weather.humidity))?null:Number(weather.humidity);
@@ -181,11 +180,7 @@ gpsAcc.style.color=(acc<=10?'#0a8f08':acc<=30?'#ff9800':'#d32f2f');
    if(status){
 const tempText=(temp===null?'-':Number(temp).toFixed(1));
 const feelText=(feel==='-'?'-':Number(feel).toFixed(1));
-status.innerHTML='📍'+addr.split(' ').slice(-2).join(' ')
-+'<br>📡 GPS ±'+acc+'m'
-+'<br>🏢 ASOS '+station.name+'('+station.stn+')'
-+'<br>📏 '+stationDist+'km'
-+'<br><br>🌡 <span class="temp-num">'+tempText+'℃</span> &nbsp; 🤒 <span class="temp-num">'+feelText+'℃</span> &nbsp; 💧'+(hum??'-')+'% &nbsp; 🌬'+(wind??'-')+'m/s &nbsp; 🌧'+rain+'mm';
+status.innerHTML='📍'+addr.split(' ').slice(-2).join(' ')+' &nbsp; 📡'+acc+'m &nbsp; 🏢'+station.name+'('+station.stn+')'+'<br><br>🌡 <span class="temp-num">'+tempText+'℃</span> &nbsp; 🤒 <span class="temp-num">'+feelText+'℃</span> &nbsp; 💧'+(hum??'-')+'% &nbsp; 🌬'+(wind??'-')+'m/s &nbsp; 🌧'+rain+'mm';
 }
 const t=document.getElementById('toastMsg'); if(t){t.style.display='block';t.innerText='현장정보 갱신 완료';setTimeout(()=>t.style.display='none',2000);}
     if(navigator.vibrate){navigator.vibrate([80,40,80]);}
@@ -350,14 +345,6 @@ const STATIONS=[
 ];
 
 
-function distanceKm(lat1, lon1, lat2, lon2){
-  const R=6371;
-  const dLat=(lat2-lat1)*Math.PI/180;
-  const dLon=(lon2-lon1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-
 function findNearestStation(lat,lon){
  let nearest=STATIONS[0], min=999999;
  STATIONS.forEach(s=>{
@@ -429,7 +416,7 @@ function updateWeatherAlert(feel, wind, rain){
 
 <div style="background:#e8f4ff;padding:12px;margin:8px 0;border-radius:12px;border-left:5px solid #1976d2;">
 <b>최근접 관측소 정보</b><br>
-<span id="gpsStatus" style="display:block;padding:12px;background:#ffffff;border-radius:10px;font-weight:bold;color:#333;line-height:1.8;font-size:12px;font-weight:600;line-height:1.5;letter-spacing:-0.5px !important;word-spacing:0 !important;font-variant-numeric:normal;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">조회 대기중...</span><br>
+<span id="gpsStatus" style="display:block;padding:12px;background:#ffffff;border-radius:10px;font-weight:bold;color:#333;line-height:1.8;font-size:13px;font-weight:600;line-height:1.5;letter-spacing:-0.5px !important;word-spacing:0 !important;font-variant-numeric:normal;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">조회 대기중...</span><br>
 <button id="refreshBtn" style="width:100%;height:52px;border:none;border-radius:12px;background:linear-gradient(135deg,#1976d2,#0d47a1);color:#fff;font-size:16px;font-weight:700;">📍 현장정보 갱신</button>
 </div>
 
@@ -460,7 +447,7 @@ function updateWeatherAlert(feel, wind, rain){
     <label><input type="checkbox" value="weather_cold" onchange="generateImage()"> 한파</label>
   </div>
   <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" placeholder="수동입력" oninput="generateImage()"></label>
-  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" placeholder="수동입력" oninput="generateImage()"></label><button type="button" onclick="resetWeatherInput()" style="width:100%;height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#607d8b,#455a64);color:#fff;font-size:15px;font-weight:700;margin-top:8px;">↺ 자동값 복원</button><div id="weather_update_time" style="font-size:12px;color:#666;">관측소 : 대기중</div>
+  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" placeholder="수동입력" oninput="generateImage()"></label><button type="button" onclick="resetWeatherInput()" style="width:100%;height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#607d8b,#455a64);color:#fff;font-size:15px;font-weight:700;margin-top:8px;">↺ 자동값 복원</button><div id="weather_update_time" style="font-size:13px;color:#666;">관측소 : 대기중</div>
 </details>
 
 <details>
@@ -656,7 +643,7 @@ function updateWeatherAlert(feel, wind, rain){
 </details>
 
 <details id="sec_boom">
-  <summary>차량탑재형 고소작업대 <span style="color:red">*</span> <span style="font-weight:normal;font-size:12px;color:#888;">(C3 리프트 작업 시 필수)</span></summary>
+  <summary>차량탑재형 고소작업대 <span style="color:red">*</span> <span style="font-weight:normal;font-size:13px;color:#888;">(C3 리프트 작업 시 필수)</span></summary>
     <div class="checkbox-group">
       <label><input type="checkbox" value="boom1" onchange="generateImage()"> ① 안전장치 부착 및 작동 유무 확인 ※ 비상정지장치 버튼 작동 확인</label>
       <label><input type="checkbox" value="boom2" onchange="generateImage()"> ② 아웃트리거 최대 확장 설치</label>
