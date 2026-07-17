@@ -180,7 +180,16 @@ gpsAcc.style.color=(acc<=10?'#0a8f08':acc<=30?'#ff9800':'#d32f2f');
    if(status){
 const tempText=(temp===null?'-':Number(temp).toFixed(1));
 const feelText=(feel==='-'?'-':Number(feel).toFixed(1));
-status.innerHTML='📍'+addr.split(' ').slice(-2).join(' ')+' &nbsp; 📡'+acc+'m &nbsp; 🏢'+station.name+'('+station.stn+')'+'<br><br>🌡 <span class="temp-num">'+tempText+'℃</span> &nbsp; 🤒 <span class="temp-num">'+feelText+'℃</span> &nbsp; 💧'+(hum??'-')+'% &nbsp; 🌬'+(wind??'-')+'m/s &nbsp; 🌧'+rain+'mm';
+const distKm=(station.distance||0).toFixed(1);
+status.innerHTML='📍 '+addr.split(' ').slice(-2).join(' ')
++' · 📡'+acc+'m'
++' · 🏢ASOS '+station.name+'('+station.stn+')'
++' · 📏'+distKm+'km'
++'<br><br>🌡 <span class="temp-num">'+tempText+'℃</span>'
++' · 🤒 <span class="temp-num">'+feelText+'℃</span>'
++' · 💧'+(hum??'-')+'%'
++' · 🌬'+(wind??'-')+'m/s'
++' · 🌧'+rain+'mm';
 }
 const t=document.getElementById('toastMsg'); if(t){t.style.display='block';t.innerText='현장정보 갱신 완료';setTimeout(()=>t.style.display='none',2000);}
     if(navigator.vibrate){navigator.vibrate([80,40,80]);}
@@ -346,12 +355,12 @@ const STATIONS=[
 
 
 function findNearestStation(lat,lon){
- let nearest=STATIONS[0], min=999999;
+ let nearest=null,min=999999;
  STATIONS.forEach(s=>{
-   const d=Math.hypot(lat-s.lat,lon-s.lon);
-   if(d<min){min=d; nearest=s;}
+   const d=Math.hypot(lat-s.lat,lon-s.lon)*111;
+   if(d<min){min=d;nearest=s;}
  });
- return nearest;
+ return {...nearest,distance:min};
 }
 
 function dfs_xy_conv(lat, lon){
