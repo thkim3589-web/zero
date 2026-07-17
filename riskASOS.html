@@ -391,7 +391,7 @@ function updateWeatherAlert(feel, wind, rain){
   const msg=[];
   if(feel>=35) msg.push("폭염 주의");
   if(wind>=10) msg.push("강풍 주의");
-  if(rain>0) msg.push("강수 중");
+  if(rain>0) msg.push("");
   box.textContent=msg.join(" / ");
 }
 
