@@ -392,9 +392,6 @@ const STATIONS=[
 const AWS_STATIONS=[
 {name:"안면도(감)",stn:12,lat:36.5333,lon:126.3167},
 {name:"독도",stn:96,lat:37.2395,lon:131.8698},
-{name:"관악(레)",stn:116,lat:37.4453,lon:126.964},
-{name:"부산(레)",stn:160,lat:35.1188,lon:129},
-{name:"진도(레)",stn:175,lat:34.4721,lon:126.3238},
 {name:"북격렬비도",stn:229,lat:36.6254,lon:125.5595},
 {name:"북부산",stn:296,lat:35.2178,lon:128.9602},
 {name:"말도",stn:300,lat:35.858,lon:126.3151},
@@ -451,7 +448,6 @@ const AWS_STATIONS=[
 {name:"구로",stn:423,lat:37.494,lon:126.827},
 {name:"강북",stn:424,lat:37.6397,lon:127.0258},
 {name:"남현",stn:425,lat:37.4634,lon:126.9855},
-{name:"백령(레)",stn:426,lat:37.9661,lon:124.6305},
 {name:"김포장기",stn:427,lat:37.6428,lon:126.6734},
 {name:"송악",stn:493,lat:36.7227,lon:127.004},
 {name:"세종고운",stn:494,lat:36.5315,lon:127.2406},
@@ -909,17 +905,28 @@ function distanceKm(lat1,lon1,lat2,lon2){
  Math.sin(dLon/2)**2;
  return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
+
 function findNearestStation(lat,lon){
- let nearest=null,min=1e9;
- (typeof ALL_STATIONS!=="undefined"?ALL_STATIONS:STATIONS).forEach(s=>{
-   const d=distanceKm(lat,lon,s.lat,s.lon);
-   if(d<min){
-      min=d;
-      nearest=s;
-   }
- });
- return {...nearest,distance:min};
+  const dist=(a,b,c,d)=>{
+    const R=6371;
+    const toRad=x=>x*Math.PI/180;
+    const dLat=toRad(c-a), dLon=toRad(d-b);
+    const aa=Math.sin(dLat/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2;
+    return R*2*Math.atan2(Math.sqrt(aa),Math.sqrt(1-aa));
+  };
+  let bestASOS=null,bestAWS=null;
+  STATIONS.forEach(s=>{
+    const km=dist(lat,lon,s.lat,s.lon);
+    if(!bestASOS||km<bestASOS.distance) bestASOS={...s,distance:km};
+  });
+  AWS_STATIONS.forEach(s=>{
+    const km=dist(lat,lon,s.lat,s.lon);
+    if(!bestAWS||km<bestAWS.distance) bestAWS={...s,distance:km};
+  });
+  if(bestASOS && bestASOS.distance<=10) return bestASOS;
+  return bestAWS||bestASOS;
 }
+
 
 function dfs_xy_conv(lat, lon){
  const RE=6371.00877, GRID=5.0, SLAT1=30.0, SLAT2=60.0;
