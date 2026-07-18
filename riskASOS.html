@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>현장 위험성 평가표(전송) 작성</title>
+<title>현장 위험성 평가표(전송) 작성 V22</title>
 <style>
 body { font-family: -apple-system, sans-serif; padding: 10px; max-width: 480px; margin: auto; background:#f8f9fa; }
 .form { display:flex; flex-direction:column; gap:10px; background:#fff; padding:15px; border-radius:8px; }
@@ -60,17 +60,33 @@ window.KMA_SERVICE_KEY="95d712b220ef0de5456f52991cf20c56e594d492a68e3e58200038c9
 let manualTemp = false;
 let manualFeel = false;
 
-function calculateFeelTemperature(temp, humidity, wind){
-  temp=Number(temp)||0;
-  humidity=Number(humidity)||0;
-  wind=Number(wind)||0;
-  let feel=temp;
-  if(temp >= 27){
-    /* 체감온도 편차 축소 */
-    feel = temp + (humidity-40)*0.03 - wind*0.10;
+function calculateKmaFeelTemperature(temp, humidity, wind){
+  temp=Number(temp);
+  humidity=Number(humidity);
+  wind=Number(wind);
+  if(isNaN(temp)||isNaN(humidity)||isNaN(wind)) return null;
+
+  // 겨울 체감온도(풍속)
+  if(temp<=10 && wind>=1.3){
+    const v=wind*3.6;
+    const w=13.12+0.6215*temp-11.37*Math.pow(v,0.16)+0.3965*temp*Math.pow(v,0.16);
+    return Math.round(w*10)/10;
   }
-  feel = Math.max(temp-5, Math.min(temp+8, feel));
-  return Math.round(feel*10)/10;
+
+  // 여름 열지수(기상청 운용 기준과 유사)
+  if(temp>=26.5 && humidity>=40){
+    const T=temp*9/5+32;
+    const R=humidity;
+    let HI=-42.379+2.04901523*T+10.14333127*R-0.22475541*T*R
+      -0.00683783*T*T-0.05481717*R*R
+      +0.00122874*T*T*R+0.00085282*T*R*R
+      -0.00000199*T*T*R*R;
+    const c=(HI-32)*5/9;
+    return Math.round(c*10)/10;
+  }
+
+  // 봄/가을은 실제 기온을 체감온도로 사용
+  return Math.round(temp*10)/10;
 }
 
 
@@ -114,7 +130,7 @@ async function v11AutoFill(){
    const hum=(weather.humidity==null||weather.humidity==='-'||isNaN(weather.humidity))?null:Number(weather.humidity);
    const wind=(weather.wind==null||weather.wind==='-'||isNaN(weather.wind))?null:Number(weather.wind);
    
-const feel=(temp===null)?'-':calculateFeelTemperature(temp,hum,wind);
+const feel=(temp===null)?'-':calculateKmaFeelTemperature(temp,hum,wind);
 const rain=Number(weather.rain||0);
 
 const el=(id)=>document.getElementById(id);
@@ -135,7 +151,7 @@ if(clearBox) clearBox.checked=rain===0;
 if(rainBox) rainBox.checked=rain>0;
 if(hotBox) hotBox.checked=temp>=35;
 if(coldBox) coldBox.checked=temp<=0;
-if(windBox) windBox.checked=wind>=8;
+if(windBox) windBox.checked=wind>=10;
 
 
    const rt=document.getElementById('real_temperature');
@@ -985,7 +1001,7 @@ function updateWeatherAlert(feel, wind, rain){
 <div id="weatherAlert" style="font-weight:bold;color:red;"></div>
 
 
-<h2>현장 위험성 평가표(전송) 작성</h2>
+<h2>현장 위험성 평가표(전송) 작성 V22</h2>
 <div class="form">
 
 <div style="background:#e8f4ff;padding:12px;margin:8px 0;border-radius:12px;border-left:5px solid #1976d2;">
