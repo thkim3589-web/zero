@@ -877,7 +877,7 @@ function distanceKm(lat1,lon1,lat2,lon2){
 }
 function findNearestStation(lat,lon){
  let nearest=null,min=1e9;
- ALL_STATIONS.forEach(s=>{
+ ALL_(typeof ALL_STATIONS!=="undefined"?ALL_STATIONS:STATIONS).forEach(s=>{
    const d=distanceKm(lat,lon,s.lat,s.lon);
    if(d<min){min=d;nearest=s;}
  });
