@@ -1504,6 +1504,39 @@ const KMA_AUTH_KEY = "0oFfQOEiRXmBX0DhInV5eQ";
 }
 </script>
 
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const btn=document.getElementById('refreshBtn');
+  async function startGPS(){
+    const status=document.getElementById('gpsStatus');
+    if(!navigator.geolocation){
+      status.textContent='이 브라우저는 위치 서비스를 지원하지 않습니다.';
+      return;
+    }
+    status.textContent='GPS 조회중...';
+    navigator.geolocation.getCurrentPosition(function(pos){
+      const lat=pos.coords.latitude;
+      const lon=pos.coords.longitude;
+      try{
+        if(typeof findNearestStation==='function'){
+          const s=findNearestStation(lat,lon);
+          status.innerHTML=`현재위치<br>최근접 관측소 : <b>${s.name}</b> (STN ${s.stn})<br>거리 : ${s.distance.toFixed(1)} km`;
+        }else{
+          status.textContent=`위치: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        }
+      }catch(e){
+        status.textContent='관측소 검색 오류: '+e.message;
+      }
+    },function(err){
+      status.textContent='GPS 실패: '+err.message;
+    },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
+  }
+  if(btn) btn.addEventListener('click',startGPS);
+  setTimeout(startGPS,500);
+});
+</script>
+
 </body>
 </html>
 
