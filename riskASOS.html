@@ -1537,9 +1537,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 
-</body>
-</html>
-
 <script>
 window.parseKmaText=function(txt){
  const lines=txt.split('\n');
@@ -1555,3 +1552,5 @@ window.parseKmaText=function(txt){
  return {temp:parseFloat(cols[headers.indexOf('TA')]),humidity:parseFloat(cols[headers.indexOf('HM')]),wind:parseFloat(cols[headers.indexOf('WS')]),rain:parseFloat(cols[headers.indexOf('RN')])||0};
 };
 </script>
+</body>
+</html>
