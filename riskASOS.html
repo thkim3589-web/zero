@@ -80,294 +80,45 @@ async function reverseGeocode(lat, lon){
     const res=await fetch(url,{headers:{Authorization:`KakaoAK ${window.KAKAO_REST_API_KEY}`}});
     const data=await res.json();
     if(!data.documents?.length) return `GPS(${lat.toFixed(5)}, ${lon.toFixed(5)})`;
-    const doc=data.documents[0];
-    const road=doc.road_address?.address_name||"";
-    const jibun=doc.address?.address_name||"";
-
-    if(jibun){
-      return jibun;
-    }
-
-    if(road){
-      return road;
-    }
-
-    return `GPS(${lat.toFixed(5)}, ${lon.toFixed(5)})`;
-  }catch(e){
-    return `GPS(${lat.toFixed(5)}, ${lon.toFixed(5)})`;
-  }
-}
-
-// getWeatherSafe 제거
-
-
-async function v11AutoFill(){
- const status=document.getElementById('gpsStatus');
- if(status) status.textContent='GPS 조회중...'; console.log('GPS 시작');
- navigator.geolocation.getCurrentPosition(async p=>{
-   const lat=p.coords.latitude, lon=p.coords.longitude;
-   const acc=Math.round(p.coords.accuracy||0);
-   if(status) status.textContent='GPS 성공 / 주소 조회중...'; const addr=await reverseGeocode(lat,lon);
-   const station=findNearestStation(lat,lon);
-   if(status) status.textContent='주소 성공 / 날씨 조회중...'; const weather=await fetchKmaByGps(lat,lon);
-   const temp=(weather.temp==null||weather.temp==='-'||isNaN(weather.temp))?null:Number(weather.temp);
-   const hum=(weather.humidity==null||weather.humidity==='-'||isNaN(weather.humidity))?null:Number(weather.humidity);
-   const wind=(weather.wind==null||weather.wind==='-'||isNaN(weather.wind))?null:Number(weather.wind);
-   
-const feel=(temp===null)?'-':calculateFeelTemperature(temp,hum,wind);
-const rain=Number(weather.rain||0);
-
-const el=(id)=>document.getElementById(id);
-
-if(el('cardTemp')) el('cardTemp').innerHTML=temp>=35?'🔴 '+temp.toFixed(1)+'℃':temp>=30?'🟠 '+temp.toFixed(1)+'℃':'🟢 '+temp.toFixed(1)+'℃';
-if(el('cardFeel')) el('cardFeel').innerHTML=feel>=35?'🔴 '+feel+'℃':feel>=30?'🟠 '+feel+'℃':'🟢 '+feel+'℃';
-if(el('cardHum')) el('cardHum').textContent=hum+'%';
-if(el('cardWind')) el('cardWind').textContent=wind+'m/s';
-if(el('cardRain')) el('cardRain').textContent=rain+'mm';
-
-const clearBox=document.querySelector('input[value="weather_clear"]');
-const rainBox=document.querySelector('input[value="weather_rain"]');
-const hotBox=document.querySelector('input[value="weather_hot"]');
-const coldBox=document.querySelector('input[value="weather_cold"]');
-const windBox=document.querySelector('input[value="weather_wind"]');
-
-if(clearBox) clearBox.checked=rain===0;
-if(rainBox) rainBox.checked=rain>0;
-if(hotBox) hotBox.checked=temp>=35;
-if(coldBox) coldBox.checked=temp<=0;
-if(windBox) windBox.checked=wind>=8;
-
-
-   const rt=document.getElementById('real_temperature');
-   const ft=document.getElementById('fake_temperature');
-   if(rt) rt.value=(temp===null?'-':temp+'℃');
-   if(ft) ft.value=(feel==='-'?'-':feel+'℃');
-
-   
-    const startEl=document.getElementById('start_date');
-    const endEl=document.getElementById('end_date');
-    if(startEl && endEl){
-      const nowDt=new Date();
-      const endDt=new Date(nowDt.getTime()+2*60*60*1000);
-      const fmt=(d)=>{
-        const p=(n)=>String(n).padStart(2,'0');
-        return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
-      };
-      startEl.value=fmt(nowDt);
-      endEl.value=fmt(endDt);
-    }
-
-
-const loc=document.getElementById('location');
-   if(loc) loc.value=addr;
-
-   const gpsAcc=document.getElementById('gpsAccuracy');
-   if(gpsAcc){
-gpsAcc.textContent='GPS 정확도 : '+acc+'m';
-gpsAcc.style.color=(acc<=10?'#0a8f08':acc<=30?'#ff9800':'#d32f2f');
-}
-
-   const rainInfo=document.getElementById('rainInfo');
-   if(rainInfo) rainInfo.textContent='강수량 : '+(weather.rain||0)+' mm';
-
-   const upd=document.getElementById('weather_update_time');
-   if(upd) upd.innerHTML='관측소 : '+station.name+'('+station.stn+')';
-
-   autoCheckRain(weather.rain||0);
-   autoCheckWeather(temp,wind);
-   updateWeatherAlert(feel,wind,weather.rain||0);
-
-   if(status){
-const tempText=(temp===null?'-':Number(temp).toFixed(1));
-const feelText=(feel==='-'?'-':Number(feel).toFixed(1));
-const distKm=(station.distance||0).toFixed(1);
-status.innerHTML='📍 '+addr.split(' ').slice(-2).join(' ')
-+' · 📡'+acc+'m'
-+' · 🏢'+(station.stn>=300?'AWS':'ASOS')+' '+station.name+'('+station.stn+')'
-+' · 📏'+distKm+'km'
-+'<br><br>🌡 <span class="temp-num">'+tempText+'℃</span>'
-+' · 🤒 <span class="temp-num">'+feelText+'℃</span>'
-+' · 💧'+(hum??'-')+'%'
-+' · 🌬'+(wind??'-')+'m/s'
-+' · 🌧'+rain+'mm';
-}
-const t=document.getElementById('toastMsg'); if(t){t.style.display='block';t.innerText='현장정보 갱신 완료';setTimeout(()=>t.style.display='none',2000);}
-    if(navigator.vibrate){navigator.vibrate([80,40,80]);}
- },()=>{
-    if(status) status.textContent='❌ 위치 권한 허용 필요';
-    if(navigator.vibrate){navigator.vibrate([300,100,300]);}
-    },
- {enableHighAccuracy:true,timeout:15000,maximumAge:0});
-}
-
-
-// 백업 dfs_xy_conv 제거
-
-
-
-async function fetchKmaByGps(lat, lon){
-  try{
-    const grid = dfs_xy_conv(lat, lon);
-
-    const now = new Date();
-    now.setHours(now.getHours()-1);
-
-    const baseDate =
-      now.getFullYear() +
-      String(now.getMonth()+1).padStart(2,'0') +
-      String(now.getDate()).padStart(2,'0');
-
-    const baseTime =
-      String(now.getHours()).padStart(2,'0') + '00';
-
-    const url =
-      `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst`
-      + `?pageNo=1&numOfRows=1000&dataType=JSON`
-      + `&base_date=${baseDate}`
-      + `&base_time=${baseTime}`
-      + `&nx=${grid.nx}`
-      + `&ny=${grid.ny}`
-      + `&serviceKey=${encodeURIComponent(window.KMA_SERVICE_KEY)}`;
-
-    const res = await fetch(url);
-    const json = await res.json();
-    console.log('KMA URL', url);
-    console.log('KMA JSON', json);
-
-    let temp=null, humidity=null, wind=null, rain=0;
-
-    const resultCode = json?.response?.header?.resultCode;
-    const resultMsg = json?.response?.header?.resultMsg;
-
-    if(resultCode && resultCode !== '00'){
-      console.error('KMA ERROR', resultCode, resultMsg);
-      return {temp:null, humidity:null, wind:null, rain:0, station:'API오류:'+resultCode};
-    }
-
-    const items = json?.response?.body?.items?.item || [];
-    console.log('KMA ITEMS COUNT', items.length);
-    if(items.length===0){
-      console.error('기상청 데이터 없음', json);
-    }
-
-    items.forEach(item=>{
-      const cat = item.category;
-      const val = item.obsrValue;
-
-      if(cat==="T1H") temp=parseFloat(val);
-      if(cat==="REH") humidity=parseFloat(val);
-      if(cat==="WSD") wind=parseFloat(val);
-      if(cat==="RN1") rain=parseFloat(val)||0;
-    });
-
-    return {temp, humidity, wind, rain, station:'초단기실황'};
-  }catch(err){
-    console.error("UltraSrtNcst 오류",err);
-    return {temp:null, humidity:null, wind:null, rain:0, station:'조회실패'};
-  }
-}
-
-
-
-function autoCheckRain(rain){
-  const rainBox=document.querySelector('input[value="weather_rain"]');
-  if(rainBox) rainBox.checked = rain > 0;
-}
-
-function autoCheckWeather(temp, wind){
-  const hot=document.querySelector('input[value="weather_hot"]');
-  const cold=document.querySelector('input[value="weather_cold"]');
-  const strong=document.querySelector('input[value="weather_wind"]');
-
-  if(hot) hot.checked = Number(temp) >= 35;
-  if(cold) cold.checked = Number(temp) <= 0;
-  if(strong) strong.checked = Number(wind) >= 10;
-}
-
-
-window.addEventListener('load',()=>setTimeout(v11AutoFill,1000));
-document.addEventListener('DOMContentLoaded',()=>setTimeout(v11AutoFill,1500));
-document.addEventListener('DOMContentLoaded',()=>{
- const rt=document.getElementById('real_temperature');
- const ft=document.getElementById('fake_temperature');
- if(rt){rt.addEventListener('input',()=>{manualTemp=true;});}
- if(ft){ft.addEventListener('input',()=>{manualFeel=true;});}
-});
-function resetWeatherInput(){
- manualTemp=false;
- manualFeel=false;
- v11AutoFill();
-}
-
-
-
-document.addEventListener('DOMContentLoaded',()=>{
- const btn=document.getElementById('refreshBtn');
- if(btn){
-   btn.addEventListener('click', async ()=>{
-      if(navigator.vibrate){navigator.vibrate(80);}
-     const status=document.getElementById('gpsStatus');
-     if(status) status.textContent='위치·주소·날씨 조회중...';
-     if(typeof v11AutoFill==='function'){
-       await v11AutoFill();
-     }
-   });
- }
-});
-
-/* ===== V8.2 Ultimate Weather Engine ===== */
-
-
-const STATIONS=[
-{name:"속초",stn:90,lat:38.25,lon:128.56},
-{name:"북춘천",stn:93,lat:37.95,lon:127.75},
-{name:"철원",stn:95,lat:38.15,lon:127.30},
-{name:"대관령",stn:100,lat:37.68,lon:128.72},
-{name:"춘천",stn:101,lat:37.90,lon:127.73},
-{name:"강릉",stn:105,lat:37.75,lon:128.89},
-{name:"서울기상관측소",stn:108,lat:37.57,lon:126.97},
-{name:"인천",stn:112,lat:37.48,lon:126.63},
-{name:"원주",stn:114,lat:37.34,lon:127.95},
-{name:"수원",stn:119,lat:37.27,lon:127.01},
-{name:"충주",stn:127,lat:36.97,lon:127.95},
-{name:"청주",stn:131,lat:36.64,lon:127.44},
-{name:"대전기상대",stn:133,lat:36.35,lon:127.38},
-{name:"추풍령",stn:135,lat:36.22,lon:128.00},
-{name:"안동",stn:136,lat:36.57,lon:128.71},
-{name:"포항",stn:138,lat:36.03,lon:129.38},
-{name:"군산",stn:140,lat:36.0053,lon:126.76135},
-{name:"대구기상대",stn:143,lat:35.88,lon:128.65},
-{name:"전주",stn:146,lat:35.82,lon:127.15},
-{name:"울산",stn:152,lat:35.56,lon:129.32},
-{name:"광주기상대",stn:156,lat:35.17,lon:126.89},
-{name:"부산기상관측소",stn:159,lat:35.10,lon:129.03},
-{name:"목포",stn:165,lat:34.82,lon:126.38},
-{name:"여수",stn:168,lat:34.74,lon:127.74},
-{name:"흑산도",stn:169,lat:34.69,lon:125.45},
-{name:"완도",stn:170,lat:34.39,lon:126.70},
-{name:"고창",stn:172,lat:35.34824,lon:126.59900},
-{name:"제주",stn:184,lat:33.51411,lon:126.52969},
-{name:"고산",stn:185,lat:33.29382,lon:126.16283},
-{name:"성산",stn:188,lat:33.38677,lon:126.88020},
-{name:"서귀포",stn:189,lat:33.24616,lon:126.56630},
-{name:"진주",stn:192,lat:35.16,lon:128.04}
-,
-{name:"부안",stn:243,lat:35.72961,lon:126.71657},
-{name:"임실",stn:244,lat:35.61203,lon:127.28556},
-{name:"남원",stn:247,lat:35.42130,lon:127.39652},
-{name:"고창군",stn:251,lat:35.42346,lon:126.69231},
-{name:"순창군",stn:254,lat:35.37131,lon:127.12860}];
-
-
+    const doc=data.documents[0,
+,stn:203,lat:37.26399,lon:127.48421},
+{name:"양평",stn:202,lat:37.48863,lon:127.49446},
+{name:"홍천",stn:212,lat:37.68360,lon:127.88043},
+{name:"태백",stn:216,lat:37.17038,lon:128.98929},
+{name:"제천",stn:221,lat:37.15927,lon:128.19432},
+{name:"보은",stn:226,lat:36.48761,lon:127.73415},
+{name:"추풍령",stn:135,lat:36.22025,lon:127.99458},
+{name:"서산",stn:129,lat:36.77656,lon:126.49391},
+{name:"장수",stn:248,lat:35.65696,lon:127.52031},
+{name:"완도",stn:170,lat:34.39590,lon:126.70182},
+{name:"진도",stn:175,lat:34.47211,lon:126.32380},
+{name:"해남",stn:261,lat:34.55375,lon:126.56907},
+{name:"장흥",stn:260,lat:34.68886,lon:126.91951},
+{name:"고흥",stn:262,lat:34.61826,lon:127.27572},
+{name:"강진",stn:259,lat:34.64464,lon:126.78405},
+{name:"문경",stn:273,lat:36.62727,lon:128.14879},
+{name:"의성",stn:278,lat:36.35610,lon:128.68862},
+{name:"영주",stn:272,lat:36.87183,lon:128.51687},
+{name:"영천",stn:281,lat:35.97742,lon:128.95140},
+{name:"봉화",stn:271,lat:36.94361,lon:128.91449},
+{name:"울진",stn:130,lat:36.99176,lon:129.41278},
+{name:"울릉",stn:115,lat:37.48129,lon:130.89863},
+{name:"밀양",stn:288,lat:35.49147,lon:128.74412},
+{name:"산청",stn:289,lat:35.41300,lon:127.87910},
+{name:"거창",stn:284,lat:35.66739,lon:127.90990},
+{name:"합천",stn:285,lat:35.56505,lon:128.16994},
+{name:"남해",stn:295,lat:34.81662,lon:127.92641},
+{name:"북부산",stn:296,lat:35.21778,lon:128.96024},
+{name:"관악",stn:116,lat:37.44526,lon:126.96402},
+{name:"강화",stn:201,lat:37.70739,lon:126.44634},
+{name:"백령도",stn:102,lat:37.97396,lon:124.71237},
+{name:"인천",stn:112,lat:37.47772,lon:126.62490},
+];
 
 const AWS_STATIONS=[
 {name:"안면도(감)",stn:12,lat:36.5333,lon:126.3167},
 {name:"독도",stn:96,lat:37.2395,lon:131.8698},
-{name:"관악(레)",stn:116,lat:37.4453,lon:126.964},
-{name:"부산(레)",stn:160,lat:35.1188,lon:129},
-{name:"진도(레)",stn:175,lat:34.4721,lon:126.3238},
 {name:"북격렬비도",stn:229,lat:36.6254,lon:125.5595},
-{name:"북부산",stn:296,lat:35.2178,lon:128.9602},
 {name:"말도",stn:300,lat:35.858,lon:126.3151},
 {name:"임자도",stn:301,lat:35.087,lon:126.1199},
 {name:"장산도",stn:302,lat:34.6647,lon:126.1593},
@@ -422,7 +173,6 @@ const AWS_STATIONS=[
 {name:"구로",stn:423,lat:37.494,lon:126.827},
 {name:"강북",stn:424,lat:37.6397,lon:127.0258},
 {name:"남현",stn:425,lat:37.4634,lon:126.9855},
-{name:"백령(레)",stn:426,lat:37.9661,lon:124.6305},
 {name:"김포장기",stn:427,lat:37.6428,lon:126.6734},
 {name:"송악",stn:493,lat:36.7227,lon:127.004},
 {name:"세종고운",stn:494,lat:36.5315,lon:127.2406},
