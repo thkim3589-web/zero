@@ -223,67 +223,37 @@ const t=document.getElementById('toastMsg'); if(t){t.style.display='block';t.inn
 
 async function fetchKmaByGps(lat, lon){
   try{
-    const grid = dfs_xy_conv(lat, lon);
-
-    const now = new Date();
-    now.setHours(now.getHours()-1);
-
-    const baseDate =
-      now.getFullYear() +
-      String(now.getMonth()+1).padStart(2,'0') +
-      String(now.getDate()).padStart(2,'0');
-
-    const baseTime =
-      String(now.getHours()).padStart(2,'0') + '00';
-
-    const url =
-      `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst`
-      + `?pageNo=1&numOfRows=1000&dataType=JSON`
-      + `&base_date=${baseDate}`
-      + `&base_time=${baseTime}`
-      + `&nx=${grid.nx}`
-      + `&ny=${grid.ny}`
-      + `&serviceKey=${encodeURIComponent(window.KMA_SERVICE_KEY)}`;
-
-    const res = await fetch(url);
-    const json = await res.json();
-    console.log('KMA URL', url);
-    console.log('KMA JSON', json);
-
-    let temp=null, humidity=null, wind=null, rain=0;
-
-    const resultCode = json?.response?.header?.resultCode;
-    const resultMsg = json?.response?.header?.resultMsg;
-
-    if(resultCode && resultCode !== '00'){
-      console.error('KMA ERROR', resultCode, resultMsg);
-      return {temp:null, humidity:null, wind:null, rain:0, station:'API오류:'+resultCode};
+    const grid=dfs_xy_conv(lat,lon);
+    let items=null,usedBaseDate="",usedBaseTime="";
+    for(let retry=0;retry<6;retry++){
+      const base=new Date();
+      base.setMinutes(0,0,0);
+      base.setHours(base.getHours()-retry);
+      const baseDate=base.getFullYear()+String(base.getMonth()+1).padStart(2,"0")+String(base.getDate()).padStart(2,"0");
+      const baseTime=String(base.getHours()).padStart(2,"0")+"00";
+      const url=`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst?pageNo=1&numOfRows=1000&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${grid.nx}&ny=${grid.ny}&serviceKey=${encodeURIComponent(window.KMA_SERVICE_KEY)}`;
+      try{
+        const res=await fetch(url);
+        const json=await res.json();
+        if(json?.response?.header?.resultCode!=="00") continue;
+        const list=json?.response?.body?.items?.item||[];
+        if(list.length){items=list;usedBaseDate=baseDate;usedBaseTime=baseTime;break;}
+      }catch(e){}
     }
-
-    const items = json?.response?.body?.items?.item || [];
-    console.log('KMA ITEMS COUNT', items.length);
-    if(items.length===0){
-      console.error('기상청 데이터 없음', json);
-    }
-
-    items.forEach(item=>{
-      const cat = item.category;
-      const val = item.obsrValue;
-
-      if(cat==="T1H") temp=parseFloat(val);
-      if(cat==="REH") humidity=parseFloat(val);
-      if(cat==="WSD") wind=parseFloat(val);
-      if(cat==="RN1") rain=parseFloat(val)||0;
+    if(!items) return {temp:null,humidity:null,wind:null,rain:0,station:"조회실패"};
+    let temp=null,humidity=null,wind=null,rain=0;
+    items.forEach(i=>{
+      if(i.category==="T1H") temp=parseFloat(i.obsrValue);
+      if(i.category==="REH") humidity=parseFloat(i.obsrValue);
+      if(i.category==="WSD") wind=parseFloat(i.obsrValue);
+      if(i.category==="RN1") rain=parseFloat(i.obsrValue)||0;
     });
-
-    return {temp, humidity, wind, rain, station:'초단기실황'};
+    return {temp,humidity,wind,rain,station:"초단기실황",base_date:usedBaseDate,base_time:usedBaseTime};
   }catch(err){
-    console.error("UltraSrtNcst 오류",err);
-    return {temp:null, humidity:null, wind:null, rain:0, station:'조회실패'};
+    console.error(err);
+    return {temp:null,humidity:null,wind:null,rain:0,station:"조회실패"};
   }
 }
-
-
 
 function autoCheckRain(rain){
   const rainBox=document.querySelector('input[value="weather_rain"]');
