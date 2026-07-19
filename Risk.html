@@ -1,12 +1,10 @@
-<!-- V36.4 visibility 정리판 -->
-<!-- V36.3 타이머정리판 -->
 <!DOCTYPE html>
 <!-- build v4.1: missing-highlight / seasonal hot+cold / per-field temp+special -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>현장 위험성 평가표(전송) 작성</title>
+<title>현장 위험성 평가표(전송) 작성 V22</title>
 <style>
 body { font-family: -apple-system, sans-serif; padding: 10px; max-width: 480px; margin: auto; background:#f8f9fa; }
 .form { display:flex; flex-direction:column; gap:10px; background:#fff; padding:15px; border-radius:8px; }
@@ -18,7 +16,7 @@ input[type="checkbox"] { width:18px; height:18px; flex:0 0 auto; margin-top:1px;
 details { border:1px solid #eee; padding:10px; border-radius:4px; margin-bottom:5px; }
 summary { font-weight:bold; cursor:pointer; padding:5px 0; }
 .etc-input { display:none; margin-top:10px; padding-left:10px; border-left:3px solid #007bff; }
-.fixed-note { font-size:13px; color:#28a745; font-weight:bold; }
+.fixed-note { font-size:14px; color:#28a745; font-weight:bold; }
 .risk-block { border-top:1px dashed #ccc; padding-top:8px; margin-top:8px; }
 .risk-title { font-weight:bold; color:#333; margin-bottom:4px; }
 .inline { flex-direction:row; align-items:center; gap:6px; font-weight:normal; }
@@ -30,75 +28,965 @@ summary { font-weight:bold; cursor:pointer; padding:5px 0; }
 .combo-list li.empty { color:#999; cursor:default; }
 .hidden { display:none; }
 .risk-children { padding-left:18px; margin-top:4px; }
-.clear-btn { align-self:flex-start; background:#6c757d; color:#fff; border:none; border-radius:4px; padding:6px 10px; font-size:12px; cursor:pointer; }
+.clear-btn { align-self:flex-start; background:#6c757d; color:#fff; border:none; border-radius:4px; padding:6px 10px; font-size:14px; cursor:pointer; }
 .missing { background:#fff3cd !important; border:1px solid #ff8c00 !important; }
 details.missing-section { border:2px solid #ff8c00; background:#fff8e1; }
 details.missing-section > summary { color:#cc4400; }
-.iphone-notice { font-size:12px; color:#d9534f; text-align:center; margin:10px 0; }
+.iphone-notice { font-size:13px; color:#d9534f; text-align:center; margin:10px 0; }
 .save-btn { background:#007bff; color:#fff; padding:12px; border:none; border-radius:4px; font-weight:bold; cursor:pointer; }
 #result-container { margin-top:20px; width:100%; text-align:center; }
 #final-image { width:100%; height:auto; border:2px solid #333; border-radius:4px; box-shadow:0 4px 10px rgba(0,0,0,0.2); }
+
+.toast-msg{
+position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+background:#1976d2;color:#fff;padding:12px 18px;border-radius:12px;
+z-index:9999;font-weight:bold;display:none;
+}
+
+.temp-num{
+ display:inline-block;
+ letter-spacing:-0.3px !important;
+ word-spacing:0 !important;
+ white-space:nowrap;
+ font-size:14px;
+ font-weight:700;
+}
 </style>
 
-<!-- 카카오 API 설정 -->
+
 <script>
+window.KAKAO_REST_API_KEY="eaa5300f4046bfac8ce0355b1bd8cd88";
+window.KMA_SERVICE_KEY="95d712b220ef0de5456f52991cf20c56e594d492a68e3e58200038c9a2d9ebec";
+let manualTemp = false;
+let manualFeel = false;
 
-
-function calculateFeelTemperature(temp, humidity, windMS){
-    temp = Number(temp || 0);
-    humidity = Number(humidity || 0);
-    windMS = Number(windMS || 0);
-
-    if(temp >= 20){
-        const feel =
-            -0.2442 +
-            (0.55399 * temp) +
-            (0.45535 * humidity) -
-            (0.0022 * temp * humidity) +
-            (0.00278 * temp * temp) +
-            (0.0003 * humidity * humidity);
+function calculateKmaFeelTemperature(temp, humidity, wind){
+    temp=Number(temp);
+    humidity=Number(humidity);
+    wind=Number(wind);
+    if(isNaN(temp)) return null;
+    const month=new Date().getMonth()+1;
+    if(month>=5 && month<=9){
+        if(isNaN(humidity)) return Math.round(temp*10)/10;
+        const Tw=
+            temp*Math.atan(0.151977*Math.sqrt(humidity+8.313659))
+            +Math.atan(temp+humidity)
+            -Math.atan(humidity-1.67633)
+            +0.00391838*Math.pow(humidity,1.5)*Math.atan(0.023101*humidity)
+            -4.686035;
+        const feel=
+            -0.2442
+            +0.55399*Tw
+            +0.45535*temp
+            -0.0022*Tw*Tw
+            +0.00278*Tw*temp
+            +3.0;
         return Number(feel.toFixed(1));
     }
-
-    const V = windMS * 3.6;
-
-    if(temp <= 10 && V >= 4.8){
-        return Number((
-            13.12 +
-            0.6215 * temp -
-            11.37 * Math.pow(V,0.16) +
-            0.3965 * Math.pow(V,0.16) * temp
-        ).toFixed(1));
-    }
-
-    return temp;
+    if(isNaN(wind)) return Math.round(temp*10)/10;
+    if(temp>10||wind<1.3) return Math.round(temp*10)/10;
+    const V=wind*3.6;
+    const feel=13.12+0.6215*temp-11.37*Math.pow(V,0.16)+0.3965*temp*Math.pow(V,0.16);
+    return Number(feel.toFixed(1));
 }
 
 
-window.KAKAO_REST_API_KEY = "eaa5300f4046bfac8ce0355b1bd8cd88";
-window.KMA_SERVICE_KEY="95d712b220ef0de5456f52991cf20c56e594d492a68e3e58200038c9a2d9ebec";
-/*
-적용용 키 저장 완료.
-GPS는 기존 navigator.geolocation 사용.
-주소 조회는 카카오 로컬 역지오코딩 API로 변경 시 사용.
-*/
+async function reverseGeocode(lat, lon){
+  try{
+    const url=`https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lon}&y=${lat}`;
+    const res=await fetch(url,{headers:{Authorization:`KakaoAK ${window.KAKAO_REST_API_KEY}`}});
+    const data=await res.json();
+    if(!data.documents?.length) return `GPS(${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+    const doc=data.documents[0];
+    const road=doc.road_address?.address_name||"";
+    const jibun=doc.address?.address_name||"";
+
+    if(jibun){
+      return jibun;
+    }
+
+    if(road){
+      return road;
+    }
+
+    return `GPS(${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+  }catch(e){
+    return `GPS(${lat.toFixed(5)}, ${lon.toFixed(5)})`;
+  }
+}
+
+// getWeatherSafe 제거
+
+
+async function v11AutoFill(){
+ const status=document.getElementById('gpsStatus');
+ if(status) status.textContent='GPS 조회중...'; console.log('GPS 시작');
+ navigator.geolocation.getCurrentPosition(async p=>{
+   const lat=p.coords.latitude, lon=p.coords.longitude;
+   const acc=Math.round(p.coords.accuracy||0);
+   if(status) status.textContent='GPS 성공 / 주소 조회중...'; const addr=await reverseGeocode(lat,lon);
+   const station=findNearestStation(lat,lon);
+   if(status) status.textContent='주소 성공 / 날씨 조회중...'; const weather=await fetchKmaByGps(lat,lon);
+   const temp=(weather.temp==null||weather.temp==='-'||isNaN(weather.temp))?null:Number(weather.temp);
+   const hum=(weather.humidity==null||weather.humidity==='-'||isNaN(weather.humidity))?null:Number(weather.humidity);
+   const wind=(weather.wind==null||weather.wind==='-'||isNaN(weather.wind))?null:Number(weather.wind);
+   
+const feel=(temp===null)?'-':calculateKmaFeelTemperature(temp,hum,wind);
+const rain=Number(weather.rain||0);
+
+const el=(id)=>document.getElementById(id);
+
+if(el('cardTemp')) el('cardTemp').innerHTML=temp>=35?'🔴 '+temp.toFixed(1)+'℃':temp>=30?'🟠 '+temp.toFixed(1)+'℃':'🟢 '+temp.toFixed(1)+'℃';
+if(el('cardFeel')) el('cardFeel').innerHTML=feel>=35?'🔴 '+feel+'℃':feel>=30?'🟠 '+feel+'℃':'🟢 '+feel+'℃';
+if(el('cardHum')) el('cardHum').textContent=hum+'%';
+if(el('cardWind')) el('cardWind').textContent=wind+'m/s';
+if(el('cardRain')) el('cardRain').textContent=rain+'mm';
+
+const clearBox=document.querySelector('input[value="weather_clear"]');
+const rainBox=document.querySelector('input[value="weather_rain"]');
+const hotBox=document.querySelector('input[value="weather_hot"]');
+const coldBox=document.querySelector('input[value="weather_cold"]');
+const windBox=document.querySelector('input[value="weather_wind"]');
+
+if(clearBox) clearBox.checked=rain===0;
+if(rainBox) rainBox.checked=rain>0;
+if(hotBox) hotBox.checked=temp>=35;
+if(coldBox) coldBox.checked=temp<=0;
+if(windBox) windBox.checked=wind>=10;
+
+
+   const rt=document.getElementById('real_temperature');
+   const ft=document.getElementById('fake_temperature');
+   if(rt) rt.value=(temp===null?'-':temp+'℃');
+   if(ft) ft.value=(feel==='-'?'-':feel+'℃');
+
+   
+    const startEl=document.getElementById('start_date');
+    const endEl=document.getElementById('end_date');
+    if(startEl && endEl){
+      const nowDt=new Date();
+      const endDt=new Date(nowDt.getTime()+2*60*60*1000);
+      const fmt=(d)=>{
+        const p=(n)=>String(n).padStart(2,'0');
+        return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+      };
+      startEl.value=fmt(nowDt);
+      endEl.value=fmt(endDt);
+    }
+
+
+const loc=document.getElementById('location');
+   if(loc) loc.value=addr;
+
+   const gpsAcc=document.getElementById('gpsAccuracy');
+   if(gpsAcc){
+gpsAcc.textContent='GPS 정확도 : '+acc+'m';
+gpsAcc.style.color=(acc<=10?'#0a8f08':acc<=30?'#ff9800':'#d32f2f');
+}
+
+   const rainInfo=document.getElementById('rainInfo');
+   if(rainInfo) rainInfo.textContent='강수량 : '+(weather.rain||0)+' mm';
+
+   const upd=document.getElementById('weather_update_time');
+   if(upd) upd.innerHTML='관측소 : '+station.name+'('+station.stn+')';
+
+   autoCheckRain(weather.rain||0);
+   autoCheckWeather(temp,wind);
+   updateWeatherAlert(feel,wind,weather.rain||0);
+
+   if(status){
+const tempText=(temp===null?'-':Number(temp).toFixed(1));
+const feelText=(feel==='-'?'-':Number(feel).toFixed(1));
+const distKm=(station.distance||0).toFixed(1);
+status.innerHTML='📍 '+addr.split(' ').slice(-2).join(' ')
++' · 📡'+acc+'m'
++' · 🏢'+(station.stn>=300?'AWS':'ASOS')+' '+station.name+'('+station.stn+')'
++' · 📏'+distKm+'km'
++'<br><br>🌡 <span class="temp-num">'+tempText+'℃</span>'
++' · 🤒 <span class="temp-num">'+feelText+'℃</span>'
++' · 💧'+(hum??'-')+'%'
++' · 🌬'+(wind??'-')+'m/s'
++' · 🌧'+rain+'mm';
+}
+const t=document.getElementById('toastMsg'); if(t){t.style.display='block';t.innerText='현장정보 갱신 완료';setTimeout(()=>t.style.display='none',2000);}
+    if(navigator.vibrate){navigator.vibrate([80,40,80]);}
+ },()=>{
+    if(status) status.textContent='❌ 위치 권한 허용 필요';
+    if(navigator.vibrate){navigator.vibrate([300,100,300]);}
+    },
+ {enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+
+
+// 백업 dfs_xy_conv 제거
+
+
+
+async function fetchKmaByGps(lat, lon){
+  try{
+    const grid=dfs_xy_conv(lat,lon);
+    let items=null,usedBaseDate="",usedBaseTime="";
+    for(let retry=0;retry<6;retry++){
+      const base=new Date();
+      base.setMinutes(0,0,0);
+      base.setHours(base.getHours()-retry);
+      const baseDate=base.getFullYear()+String(base.getMonth()+1).padStart(2,"0")+String(base.getDate()).padStart(2,"0");
+      const baseTime=String(base.getHours()).padStart(2,"0")+"00";
+      const url=`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst?pageNo=1&numOfRows=1000&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${grid.nx}&ny=${grid.ny}&serviceKey=${encodeURIComponent(window.KMA_SERVICE_KEY)}`;
+      try{
+        const res=await fetch(url);
+        const json=await res.json();
+        if(json?.response?.header?.resultCode!=="00") continue;
+        const list=json?.response?.body?.items?.item||[];
+        if(list.length){items=list;usedBaseDate=baseDate;usedBaseTime=baseTime;break;}
+      }catch(e){}
+    }
+    if(!items) return {temp:null,humidity:null,wind:null,rain:0,station:"조회실패"};
+    let temp=null,humidity=null,wind=null,rain=0;
+    items.forEach(i=>{
+      if(i.category==="T1H") temp=parseFloat(i.obsrValue);
+      if(i.category==="REH") humidity=parseFloat(i.obsrValue);
+      if(i.category==="WSD") wind=parseFloat(i.obsrValue);
+      if(i.category==="RN1") rain=parseFloat(i.obsrValue)||0;
+    });
+    return {temp,humidity,wind,rain,station:"초단기실황",base_date:usedBaseDate,base_time:usedBaseTime};
+  }catch(err){
+    console.error(err);
+    return {temp:null,humidity:null,wind:null,rain:0,station:"조회실패"};
+  }
+}
+
+function autoCheckRain(rain){
+  const rainBox=document.querySelector('input[value="weather_rain"]');
+  if(rainBox) rainBox.checked = rain > 0;
+}
+
+function autoCheckWeather(temp, wind){
+  const hot=document.querySelector('input[value="weather_hot"]');
+  const cold=document.querySelector('input[value="weather_cold"]');
+  const strong=document.querySelector('input[value="weather_wind"]');
+
+  if(hot) hot.checked = Number(temp) >= 35;
+  if(cold) cold.checked = Number(temp) <= 0;
+  if(strong) strong.checked = Number(wind) >= 10;
+}
+
+
+window.addEventListener('load',()=>setTimeout(v11AutoFill,1000));
+document.addEventListener('DOMContentLoaded',()=>setTimeout(v11AutoFill,1500));
+document.addEventListener('DOMContentLoaded',()=>{
+ const rt=document.getElementById('real_temperature');
+ const ft=document.getElementById('fake_temperature');
+ if(rt){rt.addEventListener('input',()=>{manualTemp=true;});}
+ if(ft){ft.addEventListener('input',()=>{manualFeel=true;});}
+});
+function resetWeatherInput(){
+ manualTemp=false;
+ manualFeel=false;
+ v11AutoFill();
+}
+
+
+
+document.addEventListener('DOMContentLoaded',()=>{
+ const btn=document.getElementById('refreshBtn');
+ if(btn){
+   btn.addEventListener('click', async ()=>{
+      if(navigator.vibrate){navigator.vibrate(80);}
+     const status=document.getElementById('gpsStatus');
+     if(status) status.textContent='위치·주소·날씨 조회중...';
+     if(typeof v11AutoFill==='function'){
+       await v11AutoFill();
+     }
+   });
+ }
+});
+
+/* ===== V8.2 Ultimate Weather Engine ===== */
+
+
+const STATIONS=[
+{name:"속초",stn:90,lat:38.25,lon:128.56},
+{name:"북춘천",stn:93,lat:37.95,lon:127.75},
+{name:"철원",stn:95,lat:38.15,lon:127.30},
+{name:"대관령",stn:100,lat:37.68,lon:128.72},
+{name:"춘천",stn:101,lat:37.90,lon:127.73},
+{name:"강릉",stn:105,lat:37.75,lon:128.89},
+{name:"서울기상관측소",stn:108,lat:37.57,lon:126.97},
+{name:"인천",stn:112,lat:37.48,lon:126.63},
+{name:"원주",stn:114,lat:37.34,lon:127.95},
+{name:"수원",stn:119,lat:37.27,lon:127.01},
+{name:"충주",stn:127,lat:36.97,lon:127.95},
+{name:"청주",stn:131,lat:36.64,lon:127.44},
+{name:"대전기상대",stn:133,lat:36.35,lon:127.38},
+{name:"추풍령",stn:135,lat:36.22,lon:128.00},
+{name:"안동",stn:136,lat:36.57,lon:128.71},
+{name:"포항",stn:138,lat:36.03,lon:129.38},
+{name:"군산",stn:140,lat:36.0053,lon:126.76135},
+{name:"대구기상대",stn:143,lat:35.88,lon:128.65},
+{name:"전주",stn:146,lat:35.82,lon:127.15},
+{name:"울산",stn:152,lat:35.56,lon:129.32},
+{name:"광주기상대",stn:156,lat:35.17,lon:126.89},
+{name:"부산기상관측소",stn:159,lat:35.10,lon:129.03},
+{name:"목포",stn:165,lat:34.82,lon:126.38},
+{name:"여수",stn:168,lat:34.74,lon:127.74},
+{name:"흑산도",stn:169,lat:34.69,lon:125.45},
+{name:"완도",stn:170,lat:34.39,lon:126.70},
+{name:"고창",stn:172,lat:35.34824,lon:126.59900},
+{name:"제주",stn:184,lat:33.51411,lon:126.52969},
+{name:"고산",stn:185,lat:33.29382,lon:126.16283},
+{name:"성산",stn:188,lat:33.38677,lon:126.88020},
+{name:"서귀포",stn:189,lat:33.24616,lon:126.56630},
+{name:"진주",stn:192,lat:35.16,lon:128.04}
+,
+{name:"부안",stn:243,lat:35.72961,lon:126.71657},
+{name:"임실",stn:244,lat:35.61203,lon:127.28556},
+{name:"남원",stn:247,lat:35.42130,lon:127.39652},
+{name:"고창군",stn:251,lat:35.42346,lon:126.69231},
+{name:"순창군",stn:254,lat:35.37131,lon:127.12860},
+{name:"이천",stn:203,lat:37.26399,lon:127.48421},
+{name:"양평",stn:202,lat:37.48863,lon:127.49446},
+{name:"홍천",stn:212,lat:37.68360,lon:127.88043},
+{name:"태백",stn:216,lat:37.17038,lon:128.98929},
+{name:"제천",stn:221,lat:37.15927,lon:128.19432},
+{name:"보은",stn:226,lat:36.48761,lon:127.73415},
+{name:"서산",stn:129,lat:36.77656,lon:126.49391},
+{name:"장수",stn:248,lat:35.65696,lon:127.52031},
+{name:"진도",stn:175,lat:34.47211,lon:126.32380},
+{name:"해남",stn:261,lat:34.55375,lon:126.56907},
+{name:"장흥",stn:260,lat:34.68886,lon:126.91951},
+{name:"고흥",stn:262,lat:34.61826,lon:127.27572},
+{name:"강진",stn:259,lat:34.64464,lon:126.78405},
+{name:"문경",stn:273,lat:36.62727,lon:128.14879},
+{name:"의성",stn:278,lat:36.35610,lon:128.68862},
+{name:"영주",stn:272,lat:36.87183,lon:128.51687},
+{name:"영천",stn:281,lat:35.97742,lon:128.95140},
+{name:"봉화",stn:271,lat:36.94361,lon:128.91449},
+{name:"울진",stn:130,lat:36.99176,lon:129.41278},
+{name:"울릉",stn:115,lat:37.48129,lon:130.89863},
+{name:"밀양",stn:288,lat:35.49147,lon:128.74412},
+{name:"산청",stn:289,lat:35.41300,lon:127.87910},
+{name:"거창",stn:284,lat:35.66739,lon:127.90990},
+{name:"합천",stn:285,lat:35.56505,lon:128.16994},
+{name:"남해",stn:295,lat:34.81662,lon:127.92641},
+{name:"북부산",stn:296,lat:35.21778,lon:128.96024},
+{name:"관악",stn:116,lat:37.44526,lon:126.96402},
+{name:"강화",stn:201,lat:37.70739,lon:126.44634},
+{name:"백령도",stn:102,lat:37.97396,lon:124.71237}];
+
+
+
+const AWS_STATIONS=[
+{name:"안면도(감)",stn:12,lat:36.5333,lon:126.3167},
+{name:"독도",stn:96,lat:37.2395,lon:131.8698},
+{name:"북격렬비도",stn:229,lat:36.6254,lon:125.5595},
+{name:"북부산",stn:296,lat:35.2178,lon:128.9602},
+{name:"말도",stn:300,lat:35.858,lon:126.3151},
+{name:"임자도",stn:301,lat:35.087,lon:126.1199},
+{name:"장산도",stn:302,lat:34.6647,lon:126.1593},
+{name:"가거도",stn:303,lat:34.0725,lon:125.0972},
+{name:"신지도",stn:304,lat:34.318,lon:126.8485},
+{name:"여서도",stn:305,lat:33.9862,lon:126.9201},
+{name:"소리도",stn:306,lat:34.4319,lon:127.8011},
+{name:"옥도",stn:308,lat:34.687,lon:126.073},
+{name:"판문점",stn:309,lat:37.9464,lon:126.6866},
+{name:"궁촌",stn:310,lat:37.3247,lon:129.2647},
+{name:"가야산",stn:311,lat:35.7892,lon:128.0867},
+{name:"주왕산",stn:312,lat:36.3931,lon:129.1413},
+{name:"양지암",stn:313,lat:34.8933,lon:128.7514},
+{name:"덕유봉",stn:314,lat:35.8662,lon:127.7431},
+{name:"성삼재",stn:315,lat:35.3067,lon:127.5108},
+{name:"무등산",stn:316,lat:35.1144,lon:126.9974},
+{name:"모악산",stn:317,lat:35.7295,lon:127.1142},
+{name:"용평",stn:318,lat:37.6434,lon:128.6705},
+{name:"천부",stn:319,lat:37.5373,lon:130.8708},
+{name:"향로봉",stn:320,lat:38.331,lon:128.3138},
+{name:"원통",stn:321,lat:38.1147,lon:128.1963},
+{name:"상서",stn:322,lat:38.2155,lon:127.6698},
+{name:"마현",stn:323,lat:38.2747,lon:127.553},
+{name:"송계",stn:324,lat:36.9102,lon:128.0745},
+{name:"백운",stn:325,lat:37.1445,lon:128.0253},
+{name:"용문산",stn:326,lat:37.5455,lon:127.6113},
+{name:"우암산",stn:327,lat:36.6503,lon:127.512},
+{name:"중문",stn:328,lat:33.2494,lon:126.406},
+{name:"산천단",stn:329,lat:33.4471,lon:126.5652},
+{name:"대흘",stn:330,lat:33.5008,lon:126.6495},
+{name:"강남",stn:400,lat:37.4982,lon:127.0816},
+{name:"서초",stn:401,lat:37.4846,lon:127.026},
+{name:"강동",stn:402,lat:37.5555,lon:127.145},
+{name:"송파",stn:403,lat:37.5115,lon:127.0967},
+{name:"강서",stn:404,lat:37.5739,lon:126.8295},
+{name:"양천",stn:405,lat:37.5296,lon:126.8782},
+{name:"도봉",stn:406,lat:37.6661,lon:127.0295},
+{name:"노원",stn:407,lat:37.6219,lon:127.0919},
+{name:"동대문",stn:408,lat:37.5846,lon:127.0604},
+{name:"중랑",stn:409,lat:37.5855,lon:127.0868},
+{name:"기상청",stn:410,lat:37.4933,lon:126.9174},
+{name:"마포",stn:411,lat:37.5517,lon:126.9292},
+{name:"서대문",stn:412,lat:37.5705,lon:126.9408},
+{name:"광진",stn:413,lat:37.5338,lon:127.0857},
+{name:"성북",stn:414,lat:37.6117,lon:126.9994},
+{name:"용산",stn:415,lat:37.5204,lon:126.9761},
+{name:"은평",stn:416,lat:37.6464,lon:126.9434},
+{name:"금천",stn:417,lat:37.4655,lon:126.9002},
+{name:"한강",stn:418,lat:37.5249,lon:126.939},
+{name:"중구",stn:419,lat:37.5524,lon:126.9874},
+{name:"성동",stn:421,lat:37.5472,lon:127.0389},
+{name:"구로",stn:423,lat:37.494,lon:126.827},
+{name:"강북",stn:424,lat:37.6397,lon:127.0258},
+{name:"남현",stn:425,lat:37.4634,lon:126.9855},
+{name:"김포장기",stn:427,lat:37.6428,lon:126.6734},
+{name:"송악",stn:493,lat:36.7227,lon:127.004},
+{name:"세종고운",stn:494,lat:36.5315,lon:127.2406},
+{name:"공도",stn:495,lat:36.9806,lon:127.1625},
+{name:"세종금남",stn:496,lat:36.4585,lon:127.2688},
+{name:"삽당령",stn:497,lat:37.5752,lon:128.8515},
+{name:"구룡령",stn:498,lat:37.8793,lon:128.5145},
+{name:"중면",stn:499,lat:38.1361,lon:127.0235},
+{name:"양도",stn:500,lat:37.6657,lon:126.4702},
+{name:"대연평",stn:501,lat:37.6589,lon:125.6982},
+{name:"교동",stn:502,lat:37.7894,lon:126.2916},
+{name:"도라산",stn:503,lat:37.908,lon:126.7119},
+{name:"포천",stn:504,lat:37.8704,lon:127.1807},
+{name:"가평조종",stn:505,lat:37.8244,lon:127.3454},
+{name:"금촌",stn:506,lat:37.7482,lon:126.7769},
+{name:"창수",stn:507,lat:38.0248,lon:127.1436},
+{name:"왕산",stn:508,lat:37.4665,lon:126.3609},
+{name:"관악",stn:509,lat:37.4528,lon:126.9502},
+{name:"영등포",stn:510,lat:37.5271,lon:126.9071},
+{name:"공촌동",stn:511,lat:37.555,lon:126.6905},
+{name:"인천연수",stn:512,lat:37.3968,lon:126.6621},
+{name:"덕적도",stn:513,lat:37.2272,lon:126.145},
+{name:"대부도",stn:514,lat:37.2377,lon:126.5787},
+{name:"운평",stn:515,lat:37.0845,lon:126.7739},
+{name:"안성",stn:516,lat:37.0037,lon:127.2502},
+{name:"간성",stn:517,lat:38.3854,lon:128.4745},
+{name:"해안",stn:518,lat:38.2696,lon:128.1211},
+{name:"사내",stn:519,lat:38.0755,lon:127.5194},
+{name:"설악동",stn:520,lat:38.1671,lon:128.5182},
+{name:"강현",stn:521,lat:38.1437,lon:128.6026},
+{name:"화촌",stn:522,lat:37.7871,lon:127.9838},
+{name:"주문진",stn:523,lat:37.8985,lon:128.8214},
+{name:"강문",stn:524,lat:37.7858,lon:128.9248},
+{name:"봉평",stn:525,lat:37.6123,lon:128.3773},
+{name:"평창",stn:526,lat:37.3775,lon:128.3947},
+{name:"신동",stn:527,lat:37.2111,lon:128.6413},
+{name:"원덕",stn:529,lat:37.1416,lon:129.2859},
+{name:"태하",stn:530,lat:37.5151,lon:130.8118},
+{name:"가평북면",stn:531,lat:37.8981,lon:127.5522},
+{name:"의정부",stn:532,lat:37.7348,lon:127.0735},
+{name:"백사",stn:533,lat:37.3278,lon:127.4807},
+{name:"장호원",stn:534,lat:37.121,lon:127.6106},
+{name:"서석",stn:535,lat:37.717,lon:128.1827},
+{name:"횡성",stn:536,lat:37.4876,lon:127.9724},
+{name:"임계",stn:537,lat:37.4832,lon:128.8459},
+{name:"신서",stn:538,lat:38.1725,lon:127.103},
+{name:"포천이동",stn:539,lat:38.0242,lon:127.3657},
+{name:"고양",stn:540,lat:37.6373,lon:126.892},
+{name:"남양주",stn:541,lat:37.6341,lon:127.1506},
+{name:"청평",stn:542,lat:37.6841,lon:127.3802},
+{name:"영종도",stn:543,lat:37.499,lon:126.5496},
+{name:"전곡항",stn:544,lat:37.1857,lon:126.6544},
+{name:"안산",stn:545,lat:37.281,lon:126.8385},
+{name:"경기광주",stn:546,lat:37.4353,lon:127.2592},
+{name:"양동",stn:547,lat:37.4159,lon:127.7549},
+{name:"여주",stn:548,lat:37.2688,lon:127.6396},
+{name:"용인",stn:549,lat:37.2701,lon:127.2218},
+{name:"오산",stn:550,lat:37.1879,lon:127.0487},
+{name:"평택",stn:551,lat:36.9877,lon:127.1088},
+{name:"김화",stn:552,lat:38.2722,lon:127.4245},
+{name:"대진",stn:553,lat:38.4924,lon:128.4281},
+{name:"미시령",stn:554,lat:38.2144,lon:128.4371},
+{name:"화천",stn:555,lat:38.0964,lon:127.7029},
+{name:"양구",stn:556,lat:38.098,lon:127.9853},
+{name:"기린",stn:557,lat:37.9526,lon:128.3186},
+{name:"팔봉",stn:558,lat:37.6861,lon:127.7007},
+{name:"내면",stn:559,lat:37.7781,lon:128.3973},
+{name:"진부",stn:560,lat:37.6479,lon:128.5645},
+{name:"청일",stn:561,lat:37.5822,lon:128.1528},
+{name:"영월주천",stn:562,lat:37.2753,lon:128.2694},
+{name:"북평",stn:563,lat:37.4636,lon:128.6828},
+{name:"연곡",stn:566,lat:37.8516,lon:128.8192},
+{name:"일동",stn:568,lat:37.9588,lon:127.3135},
+{name:"구리",stn:569,lat:37.5822,lon:127.157},
+{name:"금곡",stn:570,lat:37.6232,lon:126.6423},
+{name:"화성",stn:571,lat:37.1953,lon:126.8209},
+{name:"성남",stn:572,lat:37.4209,lon:127.1248},
+{name:"청운",stn:573,lat:37.5582,lon:127.7135},
+{name:"대신",stn:574,lat:37.3694,lon:127.5871},
+{name:"용인이동",stn:575,lat:37.1058,lon:127.1877},
+{name:"백암",stn:576,lat:37.1297,lon:127.3663},
+{name:"장봉도",stn:577,lat:37.5341,lon:126.3365},
+{name:"호도",stn:578,lat:36.3012,lon:126.2663},
+{name:"하장",stn:579,lat:37.3668,lon:128.9133},
+{name:"옥계",stn:580,lat:37.6135,lon:129.0289},
+{name:"상동",stn:581,lat:37.1166,lon:128.7744},
+{name:"신림",stn:582,lat:37.2315,lon:128.0799},
+{name:"안흥",stn:583,lat:37.4646,lon:128.1551},
+{name:"신남",stn:585,lat:37.96,lon:128.0742},
+{name:"북산",stn:586,lat:38.0321,lon:127.8769},
+{name:"방산",stn:587,lat:38.2264,lon:127.9533},
+{name:"남산",stn:588,lat:37.7907,lon:127.6429},
+{name:"능곡",stn:589,lat:37.7024,lon:126.7903},
+{name:"과천",stn:590,lat:37.4403,lon:127.0025},
+{name:"치악산",stn:591,lat:37.4155,lon:128.0505},
+{name:"부론",stn:592,lat:37.2316,lon:127.7487},
+{name:"양양영덕",stn:593,lat:38.0073,lon:128.5407},
+{name:"서화",stn:594,lat:38.2533,lon:128.21},
+{name:"진부령",stn:595,lat:38.2641,lon:128.3742},
+{name:"오색",stn:596,lat:38.077,lon:128.4933},
+{name:"대화",stn:597,lat:37.5455,lon:128.4411},
+{name:"양주",stn:598,lat:37.8312,lon:126.9905},
+{name:"광릉",stn:599,lat:37.7617,lon:127.1698},
+{name:"금왕",stn:600,lat:36.9737,lon:127.5897},
+{name:"단양",stn:601,lat:36.9855,lon:128.3669},
+{name:"진천",stn:602,lat:36.8634,lon:127.4625},
+{name:"괴산",stn:603,lat:36.8161,lon:127.7776},
+{name:"옥천",stn:604,lat:36.2999,lon:127.5966},
+{name:"영동",stn:605,lat:36.1631,lon:127.7598},
+{name:"대산",stn:606,lat:37.0106,lon:126.3881},
+{name:"근흥",stn:607,lat:36.6731,lon:126.1354},
+{name:"홍북",stn:608,lat:36.6277,lon:126.6451},
+{name:"삽시도",stn:609,lat:36.338,lon:126.3562},
+{name:"홍성죽도",stn:610,lat:36.52,lon:126.4424},
+{name:"세종연서",stn:611,lat:36.5722,lon:127.2836},
+{name:"공주",stn:612,lat:36.4828,lon:127.1365},
+{name:"서천",stn:614,lat:36.0625,lon:126.7041},
+{name:"논산",stn:615,lat:36.2116,lon:127.1082},
+{name:"당진",stn:616,lat:36.8894,lon:126.6174},
+{name:"성거",stn:617,lat:36.8782,lon:127.1561},
+{name:"청양",stn:618,lat:36.4237,lon:126.7791},
+{name:"음성",stn:619,lat:36.923,lon:127.7024},
+{name:"엄정",stn:620,lat:37.0737,lon:127.9035},
+{name:"수산",stn:621,lat:36.9733,lon:128.2142},
+{name:"수안보",stn:622,lat:36.8391,lon:128.0079},
+{name:"증평",stn:623,lat:36.7956,lon:127.562},
+{name:"상당",stn:624,lat:36.6244,lon:127.6571},
+{name:"속리산",stn:625,lat:36.5172,lon:127.8167},
+{name:"옥천청산",stn:626,lat:36.3705,lon:127.8154},
+{name:"태안",stn:627,lat:36.7585,lon:126.2964},
+{name:"예산",stn:628,lat:36.7421,lon:126.8144},
+{name:"세종전의",stn:629,lat:36.6908,lon:127.2005},
+{name:"노은",stn:630,lat:37.0456,lon:127.7997},
+{name:"송도",stn:631,lat:37.3478,lon:126.6154},
+{name:"유구",stn:632,lat:36.5407,lon:126.9336},
+{name:"정안",stn:633,lat:36.5511,lon:127.0938},
+{name:"아산",stn:634,lat:36.8458,lon:126.8654},
+{name:"양화",stn:635,lat:36.1319,lon:126.8602},
+{name:"계룡",stn:636,lat:36.3132,lon:127.2407},
+{name:"신평",stn:637,lat:36.8938,lon:126.8056},
+{name:"영춘",stn:638,lat:37.0835,lon:128.4847},
+{name:"덕산",stn:639,lat:36.9043,lon:128.1456},
+{name:"청천",stn:640,lat:36.6711,lon:127.8617},
+{name:"가덕",stn:641,lat:36.5461,lon:127.524},
+{name:"문화",stn:642,lat:36.3105,lon:127.4061},
+{name:"세천",stn:643,lat:36.3402,lon:127.4938},
+{name:"연무",stn:644,lat:36.1366,lon:127.09},
+{name:"서부",stn:645,lat:36.5789,lon:126.511},
+{name:"춘장대",stn:646,lat:36.1741,lon:126.5440},
+{name:"가곡",stn:647,lat:36.125,lon:127.6924},
+{name:"장동",stn:648,lat:36.4135,lon:127.4382},
+{name:"부평",stn:649,lat:37.4722,lon:126.7507},
+{name:"양지",stn:650,lat:38.2726,lon:127.2774},
+{name:"외촌",stn:651,lat:38.2772,lon:127.2057},
+{name:"연천청산",stn:652,lat:37.99,lon:127.0727},
+{name:"자월도",stn:654,lat:37.254,lon:126.3076},
+{name:"소청도",stn:655,lat:37.7602,lon:124.7291},
+{name:"볼음도",stn:656,lat:37.6709,lon:126.1922},
+{name:"대천항",stn:657,lat:36.3244,lon:126.5021},
+{name:"만리포",stn:658,lat:36.7683,lon:126.1214},
+{name:"계룡산",stn:659,lat:36.343,lon:127.2057},
+{name:"면온",stn:660,lat:37.562,lon:128.3776},
+{name:"현내",stn:661,lat:38.5439,lon:128.4025},
+{name:"승봉도",stn:662,lat:37.1706,lon:126.297},
+{name:"목덕도",stn:663,lat:36.9286,lon:125.7869},
+{name:"영흥도",stn:664,lat:37.2247,lon:126.4584},
+{name:"무의도",stn:665,lat:37.3904,lon:126.4252},
+{name:"안도",stn:666,lat:36.9587,lon:126.1683},
+{name:"옹도",stn:667,lat:36.6476,lon:126.0093},
+{name:"외연도",stn:669,lat:36.2292,lon:126.0758},
+{name:"양양",stn:670,lat:38.0873,lon:128.6297},
+{name:"청호",stn:671,lat:38.1909,lon:128.5936},
+{name:"상하",stn:672,lat:35.4424,lon:126.4884},
+{name:"진영",stn:673,lat:35.2822,lon:128.7175},
+{name:"사북",stn:674,lat:37.2196,lon:128.8214},
+{name:"남이섬",stn:675,lat:37.7898,lon:127.5277},
+{name:"위성센터",stn:676,lat:36.9906,lon:127.4299},
+{name:"강릉성산",stn:678,lat:37.7248,lon:128.7786},
+{name:"강릉왕산",stn:679,lat:37.6105,lon:128.773},
+{name:"평화",stn:680,lat:38.2128,lon:127.8447},
+{name:"원동",stn:681,lat:38.2438,lon:127.8117},
+{name:"임남",stn:682,lat:38.2806,lon:127.8647},
+{name:"석곡",stn:687,lat:35.1262,lon:127.2528},
+{name:"봉산",stn:688,lat:35.2688,lon:126.9391},
+{name:"광주남구",stn:689,lat:35.1008,lon:126.8985},
+{name:"풍산",stn:690,lat:35.3361,lon:127.1394},
+{name:"정산",stn:691,lat:36.3862,lon:126.9565},
+{name:"백학",stn:692,lat:38.0404,lon:126.9245},
+{name:"오창",stn:693,lat:36.7232,lon:127.4401},
+{name:"원효봉",stn:694,lat:36.7044,lon:126.6094},
+{name:"광덕산",stn:695,lat:38.1162,lon:127.432},
+{name:"신기",stn:696,lat:37.3466,lon:129.0861},
+{name:"서거차도",stn:697,lat:34.2506,lon:125.9183},
+{name:"해제",stn:698,lat:35.0938,lon:126.2851},
+{name:"무안",stn:699,lat:34.9838,lon:126.4611},
+{name:"어청도",stn:700,lat:36.1251,lon:125.9682},
+{name:"무주",stn:701,lat:36.0017,lon:127.6684},
+{name:"익산",stn:702,lat:35.945,lon:126.9944},
+{name:"진안",stn:703,lat:35.7604,lon:127.4374},
+{name:"변산",stn:704,lat:35.621,lon:126.4776},
+{name:"담양",stn:706,lat:35.3102,lon:126.9727},
+{name:"지도",stn:707,lat:35.058,lon:126.2084},
+{name:"광산",stn:708,lat:35.1289,lon:126.7452},
+{name:"구례",stn:709,lat:35.1974,lon:127.4618},
+{name:"나주",stn:710,lat:35.025,lon:126.744},
+{name:"이양",stn:711,lat:34.8971,lon:126.9898},
+{name:"순천시",stn:712,lat:34.9442,lon:127.5101},
+{name:"광양읍",stn:713,lat:34.9751,lon:127.5826},
+{name:"자은도",stn:714,lat:34.8791,lon:126.0287},
+{name:"하의도",stn:716,lat:34.6307,lon:126.032},
+{name:"의신",stn:717,lat:34.4275,lon:126.3098},
+{name:"상조도",stn:718,lat:34.333,lon:126.0365},
+{name:"선유도",stn:719,lat:35.8088,lon:126.3977},
+{name:"보길도",stn:720,lat:34.1549,lon:126.5499},
+{name:"금일",stn:721,lat:34.339,lon:127.0283},
+{name:"조선대",stn:722,lat:35.1368,lon:126.9288},
+{name:"거문도",stn:723,lat:34.0279,lon:127.309},
+{name:"추자도",stn:724,lat:33.9578,lon:126.3016},
+{name:"우도",stn:725,lat:33.5229,lon:126.9541},
+{name:"마라도",stn:726,lat:33.1221,lon:126.2679},
+{name:"유수암",stn:727,lat:33.4099,lon:126.3929},
+{name:"장성",stn:730,lat:35.2794,lon:126.7611},
+{name:"영암",stn:731,lat:34.8167,lon:126.6863},
+{name:"보성",stn:732,lat:34.7619,lon:127.0921},
+{name:"함라",stn:733,lat:36.0461,lon:126.8917},
+{name:"완주",stn:734,lat:35.9855,lon:127.2457},
+{name:"덕유산",stn:735,lat:35.8942,lon:127.7731},
+{name:"진봉",stn:736,lat:35.8468,lon:126.784},
+{name:"김제",stn:737,lat:35.8091,lon:126.8777},
+{name:"줄포",stn:738,lat:35.5795,lon:126.6739},
+{name:"심원",stn:739,lat:35.5225,lon:126.5467},
+{name:"화순",stn:741,lat:35.0567,lon:126.9852},
+{name:"운남",stn:742,lat:34.9389,lon:126.3306},
+{name:"비금",stn:743,lat:34.7726,lon:125.9469},
+{name:"산이",stn:744,lat:34.6725,lon:126.4365},
+{name:"성전",stn:745,lat:34.6998,lon:126.7048},
+{name:"땅끝",stn:746,lat:34.3818,lon:126.5159},
+{name:"청산도",stn:747,lat:34.1829,lon:126.858},
+{name:"벌교",stn:748,lat:34.8369,lon:127.3631},
+{name:"도양",stn:749,lat:34.5347,lon:127.1272},
+{name:"백야",stn:750,lat:34.6308,lon:127.6256},
+{name:"선흘",stn:751,lat:33.4821,lon:126.709},
+{name:"서광",stn:752,lat:33.3046,lon:126.306},
+{name:"어리목",stn:753,lat:33.393,lon:126.4959},
+{name:"함평",stn:754,lat:35.0604,lon:126.5273},
+{name:"화순북",stn:755,lat:35.1596,lon:127.0853},
+{name:"위도",stn:756,lat:35.6015,lon:126.282},
+{name:"진안주천",stn:757,lat:35.9744,lon:127.436},
+{name:"동향",stn:758,lat:35.8352,lon:127.5712},
+{name:"뱀사골",stn:759,lat:35.3716,lon:127.5783},
+{name:"복흥",stn:760,lat:35.4274,lon:126.9327},
+{name:"태인",stn:761,lat:35.6508,lon:126.9346},
+{name:"강진면",stn:762,lat:35.5198,lon:127.1261},
+{name:"여산",stn:763,lat:36.0592,lon:127.062},
+{name:"신덕",stn:764,lat:35.6736,lon:127.1414},
+{name:"복내",stn:765,lat:34.8923,lon:127.1345},
+{name:"여수산단",stn:766,lat:34.8495,lon:127.715},
+{name:"포두",stn:767,lat:34.5885,lon:127.3975},
+{name:"곡성",stn:768,lat:35.2889,lon:127.2853},
+{name:"염산",stn:769,lat:35.1993,lon:126.3834},
+{name:"다도",stn:770,lat:34.9476,lon:126.8278},
+{name:"안좌",stn:771,lat:34.7269,lon:126.1446},
+{name:"수유",stn:772,lat:34.5321,lon:126.2396},
+{name:"학산",stn:773,lat:34.7085,lon:126.6359},
+{name:"전남도청",stn:774,lat:34.8175,lon:126.4662},
+{name:"월야",stn:775,lat:35.1777,lon:126.6354},
+{name:"현산",stn:776,lat:34.4667,lon:126.5531},
+{name:"관산",stn:777,lat:34.5563,lon:126.9346},
+{name:"유치",stn:778,lat:34.7959,lon:126.8218},
+{name:"한림",stn:779,lat:33.3927,lon:126.2581},
+{name:"제주남원",stn:780,lat:33.2772,lon:126.7044},
+{name:"구좌",stn:781,lat:33.5199,lon:126.8777},
+{name:"성판악",stn:782,lat:33.3851,lon:126.6194},
+{name:"과기원",stn:783,lat:35.2303,lon:126.8408},
+{name:"시종",stn:784,lat:34.8772,lon:126.6126},
+{name:"북일",stn:785,lat:34.4638,lon:126.6763},
+{name:"돌산",stn:786,lat:34.6032,lon:127.7399},
+{name:"도화",stn:787,lat:34.5067,lon:127.3172},
+{name:"풍암",stn:788,lat:35.1316,lon:126.8813},
+{name:"압해도",stn:789,lat:34.8764,lon:126.2929},
+{name:"나로도",stn:790,lat:34.5326,lon:127.4674},
+{name:"피아골",stn:791,lat:35.2662,lon:127.5838},
+{name:"표선",stn:792,lat:33.3536,lon:126.8168},
+{name:"대정",stn:793,lat:33.241,lon:126.2263},
+{name:"황전",stn:794,lat:35.1007,lon:127.4274},
+{name:"옥과",stn:795,lat:35.2753,lon:127.139},
+{name:"초도",stn:796,lat:34.2378,lon:127.2448},
+{name:"하태도",stn:797,lat:34.395,lon:125.2995},
+{name:"홍도",stn:798,lat:34.6855,lon:125.1924},
+{name:"낙월도",stn:799,lat:35.2022,lon:126.1376},
+{name:"평해",stn:800,lat:36.7257,lon:129.4437},
+{name:"영양",stn:801,lat:36.625,lon:129.088},
+{name:"온정",stn:802,lat:36.7574,lon:129.3401},
+{name:"옥산",stn:803,lat:36.3947,lon:128.8115},
+{name:"청하",stn:804,lat:36.1906,lon:129.3392},
+{name:"죽장",stn:805,lat:36.1793,lon:129.0943},
+{name:"선산",stn:806,lat:36.2334,lon:128.2903},
+{name:"의흥",stn:807,lat:36.1797,lon:128.6932},
+{name:"호미곶",stn:808,lat:36.076,lon:129.5667},
+{name:"대덕",stn:809,lat:35.9354,lon:127.9792},
+{name:"성주",stn:810,lat:35.9255,lon:128.2985},
+{name:"황성",stn:811,lat:35.863,lon:129.2093},
+{name:"고령",stn:812,lat:35.696,lon:128.2821},
+{name:"청도",stn:813,lat:35.654,lon:128.7318},
+{name:"부석",stn:814,lat:36.9792,lon:128.661},
+{name:"예천",stn:815,lat:36.66,lon:128.4646},
+{name:"구룡포",stn:816,lat:35.9831,lon:129.5475},
+{name:"수비",stn:817,lat:36.7827,lon:129.2212},
+{name:"마성",stn:818,lat:36.7078,lon:128.1479},
+{name:"예안",stn:819,lat:36.6588,lon:128.8864},
+{name:"하회",stn:820,lat:36.5482,lon:128.5267},
+{name:"공성",stn:821,lat:36.2819,lon:128.0739},
+{name:"김천",stn:822,lat:36.0813,lon:128.1017},
+{name:"군위",stn:823,lat:36.2493,lon:128.5558},
+{name:"가산",stn:824,lat:36.0956,lon:128.5001},
+{name:"칠곡",stn:825,lat:36.0398,lon:128.3813},
+{name:"신녕",stn:826,lat:36.0471,lon:128.79},
+{name:"경산",stn:827,lat:35.8243,lon:128.743},
+{name:"달성",stn:828,lat:35.6902,lon:128.4238},
+{name:"외동",stn:829,lat:35.7121,lon:129.3182},
+{name:"기계",stn:830,lat:36.0689,lon:129.1996},
+{name:"석포",stn:831,lat:37.0401,lon:128.9971},
+{name:"단북",stn:832,lat:36.3907,lon:128.4286},
+{name:"은척",stn:833,lat:36.5383,lon:128.0419},
+{name:"화서",stn:834,lat:36.4412,lon:127.9442},
+{name:"봉화읍",stn:835,lat:36.8932,lon:128.716},
+{name:"현서",stn:836,lat:36.2795,lon:128.8955},
+{name:"이산",stn:837,lat:36.8268,lon:128.6429},
+{name:"동로",stn:838,lat:36.7907,lon:128.2705},
+{name:"길안",stn:839,lat:36.4583,lon:128.8954},
+{name:"하양",stn:840,lat:35.9125,lon:128.8144},
+{name:"화북",stn:841,lat:36.0849,lon:128.9111},
+{name:"산내",stn:842,lat:35.7576,lon:129.011},
+{name:"금강송",stn:843,lat:36.9361,lon:129.2501},
+{name:"영덕읍",stn:844,lat:36.4355,lon:129.3586},
+{name:"대구북구",stn:845,lat:35.9084,lon:128.5907},
+{name:"대구서구",stn:846,lat:35.8651,lon:128.531},
+{name:"소보",stn:847,lat:36.2762,lon:128.4664},
+{name:"청도금천",stn:848,lat:35.6792,lon:128.8953},
+{name:"지보",stn:849,lat:36.5469,lon:128.3871},
+{name:"감포",stn:850,lat:35.7847,lon:129.4906},
+{name:"소곡",stn:851,lat:37.0514,lon:129.3521},
+{name:"죽변",stn:852,lat:37.0606,lon:129.426},
+{name:"팔공산",stn:853,lat:36.0183,lon:128.6213},
+{name:"삼동",stn:854,lat:35.4953,lon:129.1336},
+{name:"가파도",stn:855,lat:33.1733,lon:126.2683},
+{name:"광양백운산",stn:856,lat:35.1018,lon:127.5982},
+{name:"완도읍",stn:857,lat:34.3,lon:126.7174},
+{name:"지산",stn:858,lat:34.4296,lon:126.1701},
+{name:"토함산",stn:859,lat:35.7613,lon:129.3658},
+{name:"신암",stn:860,lat:35.8852,lon:128.619},
+{name:"월정",stn:861,lat:33.5623,lon:126.7781},
+{name:"송당",stn:862,lat:33.4706,lon:126.7792},
+{name:"외도",stn:863,lat:33.4769,lon:126.4317},
+{name:"완산",stn:864,lat:35.8215,lon:127.155},
+{name:"오등",stn:865,lat:33.4577,lon:126.522},
+{name:"한라생태숲",stn:866,lat:33.4302,lon:126.5978},
+{name:"삼각봉",stn:867,lat:33.3769,lon:126.5305},
+{name:"사제비",stn:868,lat:33.376,lon:126.498},
+{name:"영실",stn:869,lat:33.3483,lon:126.4964},
+{name:"진달래밭",stn:870,lat:33.3698,lon:126.5557},
+{name:"윗세오름",stn:871,lat:33.3623,lon:126.5181},
+{name:"지리산",stn:872,lat:35.3192,lon:127.7564},
+{name:"원주백운산",stn:873,lat:37.2557,lon:127.9702},
+{name:"동송",stn:874,lat:38.221,lon:127.2053},
+{name:"설악산",stn:875,lat:38.1211,lon:128.4606},
+{name:"삼척",stn:876,lat:37.4534,lon:129.1682},
+{name:"문막",stn:877,lat:37.3134,lon:127.8049},
+{name:"도계",stn:878,lat:37.2238,lon:129.0961},
+{name:"금악",stn:880,lat:33.3328,lon:126.3237},
+{name:"새만금",stn:881,lat:35.7295,lon:126.5289},
+{name:"상무대",stn:882,lat:35.2518,lon:126.6042},
+{name:"새별오름",stn:883,lat:33.3623,lon:126.3599},
+{name:"기상(과)",stn:884,lat:33.2593,lon:126.5176},
+{name:"태풍센터",stn:885,lat:33.3314,lon:126.6785},
+{name:"군산산단",stn:886,lat:35.9505,lon:126.5912},
+{name:"청남대",stn:888,lat:36.4627,lon:127.4908},
+{name:"현충원",stn:889,lat:37.5004,lon:126.9765},
+{name:"제주가시리",stn:890,lat:33.3853,lon:126.7336},
+{name:"성산수산",stn:892,lat:33.4501,lon:126.8513},
+{name:"애월",stn:893,lat:33.4659,lon:126.3275},
+{name:"장생포",stn:898,lat:35.5049,lon:129.386},
+{name:"마산회원",stn:899,lat:35.2236,lon:128.5821},
+{name:"두서",stn:900,lat:35.6203,lon:129.1436},
+{name:"울기",stn:901,lat:35.4868,lon:129.4353},
+{name:"시천",stn:902,lat:35.2423,lon:127.819},
+{name:"도천",stn:903,lat:35.4039,lon:128.5149},
+{name:"사상",stn:904,lat:35.137,lon:128.9675},
+{name:"양산상북",stn:905,lat:35.4414,lon:129.0429},
+{name:"화개",stn:906,lat:35.2324,lon:127.6427},
+{name:"삼천포",stn:907,lat:34.9321,lon:128.0631},
+{name:"진해",stn:908,lat:35.1122,lon:128.7537},
+{name:"서이말",stn:909,lat:34.7877,lon:128.7383},
+{name:"영도",stn:910,lat:35.0661,lon:129.0742},
+{name:"매물도",stn:911,lat:34.6489,lon:128.5772},
+{name:"백천",stn:912,lat:35.5263,lon:127.7784},
+{name:"상주면",stn:913,lat:34.7238,lon:127.9816},
+{name:"서하",stn:914,lat:35.6376,lon:127.7156},
+{name:"삼가",stn:915,lat:35.4135,lon:128.1018},
+{name:"단성",stn:916,lat:35.3111,lon:127.967},
+{name:"사천",stn:917,lat:35.0369,lon:128.0677},
+{name:"고성",stn:918,lat:34.9905,lon:128.3309},
+{name:"창녕",stn:919,lat:35.5514,lon:128.4767},
+{name:"함안",stn:920,lat:35.2961,lon:128.3994},
+{name:"가덕도",stn:921,lat:34.9931,lon:128.8314},
+{name:"단장",stn:922,lat:35.4865,lon:128.9291},
+{name:"기장",stn:923,lat:35.2751,lon:129.2511},
+{name:"간절곶",stn:924,lat:35.3587,lon:129.3603},
+{name:"생림",stn:925,lat:35.3744,lon:128.823},
+{name:"진북",stn:926,lat:35.1262,lon:128.4748},
+{name:"송백",stn:927,lat:35.582,lon:128.8837},
+{name:"개천",stn:929,lat:35.1137,lon:128.307},
+{name:"사량도",stn:930,lat:34.8099,lon:128.2381},
+{name:"욕지도",stn:931,lat:34.6223,lon:128.2735},
+{name:"하동",stn:932,lat:35.0606,lon:127.8310},
+{name:"금남",stn:933,lat:34.9968,lon:127.8324},
+{name:"수곡",stn:934,lat:35.2214,lon:127.9285},
+{name:"청덕",stn:935,lat:35.5698,lon:128.3411},
+{name:"신포",stn:936,lat:35.3326,lon:128.2023},
+{name:"해운대",stn:937,lat:35.1761,lon:129.1624},
+{name:"부산진",stn:938,lat:35.1589,lon:129.0193},
+{name:"금정구",stn:939,lat:35.2932,lon:129.1035},
+{name:"동래",stn:940,lat:35.2091,lon:129.0901},
+{name:"북구",stn:941,lat:35.213,lon:129.0026},
+{name:"부산남구",stn:942,lat:35.1186,lon:129.0884},
+{name:"매곡",stn:943,lat:35.6674,lon:129.3753},
+{name:"길곡",stn:944,lat:35.3852,lon:128.5701},
+{name:"대병",stn:945,lat:35.5345,lon:127.9901},
+{name:"북상",stn:946,lat:35.78,lon:127.8183},
+{name:"명사",stn:947,lat:34.7219,lon:128.5908},
+{name:"삼장",stn:948,lat:35.3107,lon:127.8345},
+{name:"정자",stn:949,lat:35.6375,lon:129.4412},
+{name:"사하",stn:950,lat:35.09,lon:128.9839},
+{name:"내장산",stn:951,lat:35.5087,lon:126.9073},
+{name:"장목",stn:953,lat:34.9984,lon:128.6798},
+{name:"온산",stn:954,lat:35.431,lon:129.3601},
+{name:"마량",stn:964,lat:34.459,lon:126.8156},
+{name:"한라산남벽",stn:965,lat:33.3524,lon:126.533},
+{name:"풍도",stn:966,lat:37.1161,lon:126.3856},
+{name:"도리도",stn:967,lat:37.1189,lon:126.6128},
+{name:"철원장흥",stn:970,lat:38.2016,lon:127.2502},
+{name:"화순능주",stn:973,lat:35.0233,lon:126.9496},
+{name:"대곡",stn:974,lat:35.2444,lon:128.1561},
+{name:"춘천신북",stn:978,lat:37.9546,lon:127.7763},
+];
+
+const ALL_STATIONS=[...STATIONS,...AWS_STATIONS];
+
+function distanceKm(lat1,lon1,lat2,lon2){
+ const R=6371;
+ const dLat=(lat2-lat1)*Math.PI/180;
+ const dLon=(lon2-lon1)*Math.PI/180;
+ const a=Math.sin(dLat/2)**2+
+ Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+ Math.sin(dLon/2)**2;
+ return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function findNearestStation(lat,lon){
+  const dist=(a,b,c,d)=>{
+    const R=6371;
+    const toRad=x=>x*Math.PI/180;
+    const dLat=toRad(c-a), dLon=toRad(d-b);
+    const aa=Math.sin(dLat/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2;
+    return R*2*Math.atan2(Math.sqrt(aa),Math.sqrt(1-aa));
+  };
+  let bestASOS=null,bestAWS=null;
+  STATIONS.forEach(s=>{
+    const km=dist(lat,lon,s.lat,s.lon);
+    if(!bestASOS||km<bestASOS.distance) bestASOS={...s,distance:km};
+  });
+  AWS_STATIONS.forEach(s=>{
+    const km=dist(lat,lon,s.lat,s.lon);
+    if(!bestAWS||km<bestAWS.distance) bestAWS={...s,distance:km};
+  });
+  if(bestASOS && bestASOS.distance<=10) return bestASOS;
+  return bestAWS||bestASOS;
+}
+
+
+function dfs_xy_conv(lat, lon){
+ const RE=6371.00877, GRID=5.0, SLAT1=30.0, SLAT2=60.0;
+ const OLON=126.0, OLAT=38.0, XO=43, YO=136;
+ const DEGRAD=Math.PI/180.0;
+ const re=RE/GRID;
+ const slat1=SLAT1*DEGRAD, slat2=SLAT2*DEGRAD;
+ const olon=OLON*DEGRAD, olat=OLAT*DEGRAD;
+ let sn=Math.tan(Math.PI*0.25+slat2*0.5)/Math.tan(Math.PI*0.25+slat1*0.5);
+ sn=Math.log(Math.cos(slat1)/Math.cos(slat2))/Math.log(sn);
+ let sf=Math.tan(Math.PI*0.25+slat1*0.5);
+ sf=Math.pow(sf,sn)*Math.cos(slat1)/sn;
+ let ro=Math.tan(Math.PI*0.25+olat*0.5);
+ ro=re*sf/Math.pow(ro,sn);
+ let ra=Math.tan(Math.PI*0.25+lat*DEGRAD*0.5);
+ ra=re*sf/Math.pow(ra,sn);
+ let theta=lon*DEGRAD-olon;
+ if(theta>Math.PI) theta-=2*Math.PI;
+ if(theta<-Math.PI) theta+=2*Math.PI;
+ theta*=sn;
+ return {nx:Math.floor(ra*Math.sin(theta)+XO+0.5),
+         ny:Math.floor(ro-ra*Math.cos(theta)+YO+0.5)};
+}
+
+
+function loadLastWeather(){
+  try{
+    const cache=localStorage.getItem("LAST_WEATHER");
+    return cache ? JSON.parse(cache) : null;
+  }catch(e){ return null; }
+}
+
+function updateWeatherAlert(feel, wind, rain){
+  const box=document.getElementById("weatherAlert");
+  if(!box) return;
+  const msg=[];
+  if(feel>=35) msg.push("폭염 주의");
+  if(wind>=10) msg.push("강풍 주의");
+  if(rain>0) msg.push("");
+  box.textContent=msg.join(" / ");
+}
+
 </script>
 
 </head>
-<body>
-<h2>현장 위험성 평가표(전송) 작성</h2>
-<div class="form">
-<div style="background:#e8f4ff;padding:8px;margin:8px 0;border-radius:6px;">
-<b>V38.0 안정화 최종판</b><br>
-<span id="gpsStatus">대기중</span><br>
-<button type="button" onclick="v11AutoFill()">GPS·주소·날씨 재조회</button>
+<body><div id='toastMsg' class='toast-msg'></div>
+
+
+<div id="debugStatusCard" style="display:none;">
+<b>상태</b>
+<div id="debugStatusText">시스템 준비완료</div>
 </div>
+
+<div id="gpsAccuracy" style="display:none;">GPS 정확도 : -</div>
+<div id="rainInfo" style="display:none;">강수량 : -</div>
+<div id="weatherAlert" style="font-weight:bold;color:red;"></div>
+
+
+<h2>현장 위험성 평가표(전송) 작성 V22</h2>
+<div class="form">
+
+<div style="background:#e8f4ff;padding:12px;margin:8px 0;border-radius:12px;border-left:5px solid #1976d2;">
+<b>최근접 관측소 정보</b><br>
+<span id="gpsStatus" style="display:block;padding:12px;background:#ffffff;border-radius:10px;font-weight:bold;color:#333;line-height:1.8;font-size:13px;font-weight:600;line-height:1.5;letter-spacing:-0.5px !important;word-spacing:0 !important;font-variant-numeric:normal;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">조회 대기중...</span><br>
+<button id="refreshBtn" style="width:100%;height:52px;border:none;border-radius:12px;background:linear-gradient(135deg,#1976d2,#0d47a1);color:#fff;font-size:16px;font-weight:700;">📍 현장정보 갱신</button>
+</div>
+
 
 
 <p class="fixed-note">도급사명: SKO (고정)</p>
 <label>시작일시 <input type="datetime-local" id="start_date" oninput="generateImage()"></label>
 <label>종료일시 <input type="datetime-local" id="end_date" oninput="generateImage()"></label>
-<label><span>국소명(주소) <span style="color:red">*</span></span> <input type="text" id="location" oninput="generateImage()"></label>
+<label><span>국소명(주소) <span style="color:red">*</span></span> <input type="text" id="location" placeholder="지번주소 자동입력" oninput="generateImage()"></label>
 <label><span>작업공종 <span style="color:red">*</span></span>
   <div class="combo">
     <input type="text" id="what_do" placeholder="작업공종 선택 또는 검색" autocomplete="off" oninput="onWorkInput()" onfocus="openWorkList()" onclick="openWorkList()">
@@ -110,15 +998,17 @@ GPS는 기존 navigator.geolocation 사용.
 
 <details id="sec_weather" open>
   <summary>기상현황 / 온도 <span style="color:red">*</span></summary>
-  <div class="checkbox-group">
+  
+<div class="checkbox-group">
+
     <label><input type="checkbox" value="weather_clear" onchange="generateImage()"> 맑음</label>
     <label><input type="checkbox" value="weather_wind" onchange="generateImage()"> 강풍</label>
     <label><input type="checkbox" value="weather_rain" onchange="generateImage()"> 비/눈</label>
     <label><input type="checkbox" value="weather_hot" onchange="generateImage()"> 폭염</label>
     <label><input type="checkbox" value="weather_cold" onchange="generateImage()"> 한파</label>
   </div>
-  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" type="number" step="0.1" inputmode="decimal" oninput="generateImage()"></label>
-  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" type="number" step="0.1" inputmode="decimal" oninput="generateImage()"></label>
+  <label><span>체감온도 <span style="color:red">*</span></span> <input type="text" id="fake_temperature" placeholder="수동입력" oninput="generateImage()"></label>
+  <label><span>기온 <span style="color:red">*</span></span> <input type="text" id="real_temperature" placeholder="수동입력" oninput="generateImage()"></label><button type="button" onclick="resetWeatherInput()" style="width:100%;height:48px;border:none;border-radius:12px;background:linear-gradient(135deg,#607d8b,#455a64);color:#fff;font-size:15px;font-weight:700;margin-top:8px;">↺ 자동값 복원</button><div id="weather_update_time" style="font-size:13px;color:#666;">관측소 : 대기중</div>
 </details>
 
 <details>
@@ -314,7 +1204,7 @@ GPS는 기존 navigator.geolocation 사용.
 </details>
 
 <details id="sec_boom">
-  <summary>차량탑재형 고소작업대 <span style="color:red">*</span> <span style="font-weight:normal;font-size:12px;color:#888;">(C3 리프트 작업 시 필수)</span></summary>
+  <summary>차량탑재형 고소작업대 <span style="color:red">*</span> <span style="font-weight:normal;font-size:13px;color:#888;">(C3 리프트 작업 시 필수)</span></summary>
     <div class="checkbox-group">
       <label><input type="checkbox" value="boom1" onchange="generateImage()"> ① 안전장치 부착 및 작동 유무 확인 ※ 비상정지장치 버튼 작동 확인</label>
       <label><input type="checkbox" value="boom2" onchange="generateImage()"> ② 아웃트리거 최대 확장 설치</label>
@@ -330,6 +1220,8 @@ GPS는 기존 navigator.geolocation 사용.
   <label>작업높이(m) <input type="text" id="work_height" oninput="generateImage()"></label>
   <label>작업수평거리(m) <input type="text" id="work_distance" oninput="generateImage()"></label>
 </details>
+
+
 
 <p class="iphone-notice">아이폰은 아래 이미지를 길게 눌러 저장하세요.</p>
 <button class="save-btn" onclick="saveImage()">이미지 저장</button>
@@ -749,542 +1641,157 @@ function getDisplayDateTime() {
 }
 
 window.addEventListener('DOMContentLoaded', () => { loadNames(); applySeasonalMarkers(); setCurrentDateTime(); });
-</script>
+
+// ===== 카카오 주소 + 기상청 온도 자동입력 =====
+window.addEventListener("load", () => {
+    setTimeout(loadCurrentLocationWeather, 1000);
+});
 
 
 
-<script>
-function autoWeatherCheck(apparentTemp){
-  const hot = document.querySelector('input[value="weather_hot"]');
-  const cold = document.querySelector('input[value="weather_cold"]');
 
-  if(!hot || !cold) return;
+document.getElementById("refreshLocationWeather")?.addEventListener("click", loadCurrentLocationWeather);
 
-  hot.checked = Number(apparentTemp) >= 35;
-  cold.checked = Number(apparentTemp) <= -12;
-
-  if(typeof generateImage === 'function') generateImage();
-}
-</script>
-
-<script>
-function dfs_xy_conv(lat, lon) {
-    const RE=6371.00877, GRID=5.0, SLAT1=30.0, SLAT2=60.0;
-    const OLON=126.0, OLAT=38.0, XO=43, YO=136;
-    const DEGRAD=Math.PI/180.0;
-    let re=RE/GRID;
-    let slat1=SLAT1*DEGRAD, slat2=SLAT2*DEGRAD;
-    let olon=OLON*DEGRAD, olat=OLAT*DEGRAD;
-
-    let sn=Math.tan(Math.PI*0.25+slat2*0.5)/Math.tan(Math.PI*0.25+slat1*0.5);
-    sn=Math.log(Math.cos(slat1)/Math.cos(slat2))/Math.log(sn);
-
-    let sf=Math.tan(Math.PI*0.25+slat1*0.5);
-    sf=Math.pow(sf,sn)*Math.cos(slat1)/sn;
-
-    let ro=Math.tan(Math.PI*0.25+olat*0.5);
-    ro=re*sf/Math.pow(ro,sn);
-
-    let ra=Math.tan(Math.PI*0.25+(lat)*DEGRAD*0.5);
-    ra=re*sf/Math.pow(ra,sn);
-
-    let theta=lon*DEGRAD-olon;
-    if(theta>Math.PI) theta-=2.0*Math.PI;
-    if(theta<-Math.PI) theta+=2.0*Math.PI;
-    theta*=sn;
-
-    return {
-      nx: Math.floor(ra*Math.sin(theta)+XO+0.5),
-      ny: Math.floor(ro-ra*Math.cos(theta)+YO+0.5)
-    };
+// 폭염/한파 자동체크 보조
+function updateWeatherChecks(temp){
+ const hot=document.querySelector('input[value="weather_hot"]');
+ const cold=document.querySelector('input[value="weather_cold"]');
+ if(hot) hot.checked = temp >= 35;
+ if(cold) cold.checked = temp <= -12;
 }
 
 
-async function fetchAddressByGps(lat, lon){
+
+// ===== V5.2 준비: 기상청 실황값 사용 =====
+// 기온(T1H) -> real_temperature
+// 체감온도 -> 기상청 체감값 사용
+// 폭염 기준 35도, 한파 기준 -12도
+window.KMA_HOT_THRESHOLD = 35;
+window.KMA_COLD_THRESHOLD = -12;
+
+
+
+
+
+
+
+</script>
+
+<script>
+async function refreshLocationAndWeather(){
   try{
-    const res = await fetch(`https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lon}&y=${lat}`,{
-      headers:{ Authorization:`KakaoAK ${window.KAKAO_REST_API_KEY}` }
+    const t = document.getElementById('weather_update_time');
+    if(t) t.textContent = '기상조회 : ' + new Date().toLocaleString('ko-KR');
+
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition((pos)=>{
+        console.log('GPS', pos.coords.latitude, pos.coords.longitude);
+      });
+    }
+
+    // TODO: 카카오 역지오코딩 연동
+    // TODO: 기상청 API 연동
+    // TODO: 기온 자동입력
+    // TODO: 폭염(35℃), 한파(-12℃) 자동체크
+  }catch(e){
+    console.error(e);
+  }
+}
+</script>
+
+
+<script>
+const KAKAO_REST_API_KEY = "eaa5300f4046bfac8ce0355b1bd8cd88";
+
+async function refreshLocationAndWeather(){
+  const stamp = document.getElementById('weather_update_time');
+  if(stamp) stamp.textContent = '기상조회 : ' + new Date().toLocaleString('ko-KR');
+
+  navigator.geolocation.getCurrentPosition(async (pos)=>{
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+
+    try{
+      const res = await fetch(
+        `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lon}&y=${lat}`,
+        {headers:{Authorization:`KakaoAK ${KAKAO_REST_API_KEY}`}}
+      );
+      const data = await res.json();
+
+      const road = data.documents?.[0]?.road_address?.address_name || '';
+      const jibun = data.documents?.[0]?.address?.address_name || '';
+      const loc = document.getElementById('location');
+
+      if(loc){
+        if(jibun){
+          loc.value = jibun;
+        }else if(road){
+          loc.value = road;
+        }else{
+          loc.value = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+        }
+      }
+    }catch(e){
+      console.error('주소조회 실패', e);
+    }
+
+    // 기상청 API 연결 위치
     });
-    const data = await res.json();
-    const doc = data?.documents?.[0];
-    if(!doc){ const s=document.getElementById('gpsStatus'); if(s) s.textContent='주소 조회 실패'; return; }
-
-    const jibunAddr = doc.address?.address_name || '';
-    const dongName = doc.address?.region_3depth_name || '';
-    const roadAddr = doc.road_address?.address_name || '';
-
-    const loc = document.getElementById('location');
-    if(loc){
-      loc.value = roadAddr || jibunAddr || dongName || '';
-    }
-
-    let info = document.getElementById('addressInfo');
-    if(!info){
-      info = document.createElement('div');
-      info.id='addressInfo';
-      info.style.cssText='margin-top:8px;padding:8px;background:#eef7ff;border-radius:6px;font-size:13px;';
-      document.getElementById('gpsStatus').parentNode.appendChild(info);
-    }
-
-    info.innerHTML=`<b>행정동</b> : ${dongName}<br><b>지번주소</b> : ${jibunAddr}<br><b>도로명주소</b> : ${roadAddr}`;
-
-    if(typeof generateImage==='function') generateImage();
-  }catch(e){
-    console.error('주소 조회 실패',e);
-  }
 }
 
-function v11AutoFill(){
- const status=document.getElementById('gpsStatus');
- if(status) status.textContent='GPS 조회중...';
-
- navigator.geolocation.getCurrentPosition(
-   p=>{
-     const st=document.getElementById('gpsStatus'); if(st) st.textContent=`GPS:${p.coords.latitude.toFixed(5)}, ${p.coords.longitude.toFixed(5)} 조회중`; fetchKmaByGps(p.coords.latitude,p.coords.longitude);
-     fetchAddressByGps(p.coords.latitude,p.coords.longitude);
-   },
-   err=>{
-     if(status) status.textContent='위치 권한 허용 필요';
-     console.error(err);
-   },
-   {enableHighAccuracy:true,timeout:15000,maximumAge:0}
- );
-}
+document.addEventListener('DOMContentLoaded', ()=>{
+  const btn = document.getElementById('refreshLocationWeather');
+  if(btn) btn.onclick = refreshLocationAndWeather;
+});
+</script>
 
 
-async function fetchKmaByGps(lat, lon){
-  const g=dfs_xy_conv(lat, lon);
+<script>
+const KMA_AUTH_KEY="0oFfQOEiRXmBX0DhInV5eQ";
 
-  const d=new Date();
-  d.setMinutes(d.getMinutes()-10);
-  const yyyy=d.getFullYear();
-  const mm=String(d.getMonth()+1).padStart(2,'0');
-  const dd=String(d.getDate()).padStart(2,'0');
-  const hh=String(d.getHours()).padStart(2,'0');
-
-  const base_date=`${yyyy}${mm}${dd}`;
-  let baseHour=d.getHours()-1;
-if(baseHour<0){baseHour=23; d.setDate(d.getDate()-1);}
-const base_time=String(baseHour).padStart(2,'0')+'00';
-
-  const url=`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst?serviceKey=${window.KMA_SERVICE_KEY}&pageNo=1&numOfRows=100&dataType=JSON&base_date=${base_date}&base_time=${base_time}&nx=${g.nx}&ny=${g.ny}`;
-
-  const res=await fetch(url);
-  if(!res.ok){
-    throw new Error('기상청 API 오류:'+res.status);
-  }
-  const data=await res.json();
-
-  let T1H=null, REH=null, WSD=null, RN1=0;
-  (data?.response?.body?.items?.item||[]).forEach(i=>{
-    if(i.category==='T1H') T1H=Number(i.obsrValue);
-    if(i.category==='REH') REH=Number(i.obsrValue);
-    if(i.category==='WSD') WSD=Number(i.obsrValue);
-    if(i.category==='RN1') RN1=Number(i.obsrValue)||0;
+function updateWeatherChecks(temp){
+  const boxes=document.querySelectorAll('input[type="checkbox"]');
+  boxes.forEach(b=>{
+    if(b.value==="weather_hot") b.checked=(temp>=35);
+    if(b.value==="weather_cold") b.checked=(temp<=-12);
   });
-
-  // 기상청 자료 기반 체감온도 계산
-  let feel=T1H;
-  if(T1H!=null){
-    if(T1H > 10 && T1H < 27 && REH != null && WSD != null){
-      feel = T1H + ((REH-50)*0.03) - (WSD*0.15);
-    } else if(T1H >= 27 && REH != null){
-      // V25.2 수정: 과도한 체감온도 방지
-      feel = T1H + ((REH-50)*0.08) - ((WSD||0)*0.2);
-      if(feel > T1H + 4) feel = T1H + 4;
-    }else if(T1H <= 10 && WSD != null){
-      feel = calculateWindChill(Number(T1H), Number(WSD)); // 습도보정 체감온도
-    }
-  }
-
-  const rt=document.getElementById('real_temperature');
-  const ft=document.getElementById('fake_temperature');
-  if(rt && T1H!=null) rt.value=Math.round(T1H)+'℃';
-  if(ft && feel!=null){ ft.value=Math.round(feel)+'℃'; autoCheckHeatWave(); }
-const status=document.getElementById('gpsStatus');
-if(status) status.textContent=`주소확인 완료 | 기온:${T1H?.toFixed?.(1) ?? '-'}℃ | 습도:${REH ?? '-'}% | 풍속:${WSD ?? '-'}m/s`;
-if(typeof generateImage==='function') generateImage();
-
-  const q=v=>document.querySelector(`input[value="${v}"]`);
-  if(q('weather_clear')) q('weather_clear').checked = RN1===0;
-  // 비/눈 자동체크 제거
-  if(q('weather_wind')) q('weather_wind').checked = (WSD||0)>=10;
-  if(q('weather_hot')) q('weather_hot').checked = (feel||0)>=35;
-  if(q('weather_cold')) q('weather_cold').checked = (feel||0)<=-12;
 }
 
-window.__weatherLoading=false;
-window.addEventListener('load',()=>{ if(!window.__weatherLoading){window.__weatherLoading=true; v11AutoFill(); setTimeout(()=>window.__weatherLoading=false,5000);} });
+async function applyWeatherTemp(temp){
+  const t=document.getElementById("real_temperature");
+  const f=document.getElementById("fake_temperature");
+  if(t) t.value=temp.toFixed(1)+"℃";
+  if(f) f.value=temp.toFixed(1)+"℃";
+  updateWeatherChecks(temp);
+}
+
 </script>
 
 
 <script>
-function autoWeatherCheckV19(T1H,REH,WSD,PTY){
- try{
-   const cbs=[...document.querySelectorAll('input[type="checkbox"]')];
-   const find=(v)=>cbs.find(x=>x.value===v);
-   if(find('weather_wind')) find('weather_wind').checked=(WSD>=8);
-   // 비/눈 자동체크 제거
-   if(find('weather_hot')) find('weather_hot').checked=(T1H>=33);
-   if(find('weather_cold')) find('weather_cold').checked=(T1H<=-12);
- }catch(e){console.log(e);}
+const KMA_AUTH_KEY = "0oFfQOEiRXmBX0DhInV5eQ";
+
+
+    if(cb.value==="weather_cold") cb.checked = temp <= -12;
+  });
 }
 </script>
 
+</body>
+</html>
 
 <script>
-// 30분마다 자동 갱신
-/* V32.0 중복 자동갱신 제거 */
-</script>
-
-
-<script>
-
-document.addEventListener('visibilitychange',()=>{
- if(!document.hidden && typeof v11AutoFill==='function'){
-   v11AutoFill();
+window.parseKmaText=function(txt){
+ const lines=txt.split('\n');
+ let hi=-1,di=-1;
+ for(let i=0;i<lines.length;i++){
+  const l=lines[i].trim();
+  if(l.startsWith('#YYMMDDHHMI')||l.includes('YYMMDDHHMI STN')){hi=i;continue;}
+  if(hi>-1 && l && !l.startsWith('#')){di=i;break;}
  }
-});
-
-// V20 추가
-function updateWeatherStatus(temp, feel, hum, wind){
-  const el = document.getElementById('gpsStatus');
-  if(!el) return;
-  const now = new Date();
-  el.innerHTML =
-    'GPS/날씨 정상<br>' +
-    '기온: ' + temp + '℃ / 체감: ' + feel + '℃<br>' +
-    '습도: ' + hum + '% / 풍속: ' + wind + 'm/s<br>' +
-    '최종갱신: ' + now.toLocaleString();
-}
+ if(hi<0||di<0) return null;
+ const headers=lines[hi].replace(/^#/,'').trim().split(/\s+/);
+ const cols=lines[di].trim().split(/\s+/);
+ return {temp:parseFloat(cols[headers.indexOf('TA')]),humidity:parseFloat(cols[headers.indexOf('HM')]),wind:parseFloat(cols[headers.indexOf('WS')]),rain:parseFloat(cols[headers.indexOf('RN')])||0};
+};
 </script>
-
-
-<script>
-/* V36.5 deprecated */ <!-- V36.5 제거된 중복 날씨 엔진 -->
-
-
-<script>
-/* V36.5 deprecated */ <!-- V36.5 제거된 중복 날씨 엔진 -->
-
-
-<script>
-/* V36.5 deprecated */ <!-- V36.5 제거된 중복 날씨 엔진 -->
-
-
-<script>
-/* V36.5 deprecated */ <!-- V36.5 제거된 중복 날씨 엔진 -->
-
-
-<!-- V24 AWS 실측 준비판 패치 -->
-<script>
-function updateWeatherStatusV24(obs,temp,feel,hum,wind){
- const el=document.getElementById('gpsStatus');
- if(!el) return;
- el.innerHTML =
- '<b>V24.1 AWS관측소연동준비판</b><br>' +
- '관측소 : ' + (obs||'GPS 기반') + '<br>' +
- '기온 : ' + (temp||'-') + '℃<br>' +
- '체감 : ' + (feel||'-') + '℃<br>' +
- '습도 : ' + (hum||'-') + '%<br>' +
- '풍속 : ' + (wind||'-') + 'm/s<br>' +
- '최종갱신 : ' + new Date().toLocaleString();
-}
-
-
-/* V32.0 중복 visibilitychange 제거 */
-/* V32.0 중복 자동갱신 제거 */
-</script>
-
-
-<script>
-const AWS_STATIONS_V241 = [
- {name:'대구', lat:35.8714, lon:128.6014},
- {name:'대구서구', lat:35.8710, lon:128.5590},
- {name:'대구달성', lat:35.7740, lon:128.4310}
-];
-
-function findNearestAWSV241(lat, lon){
- let best=null, dist=1e9;
- for(const s of AWS_STATIONS_V241){
-   const d=Math.hypot(lat-s.lat, lon-s.lon);
-   if(d<dist){dist=d; best=s;}
- }
- return best;
-}
-
-function updateWeatherStatusV241(obs,temp,feel,hum,wind){
- const el=document.getElementById('gpsStatus');
- if(!el) return;
- el.innerHTML =
- '<b>V24.1 AWS관측소연동준비판</b><br>' +
- '관측소 : '+(obs||'자동선택')+'<br>' +
- '기온 : '+(temp||'-')+'℃<br>' +
- '체감 : '+(feel||'-')+'℃<br>' +
- '습도 : '+(hum||'-')+'%<br>' +
- '풍속 : '+(wind||'-')+'m/s<br>' +
- '최종갱신 : '+new Date().toLocaleString();
-}
-</script>
-
-
-<script>
-function autoWeatherCheck(temp, wind){
-  const hot=document.querySelector('input[value="weather_hot"]');
-  const cold=document.querySelector('input[value="weather_cold"]');
-  const windy=document.querySelector('input[value="weather_wind"]');
-  if(hot) hot.checked = Number(temp) >= 33;
-  if(cold) cold.checked = Number(temp) <= -12;
-  if(windy) windy.checked = Number(wind) >= 10;
-}
-
-function updateWeatherStatusV243(obs,temp,feel,hum,wind){
-  const el=document.getElementById('gpsStatus');
-  if(!el) return;
-  el.innerHTML =
-   '<b>V38.0 안정화 최종판</b><br>' +
-   '관측소 : ' + (obs || '자동선택') + '<br>' +
-   '기온 : ' + (temp || '-') + '℃<br>' +
-   '체감 : ' + (feel || '-') + '℃<br>' +
-   '습도 : ' + (hum || '-') + '%<br>' +
-   '풍속 : ' + (wind || '-') + 'm/s<br>' +
-   '최종갱신 : ' + new Date().toLocaleString();
-  autoWeatherCheck(temp, wind);
-}
-</script>
-
-
-<script>
-let lastGpsV244=null;
-
-function gpsMovedV244(lat, lon){
-  if(!lastGpsV244){
-    lastGpsV244={lat,lon};
-    return false;
-  }
-  const moved = Math.abs(lat-lastGpsV244.lat)>0.0005 ||
-                Math.abs(lon-lastGpsV244.lon)>0.0005;
-  if(moved) lastGpsV244={lat,lon};
-  return moved;
-}
-
-function updateWeatherStatusV244(obs,temp,feel,hum,wind){
-  const el=document.getElementById('gpsStatus');
-  if(!el) return;
-  el.innerHTML =
-   '<b>V38.0 안정화 최종판</b><br>' +
-   '관측소 : '+(obs||'자동선택')+'<br>' +
-   '기온 : '+(temp||'-')+'℃<br>' +
-   '체감 : '+(feel||'-')+'℃<br>' +
-   '습도 : '+(hum||'-')+'%<br>' +
-   '풍속 : '+(wind||'-')+'m/s<br>' +
-   '최종갱신 : '+new Date().toLocaleString();
-}
-</script>
-
-
-<script>
-function updateWeatherStatusV25(obs,temp,feel,hum,wind){
-  const el=document.getElementById('gpsStatus');
-  if(!el) return;
-  el.innerHTML =
-   '<b>V38.0 안정화 최종판</b><br>' +
-   '관측소 : '+(obs||'자동선택')+'<br>' +
-   '기온 : '+(temp||'-')+'℃<br>' +
-   '체감 : '+(feel||'-')+'℃<br>' +
-   '습도 : '+(hum||'-')+'%<br>' +
-   '풍속 : '+(wind||'-')+'m/s<br>' +
-   '최종갱신 : '+new Date().toLocaleString();
-}
-
-
-/* V32.0 중복 visibilitychange 제거 */
-</script>
-
-
-<script>
-// V25.1 체감온도 수정
-function calcFeelTempV251(temp, humidity){
-    temp = Number(temp);
-    humidity = Number(humidity);
-    if(isNaN(temp) || isNaN(humidity)) return temp;
-    if(temp < 20) return temp;
-
-    const feel = temp + (0.33 * (humidity/10)) - 4.0;
-    return Math.round(feel * 10) / 10;
-}
-
-function autoWeatherCheckV251(temp, wind){
-    const hot = Number(temp) >= 33;
-    const cold = Number(temp) <= -12;
-    const strong = Number(wind) >= 10;
-    console.log('폭염:', hot, '한파:', cold, '강풍:', strong);
-}
-</script>
-
-
-<script>
-function updateWeatherStatusV25(obs,temp,feel,hum,wind){
-  const el=document.getElementById('gpsStatus');
-  const feelInput=document.getElementById('fake_temperature');
-  const realInput=document.getElementById('real_temperature');
-
-  if(!el) return;
-
-  const obsDisplay = obs || '조회 실패(위치확인요망)';
-
-  el.innerHTML =
-   '<b>V38.0 안정화 최종판</b><br>' +
-   '관측소 : ' + obsDisplay + '<br>' +
-   '기온 : ' + (temp ?? '-') + '℃<br>' +
-   '체감 : ' + (feel ?? '-') + '℃<br>' +
-   '습도 : ' + (hum ?? '-') + '%<br>' +
-   '풍속 : ' + (wind ?? '-') + 'm/s<br>' +
-   '최종갱신 : ' + new Date().toLocaleString();
-
-  if(realInput && temp != null){
-      realInput.value = Number(temp).toFixed(1);
-  }
-
-  if(feelInput && feel != null){
-      feelInput.value = Number(feel).toFixed(1);
-  }
-
-  const hot=document.querySelector('input[value="weather_hot"]');
-  const cold=document.querySelector('input[value="weather_cold"]');
-  const windChk=document.querySelector('input[value="weather_wind"]');
-
-  if(hot) hot.checked = Number(temp) >= 33;
-  if(cold) cold.checked = Number(temp) <= -12;
-  if(windChk) windChk.checked = Number(wind) >= 10;
-
-  if(typeof generateImage==='function') generateImage();
-}
-
-/* V32.0 중복 자동갱신 제거 */
-</script>
-
-
-<script>
-function validateFeelTemperature(temp, feel, humidity, wind){
-    temp = Number(temp);
-    feel = Number(feel);
-    humidity = Number(humidity);
-    wind = Number(wind);
-
-    if(isNaN(feel)){
-        return { value: temp, source:'기온대체' };
-    }
-
-    const diff = feel - temp;
-
-    if(diff < -5 || diff > 8){
-        let corrected =
-            temp +
-            ((humidity - 50) * 0.08) -
-            (wind * 0.2);
-
-        corrected = Math.round(corrected * 10) / 10;
-
-        return { value: corrected, source:'보정계산' };
-    }
-
-    return { value: feel, source:'기상청' };
-}
-
-function updateWeatherStatusV26(obs,temp,feel,hum,wind){
-
-  const el=document.getElementById('gpsStatus');
-  const tempInput=document.getElementById('real_temperature');
-  const feelInput=document.getElementById('fake_temperature');
-
-  if(!el) return;
-
-  const result=validateFeelTemperature(temp,feel,hum,wind);
-  const finalFeel=result.value;
-
-  if(tempInput && temp!=null){
-      tempInput.value=Number(temp).toFixed(1)+'℃';
-  }
-
-  if(feelInput && finalFeel!=null){
-      feelInput.value=Number(finalFeel).toFixed(1)+'℃';
-  }
-
-  el.innerHTML =
-      '<b>V38.0 안정화 최종판</b><br>' +
-      '관측소 : ' + (obs || '자동선택') + '<br>' +
-      '기온 : ' + temp + '℃<br>' +
-      '체감 : ' + finalFeel + '℃<br>' +
-      '습도 : ' + hum + '%<br>' +
-      '풍속 : ' + wind + 'm/s<br>' +
-      '출처 : ' + result.source + '<br>' +
-      '최종갱신 : ' + new Date().toLocaleString();
-
-  if(typeof generateImage==='function') generateImage();
-}
-</script>
-
-
-<script>
-function autoWeatherCheck(T1H,WSD,PTY,feel){
- const rain=document.querySelector('[value="weather_rain"]');
- const wind=document.querySelector('[value="weather_wind"]');
- const hot=document.querySelector('[value="weather_hot"]');
- const cold=document.querySelector('[value="weather_cold"]');
- // 비/눈 자동체크 제거
- if(wind) wind.checked=Number(WSD)>=10;
- if(hot) hot.checked=Number(feel)>=33;
- if(cold) cold.checked=Number(feel)<=-12;
-}
-</script>
-
-<!-- V26.5 KMA Backup API Patch -->
-<script>
-async function getAsosWeather(stn){
-  const now=new Date();
-  const tm2=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+
-            String(now.getDate()).padStart(2,'0')+
-            String(now.getHours()).padStart(2,'0')+'00';
-
-  const url='https://apihub.kma.go.kr/api/typ01/url/kma_sfctm3.php?tm1='+tm2+
-            '&tm2='+tm2+'&stn='+stn+'&authKey=인증키';
-  return fetch(url).then(r=>r.text());
-}
-
-async function getWeatherSafe(){
-  try{
-    if(typeof v11AutoFill==='function'){
-      await v11AutoFill();
-    }
-  }catch(e){
-    console.log('UltraSrtNcst 실패, ASOS 백업 사용');
-    await getAsosWeather(143);
-  }
-}
-</script>
-
-<!-- V26.6 최적화 패치 -->
-<script>
-// 30분 자동 갱신
-
-
-
-
-function autoCheckHeatWave(){
-  const el=document.getElementById('fake_temperature');
-  const hot=document.querySelector('input[value="weather_hot"]');
-  if(!el || !hot) return;
-
-  const temp=parseFloat(String(el.value).replace('℃','').trim());
-  if(isNaN(temp)) return;
-
-  hot.checked = temp >= 34;
-}
-
-document.addEventListener('input', function(e){
-  if(e.target && e.target.id==='fake_temperature'){
-    autoCheckHeatWave();
-  }
-});
-
