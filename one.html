@@ -174,7 +174,17 @@
     0%,100%{ box-shadow:0 0 0 0 rgba(196,67,43,0.5); }
     50%{ box-shadow:0 0 0 7px rgba(196,67,43,0); }
   }
+  .icon-btn.active{ background:var(--orange); border-color:var(--orange); color:#fff; }
   .quickadd-hint{ margin-top:8px; font-size:11.5px; color:rgba(255,255,255,0.4); }
+  .range-row{
+    margin-top:8px; display:flex; align-items:center; gap:8px;
+  }
+  .range-row input[type=date]{
+    background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius-card);
+    padding:8px 9px; color:#fff; font-size:12.5px; font-family:'Inter',sans-serif;
+  }
+  .range-row span{ font-size:12px; color:rgba(255,255,255,0.5); }
+  .range-row .range-hint{ font-size:11px; }
   .photo-preview{
     margin-top:8px;
     display:flex;
@@ -250,12 +260,17 @@
   .task.p-low{ border-left-color:var(--green); }
   .task.done{ opacity:0.45; }
   .task.done .task-title{ text-decoration:line-through; }
+  .task-check-wrap{ display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0; }
   .task-check{
     width:21px;height:21px; border-radius:50%; border:2px solid var(--paper-dim); flex-shrink:0; margin-top:1px;
     cursor:pointer; display:flex;align-items:center;justify-content:center; background:#fff;
   }
   .task-check.static{ cursor:default; border:none; background:none; font-size:15px; }
   .task.done .task-check{ background:var(--green); border-color:var(--green); color:#fff; font-size:12px; }
+  .dday-badge{ font-size:9.5px; font-weight:700; padding:1.5px 6px; border-radius:var(--radius-pill); white-space:nowrap; line-height:1.4; }
+  .dday-badge.dday-today{ background:var(--red); color:#fff; }
+  .dday-badge.dday-future{ background:var(--paper-dim); color:var(--ink-soft); }
+  .dday-badge.dday-past{ background:#f6d9d1; color:#a3341e; }
   .task-body{ flex:1; min-width:0; }
   .task-title{ font-size:15.5px; font-weight:700; color:var(--ink); margin-bottom:4px; word-break:break-word; }
   .task-meta{ font-size:12px; color:var(--ink); font-weight:500; display:flex; gap:6px; flex-wrap:wrap; }
@@ -311,6 +326,12 @@
   .note-record-transcript{ font-size:12.5px; color:var(--ink-soft); line-height:1.6; white-space:pre-wrap; background:var(--paper); border-radius:var(--radius-card); padding:10px; margin-bottom:8px; }
   .note-record-thumb{ width:100%; max-width:220px; border-radius:var(--radius-card); margin-bottom:8px; cursor:pointer; display:block; }
   .note-record-del{ border:none; background:none; color:var(--red); font-size:12px; cursor:pointer; text-decoration:underline; }
+  .note-record-edit{ border:none; background:none; color:var(--navy); font-size:12px; cursor:pointer; text-decoration:underline; margin-right:14px; }
+  .color-swatch-row{ display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .swatch-label{ font-size:12px; color:var(--ink-soft); font-weight:600; margin-right:2px; }
+  .swatch{ width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
+  .swatch.selected{ border-color:var(--navy); }
+  .swatch.none{ background:#fff; border:1px solid var(--paper-dim); color:var(--ink-soft); font-size:12px; display:flex; align-items:center; justify-content:center; }
 
   /* ---------- Lightbox ---------- */
   .lightbox{ position:fixed; inset:0; background:rgba(0,0,0,0.88); display:none; align-items:center; justify-content:center; z-index:50; padding:24px; cursor:zoom-out; }
@@ -349,6 +370,9 @@
   <div class="quickadd">
     <div class="quickadd-row">
       <input type="text" id="quickInput" placeholder="예: 내일 오전 9시 안전점검 !중요 @김반장">
+      <button id="rangeToggleBtn" class="icon-btn" type="button" aria-label="기간 설정">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+      </button>
       <button id="photoBtn" class="icon-btn" type="button" aria-label="사진으로 등록">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
       </button>
@@ -358,13 +382,20 @@
       <button id="quickAddBtn" class="add-btn">추가</button>
       <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;">
     </div>
-    <div class="quickadd-hint" id="quickHint">날짜·시간·우선순위(!중요)·담당자(@이름)·반복(매일/매주 화요일)을 자동으로 인식해요</div>
+    <div class="range-row" id="rangeRow" style="display:none;">
+      <input type="date" id="rangeStart">
+      <span>~</span>
+      <input type="date" id="rangeEnd">
+      <span class="range-hint">기간 일정으로 등록돼요</span>
+    </div>
+    <div class="quickadd-hint" id="quickHint">날짜·시간·우선순위(!중요)·담당자(@이름)·반복(매일/매주 화요일)·기간(3일간)을 자동으로 인식해요</div>
     <div class="photo-preview" id="photoPreview" style="display:none;">
       <img id="photoPreviewImg" src="">
       <span>사진이 첨부돼요. 텍스트를 읽어 내용을 채워봤어요.</span>
       <button id="photoPreviewRemove" type="button">×</button>
     </div>
   </div>
+
 
   <main>
     <div class="day-nav">
@@ -447,6 +478,16 @@
     <div class="note-composer">
       <input type="text" id="memoTitle" class="note-title-input" placeholder="메모 제목">
       <textarea id="memoContent" class="note-textarea" rows="5" placeholder="내용을 입력하세요"></textarea>
+      <div class="color-swatch-row" id="memoColorRow">
+        <span class="swatch-label">색상</span>
+        <button type="button" class="swatch" data-idx="0" style="background:#FFF3C4;" aria-label="옐로"></button>
+        <button type="button" class="swatch" data-idx="1" style="background:#FFD9E3;" aria-label="핑크"></button>
+        <button type="button" class="swatch" data-idx="2" style="background:#D3E7FF;" aria-label="블루"></button>
+        <button type="button" class="swatch" data-idx="3" style="background:#DAF5E3;" aria-label="그린"></button>
+        <button type="button" class="swatch" data-idx="4" style="background:#E9DCFF;" aria-label="퍼플"></button>
+        <button type="button" class="swatch" data-idx="5" style="background:#FFE3C7;" aria-label="오렌지"></button>
+        <button type="button" class="swatch none" data-idx="-1" aria-label="색상 없음">✕</button>
+      </div>
       <div class="note-row" style="margin-top:10px;">
         <button id="memoPhotoBtn" type="button" class="btn-secondary" style="flex:none; padding:9px 16px;">사진 추가</button>
         <span class="note-status" id="memoPhotoStatus"></span>
@@ -454,6 +495,7 @@
       </div>
       <div class="note-actions-row">
         <button id="memoSaveBtn" class="btn-primary" type="button">메모 저장</button>
+        <button id="memoCancelEditBtn" class="btn-secondary" type="button" style="display:none; flex:none; padding:10px 16px;">취소</button>
       </div>
     </div>
     <div class="group-label" style="margin-top:24px;">저장된 메모</div>
@@ -504,6 +546,7 @@
   let mtgExpandedId = null;
   let memoPendingPhoto = null;
   let memoExpandedId = null;
+  let editingMemoId = null;
 
   function loadTasks(){ try{ const r=localStorage.getItem(STORAGE_KEY); return r?JSON.parse(r):[]; }catch(e){ return []; } }
   function saveTasks(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }catch(e){ showToast('저장 공간이 부족해요 (사진 용량 확인)'); } }
@@ -523,6 +566,7 @@
     let str = text.trim();
     const now = new Date();
     let targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let endDateObj = null;
     let hasTime = false, hour = null, minute = 0, priority = 'mid', assignee = null, recurrence = null;
 
     const assigneeMatch = str.match(/@(\S+)/);
@@ -534,23 +578,38 @@
 
     if(/매일/.test(str)){ recurrence = { type:'daily' }; str = str.replace(/매일/,'').trim(); }
 
-    if(/오늘/.test(str)){ str = str.replace(/오늘/,'').trim(); }
-    else if(/내일모레|모레/.test(str)){ targetDate.setDate(targetDate.getDate()+2); str = str.replace(/내일모레|모레/,'').trim(); }
-    else if(/내일/.test(str)){ targetDate.setDate(targetDate.getDate()+1); str = str.replace(/내일/,'').trim(); }
-    else {
-      const wdMap = {'일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6};
-      const wdMatch = str.match(/(매주\s*|다음주\s*)?([일월화수목금토])요일/);
-      if(wdMatch){
-        const targetWd = wdMap[wdMatch[2]];
-        let diff = (targetWd - now.getDay() + 7) % 7;
-        if(diff === 0) diff = 7;
-        if(wdMatch[1] && wdMatch[1].startsWith('다음주')) diff += 7;
-        targetDate.setDate(targetDate.getDate() + diff);
-        if(wdMatch[1] && wdMatch[1].startsWith('매주') && !recurrence){ recurrence = { type:'weekly', weekday: targetWd }; }
-        str = str.replace(wdMatch[0],'').trim();
+    // explicit date range: "9월1일~9월5일" or "9월1일-9월5일"
+    const rangeMatch = str.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일\s*[~\-]\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/);
+    if(rangeMatch){
+      targetDate = new Date(now.getFullYear(), parseInt(rangeMatch[1])-1, parseInt(rangeMatch[2]));
+      endDateObj = new Date(now.getFullYear(), parseInt(rangeMatch[3])-1, parseInt(rangeMatch[4]));
+      str = str.replace(rangeMatch[0],'').trim();
+    } else {
+      if(/오늘/.test(str)){ str = str.replace(/오늘/,'').trim(); }
+      else if(/내일모레|모레/.test(str)){ targetDate.setDate(targetDate.getDate()+2); str = str.replace(/내일모레|모레/,'').trim(); }
+      else if(/내일/.test(str)){ targetDate.setDate(targetDate.getDate()+1); str = str.replace(/내일/,'').trim(); }
+      else {
+        const wdMap = {'일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6};
+        const wdMatch = str.match(/(매주\s*|다음주\s*)?([일월화수목금토])요일/);
+        if(wdMatch){
+          const targetWd = wdMap[wdMatch[2]];
+          let diff = (targetWd - now.getDay() + 7) % 7;
+          if(diff === 0) diff = 7;
+          if(wdMatch[1] && wdMatch[1].startsWith('다음주')) diff += 7;
+          targetDate.setDate(targetDate.getDate() + diff);
+          if(wdMatch[1] && wdMatch[1].startsWith('매주') && !recurrence){ recurrence = { type:'weekly', weekday: targetWd }; }
+          str = str.replace(wdMatch[0],'').trim();
+        }
+        const explicitDate = str.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/);
+        if(explicitDate){ targetDate = new Date(now.getFullYear(), parseInt(explicitDate[1])-1, parseInt(explicitDate[2])); str = str.replace(explicitDate[0],'').trim(); }
       }
-      const explicitDate = str.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/);
-      if(explicitDate){ targetDate = new Date(now.getFullYear(), parseInt(explicitDate[1])-1, parseInt(explicitDate[2])); str = str.replace(explicitDate[0],'').trim(); }
+      // duration: "3일간" (only meaningful without recurrence)
+      const durMatch = str.match(/(\d{1,2})\s*일간/);
+      if(durMatch && !recurrence){
+        const days = parseInt(durMatch[1]);
+        if(days > 1){ endDateObj = new Date(targetDate); endDateObj.setDate(endDateObj.getDate() + (days-1)); }
+        str = str.replace(durMatch[0],'').trim();
+      }
     }
 
     const timeMatch = str.match(/(오전|오후)?\s*(\d{1,2})\s*시\s*(\d{1,2})?\s*분?/);
@@ -564,13 +623,19 @@
     }
 
     const title = str.replace(/\s+/g,' ').trim() || '제목 없는 일정';
-    return { title, dateKey: dateKey(targetDate), hour: hasTime?hour:null, minute: hasTime?minute:0, priority, assignee, recurrence };
+    return {
+      title, dateKey: dateKey(targetDate),
+      endDateKey: (endDateObj && dateKey(endDateObj) !== dateKey(targetDate)) ? dateKey(endDateObj) : null,
+      hour: hasTime?hour:null, minute: hasTime?minute:0, priority, assignee,
+      recurrence: endDateObj ? null : recurrence
+    };
   }
 
   function addTask(parsed, photo){
     tasks.push({
       id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-      title: parsed.title, dateKey: parsed.dateKey, hour: parsed.hour, minute: parsed.minute,
+      title: parsed.title, dateKey: parsed.dateKey, endDateKey: parsed.endDateKey || null,
+      hour: parsed.hour, minute: parsed.minute,
       priority: parsed.priority, assignee: parsed.assignee || null, recurrence: parsed.recurrence || null,
       doneDates: [], photo: photo || null, done: false, createdAt: Date.now()
     });
@@ -607,9 +672,18 @@
     if(t.recurrence.type==='weekly') return `매주 ${WEEKDAY_KO[t.recurrence.weekday]}요일 반복`;
     return null;
   }
+  function formatMD(key){ const d = new Date(key+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}`; }
+  function rangeLabel(t){
+    if(!t.endDateKey || t.endDateKey === t.dateKey) return null;
+    const days = Math.round((new Date(t.endDateKey+'T00:00:00') - new Date(t.dateKey+'T00:00:00'))/86400000) + 1;
+    return `${formatMD(t.dateKey)}~${formatMD(t.endDateKey)} (${days}일간)`;
+  }
 
   function taskOccursOn(t, key){
-    if(!t.recurrence) return t.dateKey === key;
+    if(!t.recurrence){
+      if(t.endDateKey) return key >= t.dateKey && key <= t.endDateKey;
+      return t.dateKey === key;
+    }
     if(key < t.dateKey) return false;
     if(t.recurrence.type==='daily') return true;
     if(t.recurrence.type==='weekly') return new Date(key+'T00:00:00').getDay() === t.recurrence.weekday;
@@ -622,7 +696,7 @@
     const idx = t.doneDates.indexOf(occDate);
     if(idx>=0) t.doneDates.splice(idx,1); else t.doneDates.push(occDate);
   }
-  function isOverdueTemplate(t){ return !t.recurrence && !t.done && t.dateKey < todayKey(); }
+  function isOverdueTemplate(t){ if(t.recurrence || t.done) return false; return (t.endDateKey || t.dateKey) < todayKey(); }
   function buildOccurrence(t, occDate){ return Object.assign({}, t, { occDate, doneComputed: isDoneOn(t, occDate) }); }
   function priorityRank(p){ return p==='high'?0:p==='mid'?1:2; }
 
@@ -756,14 +830,29 @@
     items.forEach(o => wrap.appendChild(renderTask(o)));
   }
 
+  function ddayInfo(o){
+    if(o.recurrence) return null;
+    const diff = Math.round((new Date(o.occDate+'T00:00:00') - new Date(todayKey()+'T00:00:00'))/86400000);
+    if(diff === 0) return { text:'D-DAY', cls:'dday-today' };
+    if(diff > 0) return { text:'D-'+diff, cls:'dday-future' };
+    return { text:'D+'+Math.abs(diff), cls:'dday-past' };
+  }
+
   function renderTask(o){
     const el = document.createElement('div');
     el.className = `task p-${o.priority}${o.doneComputed?' done':''}`;
     const isTemplateRow = o.recurrence && currentView === 'all';
-    const checkHtml = isTemplateRow
+    const dday = isTemplateRow ? null : ddayInfo(o);
+    const checkInner = isTemplateRow
       ? `<div class="task-check static">🔁</div>`
       : `<div class="task-check" data-id="${o.id}" data-occ="${o.occDate}">${o.doneComputed?'✓':''}</div>`;
+    const checkHtml = `
+      <div class="task-check-wrap">
+        ${checkInner}
+        ${dday ? `<span class="dday-badge ${dday.cls}">${dday.text}</span>` : ''}
+      </div>`;
     const recLabel = recurrenceLabel(o);
+    const rgLabel = rangeLabel(o);
     const isOver = !o.recurrence && o.occDate < todayKey() && !o.doneComputed;
     el.innerHTML = `
       ${checkHtml}
@@ -774,6 +863,7 @@
           <span class="tag">${priorityLabel(o.priority)}</span>
           ${o.assignee ? `<span class="tag">@${escapeHtml(o.assignee)}</span>` : ''}
           ${recLabel ? `<span class="tag">🔁 ${recLabel}</span>` : ''}
+          ${rgLabel ? `<span class="tag">📅 ${rgLabel}</span>` : ''}
           ${isOver ? `<span class="tag" style="background:#f6d9d1;color:#a3341e;">${relativeDateLabel(o.occDate)}</span>` : ''}
           ${o.photo ? `<button class="tag clickable" data-photo="${o.id}">📷 사진</button>` : ''}
         </div>
@@ -833,13 +923,29 @@
     const val = input.value.trim();
     if(!val) return;
     const parsed = parseQuickInput(val);
+
+    const rs = $('#rangeStart').value, re = $('#rangeEnd').value;
+    if($('#rangeToggleBtn').classList.contains('active') && rs){
+      parsed.dateKey = rs;
+      parsed.endDateKey = (re && re > rs) ? re : null;
+      parsed.recurrence = null;
+    }
+
     addTask(parsed, pendingPhoto);
     input.value = '';
     pendingPhoto = null;
     $('#photoPreview').style.display = 'none';
-    showToast(`"${parsed.title}" 일정을 ${relativeDateLabel(parsed.dateKey)}${parsed.hour!==null ? ' '+timeLabel(parsed) : ''}(으)로 등록했어요`);
+    $('#rangeStart').value = ''; $('#rangeEnd').value = '';
+    const rangeMsg = parsed.endDateKey ? ` ~ ${relativeDateLabel(parsed.endDateKey)}` : '';
+    showToast(`"${parsed.title}" 일정을 ${relativeDateLabel(parsed.dateKey)}${rangeMsg}${parsed.hour!==null ? ' '+timeLabel(parsed) : ''}(으)로 등록했어요`);
     render();
   }
+
+  $('#rangeToggleBtn').addEventListener('click', ()=>{
+    const active = $('#rangeToggleBtn').classList.toggle('active');
+    $('#rangeRow').style.display = active ? 'flex' : 'none';
+    if(!active){ $('#rangeStart').value=''; $('#rangeEnd').value=''; }
+  });
 
   $('#photoBtn').addEventListener('click', ()=> $('#photoInput').click());
   $('#photoInput').addEventListener('change', async e=>{
@@ -868,7 +974,7 @@
       showToast('사진은 첨부됐지만 글자 인식에는 실패했어요');
     }
     $('#photoBtn').classList.remove('processing');
-    $('#quickHint').textContent = '날짜·시간·우선순위(!중요)·담당자(@이름)·반복(매일/매주 화요일)을 자동으로 인식해요';
+    $('#quickHint').textContent = '날짜·시간·우선순위(!중요)·담당자(@이름)·반복(매일/매주 화요일)·기간(3일간)을 자동으로 인식해요';
     e.target.value = '';
   });
   $('#photoPreviewRemove').addEventListener('click', ()=>{ pendingPhoto = null; $('#photoPreview').style.display='none'; });
@@ -968,7 +1074,7 @@
     recognition = new SpeechRecognitionAPI();
     recognition.lang = 'ko-KR'; recognition.continuous = false; recognition.interimResults = false; recognition.maxAlternatives = 1;
     recognition.addEventListener('start', ()=>{ isListening=true; $('#micBtn').classList.add('listening'); $('#quickHint').textContent='듣고 있어요... 말씀해주세요'; });
-    recognition.addEventListener('end', ()=>{ isListening=false; $('#micBtn').classList.remove('listening'); $('#quickHint').textContent='날짜·시간·우선순위(!중요)·담당자(@이름)·반복(매일/매주 화요일)을 자동으로 인식해요'; });
+    recognition.addEventListener('end', ()=>{ isListening=false; $('#micBtn').classList.remove('listening'); $('#quickHint').textContent='날짜·시간·우선순위(!중요)·담당자(@이름)·반복(매일/매주 화요일)·기간(3일간)을 자동으로 인식해요'; });
     recognition.addEventListener('result', e=>{ const tr = e.results[0][0].transcript; $('#quickInput').value = tr; showToast(`인식됨: "${tr}"`); });
     recognition.addEventListener('error', e=>{
       isListening=false; $('#micBtn').classList.remove('listening');
@@ -1087,6 +1193,33 @@
   });
 
   // ---------- Memos ----------
+  const MEMO_PALETTE = [
+    {bg:'#FFF3C4', border:'#F0C23E'},
+    {bg:'#FFD9E3', border:'#F07C9B'},
+    {bg:'#D3E7FF', border:'#5E9EE8'},
+    {bg:'#DAF5E3', border:'#5FC489'},
+    {bg:'#E9DCFF', border:'#A374EE'},
+    {bg:'#FFE3C7', border:'#F0973E'}
+  ];
+  let selectedMemoColorIdx = null;
+
+  $('#memoColorRow').addEventListener('click', e=>{
+    const btn = e.target.closest('.swatch'); if(!btn) return;
+    const idx = parseInt(btn.dataset.idx);
+    selectedMemoColorIdx = idx === -1 ? null : idx;
+    $$('#memoColorRow .swatch').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+
+  function resetMemoComposer(){
+    $('#memoTitle').value=''; $('#memoContent').value=''; memoPendingPhoto=null; $('#memoPhotoStatus').textContent='';
+    selectedMemoColorIdx = null;
+    $$('#memoColorRow .swatch').forEach(b=>b.classList.remove('selected'));
+    editingMemoId = null;
+    $('#memoSaveBtn').textContent = '메모 저장';
+    $('#memoCancelEditBtn').style.display = 'none';
+  }
+
   $('#memoPhotoBtn').addEventListener('click', ()=> $('#memoPhotoInput').click());
   $('#memoPhotoInput').addEventListener('change', async e=>{
     const file = e.target.files[0]; if(!file) return;
@@ -1099,22 +1232,40 @@
   $('#memoSaveBtn').addEventListener('click', ()=>{
     const title = $('#memoTitle').value.trim(), content = $('#memoContent').value.trim();
     if(!title && !content && !memoPendingPhoto){ showToast('내용을 입력해주세요'); return; }
-    memos.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), title: title||'제목 없는 메모', content, photo: memoPendingPhoto, dateKey: todayKey(), createdAt: Date.now() });
-    saveMemos();
-    $('#memoTitle').value=''; $('#memoContent').value=''; memoPendingPhoto=null; $('#memoPhotoStatus').textContent='';
-    renderMemosView(); showToast('메모를 저장했어요');
+    if(editingMemoId){
+      const m = memos.find(x=>x.id===editingMemoId);
+      if(m){
+        m.title = title || '제목 없는 메모';
+        m.content = content;
+        m.photo = memoPendingPhoto;
+        m.colorIdx = selectedMemoColorIdx;
+        saveMemos();
+        showToast('메모를 수정했어요');
+      }
+    } else {
+      memos.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), title: title||'제목 없는 메모', content, photo: memoPendingPhoto, colorIdx: selectedMemoColorIdx, dateKey: todayKey(), createdAt: Date.now() });
+      saveMemos();
+      showToast('메모를 저장했어요');
+    }
+    resetMemoComposer();
+    renderMemosView();
   });
+  $('#memoCancelEditBtn').addEventListener('click', resetMemoComposer);
+
   function renderMemosList(){
     const wrap = $('#memoList'); wrap.innerHTML='';
     if(memos.length === 0){ wrap.innerHTML = `<div class="empty"><div class="display">저장된 메모가 없어요</div><p>떠오른 생각을 바로 기록해보세요.</p></div>`; return; }
     memos.slice().sort((a,b)=>b.createdAt-a.createdAt).forEach(m=>{
       const el = document.createElement('div'); el.className='note-record'+(memoExpandedId===m.id?' expanded':''); el.dataset.id=m.id;
+      const pal = (m.colorIdx!=null && MEMO_PALETTE[m.colorIdx]) ? MEMO_PALETTE[m.colorIdx] : null;
+      if(pal){ el.style.background = pal.bg; el.style.borderLeftColor = pal.border; }
       el.innerHTML = `
         <div class="note-record-title">${escapeHtml(m.title)}</div>
         <div class="note-record-meta"><span>${relativeDateLabel(m.dateKey)}</span></div>
         <div class="note-record-body">
           ${m.photo ? `<img class="note-record-thumb" src="${m.photo}" data-photo="${m.id}">` : ''}
           <div class="note-record-transcript">${escapeHtml(m.content||'(내용 없음)')}</div>
+          <button class="note-record-edit" data-id="${m.id}">수정</button>
           <button class="note-record-del" data-id="${m.id}">이 메모 삭제</button>
         </div>`;
       wrap.appendChild(el);
@@ -1124,6 +1275,25 @@
   $('#memoList').addEventListener('click', e=>{
     const photo = e.target.closest('[data-photo]');
     if(photo){ e.stopPropagation(); const m = memos.find(x=>x.id===photo.dataset.photo); if(m && m.photo) openLightbox(m.photo); return; }
+    const edit = e.target.closest('.note-record-edit');
+    if(edit){
+      e.stopPropagation();
+      const m = memos.find(x=>x.id===edit.dataset.id);
+      if(!m) return;
+      $('#memoTitle').value = m.title;
+      $('#memoContent').value = m.content || '';
+      memoPendingPhoto = m.photo || null;
+      $('#memoPhotoStatus').textContent = m.photo ? '사진 첨부됨' : '';
+      selectedMemoColorIdx = (m.colorIdx!=null) ? m.colorIdx : null;
+      $$('#memoColorRow .swatch').forEach(b=>b.classList.remove('selected'));
+      const sel = $(`#memoColorRow .swatch[data-idx="${selectedMemoColorIdx!=null ? selectedMemoColorIdx : -1}"]`);
+      if(sel) sel.classList.add('selected');
+      editingMemoId = m.id;
+      $('#memoSaveBtn').textContent = '수정 저장';
+      $('#memoCancelEditBtn').style.display = '';
+      showToast('메모를 수정 중이에요. 위 입력창에서 내용을 고쳐주세요');
+      return;
+    }
     const del = e.target.closest('.note-record-del');
     if(del){ e.stopPropagation(); memos = memos.filter(m=>m.id!==del.dataset.id); saveMemos(); renderMemosList(); return; }
     const record = e.target.closest('.note-record');
