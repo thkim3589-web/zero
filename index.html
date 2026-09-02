@@ -1419,17 +1419,25 @@
   }
   function renderMeetingsView(){ $('#meetingDateLabel').textContent = formatBriefDate(new Date()); renderMtgActionItems(); renderMeetingsList(); }
 
-  let mtgRecognition = null, mtgRecording = false;
+  let mtgRecognition = null, mtgRecording = false, mtgWantRecording = false;
   if(SpeechRecognitionAPI){
     mtgRecognition = new SpeechRecognitionAPI();
     mtgRecognition.lang='ko-KR'; mtgRecognition.continuous=true; mtgRecognition.interimResults=true; mtgRecognition.maxAlternatives=1;
     let finalBuffer = '';
     mtgRecognition.addEventListener('start', ()=>{
-      mtgRecording=true; finalBuffer=$('#mtgTranscript').value;
-      if(finalBuffer && !finalBuffer.endsWith(' ') && !finalBuffer.endsWith('\n')) finalBuffer += ' ';
+      mtgRecording=true;
       $('#mtgRecordBtn').classList.add('recording'); $('#mtgRecordLabel').textContent='녹음 중지'; $('#mtgRecordStatus').textContent='듣고 있어요... (눌러서 중지)';
     });
-    mtgRecognition.addEventListener('end', ()=>{ mtgRecording=false; $('#mtgRecordBtn').classList.remove('recording'); $('#mtgRecordLabel').textContent='녹음 시작'; $('#mtgRecordStatus').textContent='눌러서 녹음 시작'; });
+    mtgRecognition.addEventListener('end', ()=>{
+      mtgRecording=false;
+      if(mtgWantRecording){
+        // 브라우저/OS가 세션을 임의로 끊은 경우 - 자동으로 이어서 재시작
+        $('#mtgRecordStatus').textContent = '이어서 녹음 중...';
+        setTimeout(()=>{ if(mtgWantRecording){ try{ mtgRecognition.start(); }catch(err){} } }, 300);
+      } else {
+        $('#mtgRecordBtn').classList.remove('recording'); $('#mtgRecordLabel').textContent='녹음 시작'; $('#mtgRecordStatus').textContent='눌러서 녹음 시작';
+      }
+    });
     mtgRecognition.addEventListener('result', e=>{
       let interim='';
       for(let i=e.resultIndex; i<e.results.length; i++){
@@ -1439,11 +1447,26 @@
       $('#mtgTranscript').value = finalBuffer + interim;
     });
     mtgRecognition.addEventListener('error', e=>{
-      mtgRecording=false; $('#mtgRecordBtn').classList.remove('recording'); $('#mtgRecordLabel').textContent='녹음 시작';
-      if(e.error==='not-allowed'||e.error==='permission-denied') showToast('마이크 권한을 허용해주세요');
-      else if(e.error!=='no-speech') showToast('음성 인식 중 오류가 발생했어요');
+      if(e.error==='not-allowed'||e.error==='permission-denied'){
+        mtgWantRecording = false; mtgRecording = false;
+        $('#mtgRecordBtn').classList.remove('recording'); $('#mtgRecordLabel').textContent='녹음 시작'; $('#mtgRecordStatus').textContent='눌러서 녹음 시작';
+        showToast('마이크 권한을 허용해주세요');
+      } else if(e.error !== 'no-speech' && e.error !== 'aborted'){
+        showToast('음성 인식이 잠시 끊겼어요. 자동으로 다시 연결할게요');
+      }
+      // no-speech/network/aborted 등은 'end' 핸들러가 이어서 자동 재시작 처리
     });
-    $('#mtgRecordBtn').addEventListener('click', ()=>{ if(mtgRecording) mtgRecognition.stop(); else { try{ mtgRecognition.start(); }catch(err){} } });
+    $('#mtgRecordBtn').addEventListener('click', ()=>{
+      if(mtgWantRecording){
+        mtgWantRecording = false;
+        mtgRecognition.stop();
+      } else {
+        mtgWantRecording = true;
+        finalBuffer = $('#mtgTranscript').value;
+        if(finalBuffer && !finalBuffer.endsWith(' ') && !finalBuffer.endsWith('\n')) finalBuffer += ' ';
+        try{ mtgRecognition.start(); }catch(err){}
+      }
+    });
   } else {
     $('#mtgRecordBtn').addEventListener('click', ()=> showToast('이 브라우저는 음성 인식을 지원하지 않아요. 직접 입력해주세요.'));
   }
