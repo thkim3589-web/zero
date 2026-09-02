@@ -249,6 +249,14 @@
   .cal-dot.p-high{ background:var(--red); }
   .cal-dot.p-mid{ background:var(--orange); }
   .cal-dot.p-low{ background:var(--green); }
+  .cal-range-bar{
+    position:absolute; left:-2px; right:-2px; height:5px; z-index:1;
+  }
+  .cal-range-bar.round-left{ left:2px; border-top-left-radius:3px; border-bottom-left-radius:3px; }
+  .cal-range-bar.round-right{ right:2px; border-top-right-radius:3px; border-bottom-right-radius:3px; }
+  .cal-range-bar.p-high{ background:var(--red); }
+  .cal-range-bar.p-mid{ background:var(--orange); }
+  .cal-range-bar.p-low{ background:var(--green); }
   .cal-selected-label, .group-label{
     font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.6px; margin:18px 0 8px;
   }
@@ -962,21 +970,34 @@
 
     const grid = $('#calGrid'); grid.innerHTML = '';
     const today = todayKey();
-    cells.forEach(c=>{
+    cells.forEach((c, idx)=>{
       const cell = document.createElement('div');
       cell.className = 'cal-cell' + (c.muted?' muted':'') + (c.dKey===today?' today':'') + (c.dKey===selectedCalDate?' selected':'');
       const num = document.createElement('div'); num.className='cal-num'; num.textContent=c.day; cell.appendChild(num);
       if(!c.muted){
         const dayTasks = tasks.filter(t=>taskOccursOn(t, c.dKey));
-        if(dayTasks.length){
+        const rangeTasks = dayTasks.filter(t=>t.endDateKey && t.endDateKey !== t.dateKey);
+        const normalTasks = dayTasks.filter(t=>!(t.endDateKey && t.endDateKey !== t.dateKey));
+
+        if(normalTasks.length){
           const dots = document.createElement('div'); dots.className='cal-dots';
           const seen = new Set();
-          dayTasks.slice(0,3).forEach(t=>{
+          normalTasks.slice(0,3).forEach(t=>{
             if(seen.has(t.priority)) return; seen.add(t.priority);
             const dot = document.createElement('span'); dot.className = `cal-dot p-${t.priority}`; dots.appendChild(dot);
           });
           cell.appendChild(dots);
         }
+
+        rangeTasks.slice(0,2).forEach((t, barIdx)=>{
+          const bar = document.createElement('div');
+          const roundLeft = c.dKey === t.dateKey;
+          const roundRight = c.dKey === t.endDateKey;
+          bar.className = `cal-range-bar p-${t.priority}${roundLeft?' round-left':''}${roundRight?' round-right':''}`;
+          bar.style.bottom = (4 + barIdx*7) + 'px';
+          cell.appendChild(bar);
+        });
+
         cell.addEventListener('click', ()=>{ selectedCalDate = c.dKey; render(); });
       }
       grid.appendChild(cell);
