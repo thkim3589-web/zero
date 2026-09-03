@@ -25,6 +25,7 @@
     --radius-card: 6px;
     --radius-pill: 999px;
     --fs-scale: 1;
+    --kb-offset: 0px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -132,6 +133,7 @@
     position:fixed; left:0; right:0; bottom:60px; max-width:520px; margin:0 auto;
     padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:var(--navy-2);
     border-top:1px solid rgba(255,255,255,0.1); box-shadow:0 -4px 16px rgba(0,0,0,0.25); z-index:12;
+    transform:translateY(calc(-1 * var(--kb-offset)));
   }
   .quickadd-row{ display:flex; gap:7px; }
   .quickadd input[type=text]{
@@ -377,6 +379,7 @@
   .tabbar{
     position:fixed; left:0; right:0; bottom:0; max-width:520px; margin:0 auto; display:flex;
     background:var(--navy); border-top:1px solid rgba(255,255,255,0.08); padding:6px 0 calc(6px + env(safe-area-inset-bottom)); z-index:10;
+    transform:translateY(calc(-1 * var(--kb-offset)));
   }
   .tabbar button{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:rgba(255,255,255,0.45); font-family:'Inter',sans-serif; font-size:calc(11px * var(--fs-scale)); font-weight:600; padding:6px 0; cursor:pointer; }
   .tabbar button.active{ color:var(--orange-soft); }
@@ -606,11 +609,11 @@
       <div class="note-row">
         <button id="mtgRecordBtn" type="button" class="btn-dark-pill">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-          <span id="mtgRecordLabel">녹음 시작</span>
+          <span id="mtgRecordLabel">음성 입력 시작</span>
         </button>
-        <span class="note-status" id="mtgRecordStatus">눌러서 녹음 시작</span>
+        <span class="note-status" id="mtgRecordStatus">눌러서 음성 입력 시작</span>
       </div>
-      <textarea id="mtgTranscript" class="note-textarea" rows="6" placeholder="녹음 시작을 누르고 말씀하시면 여기 받아 적습니다. 직접 타이핑도 가능해요."></textarea>
+      <textarea id="mtgTranscript" class="note-textarea" rows="6" placeholder="음성 입력 시작을 누르고 말씀하시면 텍스트로 받아 적습니다 (실제 음성 파일 저장은 아니에요). 직접 타이핑도 가능해요."></textarea>
       <div class="note-actions-row">
         <button id="mtgExtractBtn" class="btn-secondary" type="button">할 일 뽑아내기</button>
         <button id="mtgSaveBtn" class="btn-primary" type="button">회의록 저장</button>
@@ -762,24 +765,103 @@
   let mtgCurrentActionItems = [];
   let mtgExpandedId = null;
   let memoPendingPhoto = null;
+  let memoPhotoIsFresh = false;
   let memoExpandedId = null;
   let editingMemoId = null;
   let memoChecklistDraft = [];
 
   function loadTasks(){ try{ const r=localStorage.getItem(STORAGE_KEY); return r?JSON.parse(r):[]; }catch(e){ return []; } }
-  function saveTasks(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }catch(e){ showToast('저장 공간이 부족해요 (사진 용량 확인)'); } }
+  function saveTasks(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }catch(e){ showToast('저장 공간이 부족해요'); } }
   function loadMeetings(){ try{ const r=localStorage.getItem(MTG_STORAGE_KEY); return r?JSON.parse(r):[]; }catch(e){ return []; } }
   function saveMeetings(){ try{ localStorage.setItem(MTG_STORAGE_KEY, JSON.stringify(meetings)); }catch(e){ showToast('회의록 저장에 실패했어요'); } }
   function loadMemos(){ try{ const r=localStorage.getItem(MEMO_STORAGE_KEY); return r?JSON.parse(r):[]; }catch(e){ return []; } }
-  function saveMemos(){ try{ localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos)); }catch(e){ showToast('메모 저장에 실패했어요 (사진 용량 확인)'); } }
+  function saveMemos(){ try{ localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos)); }catch(e){ showToast('메모 저장에 실패했어요'); } }
+
+  // ---------- IndexedDB 사진 저장소 ----------
+  // localStorage는 용량이 약 5MB로 제한돼 있어 사진을 계속 첨부하면 저장이 실패할 수 있습니다.
+  // 사진은 IndexedDB(수백MB~ 브라우저별 상이)에 따로 저장하고, tasks/memos에는 짧은 참조ID만 남깁니다.
+  // (IndexedDB를 못 쓰는 환경에서는 예전처럼 원본을 그대로 저장하는 방식으로 자동 대체됩니다.)
+  const PHOTO_DB_NAME = 'jhb_photos_db';
+  const PHOTO_STORE = 'photos';
+  let photoDbPromise = null;
+  function openPhotoDB(){
+    if(photoDbPromise) return photoDbPromise;
+    photoDbPromise = new Promise((resolve, reject)=>{
+      if(!('indexedDB' in window)){ reject(new Error('no indexeddb')); return; }
+      const req = indexedDB.open(PHOTO_DB_NAME, 1);
+      req.onupgradeneeded = ()=>{ req.result.createObjectStore(PHOTO_STORE, { keyPath:'id' }); };
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
+    return photoDbPromise;
+  }
+  function savePhotoToDB(id, dataUrl){
+    return openPhotoDB().then(db => new Promise((resolve, reject)=>{
+      const tx = db.transaction(PHOTO_STORE, 'readwrite');
+      tx.objectStore(PHOTO_STORE).put({ id, dataUrl });
+      tx.oncomplete = ()=> resolve(true);
+      tx.onerror = ()=> reject(tx.error);
+    }));
+  }
+  function getPhotoFromDB(id){
+    return openPhotoDB().then(db => new Promise((resolve, reject)=>{
+      const tx = db.transaction(PHOTO_STORE, 'readonly');
+      const req = tx.objectStore(PHOTO_STORE).get(id);
+      req.onsuccess = ()=> resolve(req.result ? req.result.dataUrl : null);
+      req.onerror = ()=> reject(req.error);
+    })).catch(()=> null);
+  }
+  function deletePhotoFromDB(id){
+    return openPhotoDB().then(db => new Promise((resolve)=>{
+      const tx = db.transaction(PHOTO_STORE, 'readwrite');
+      tx.objectStore(PHOTO_STORE).delete(id);
+      tx.oncomplete = ()=> resolve();
+      tx.onerror = ()=> resolve();
+    })).catch(()=>{});
+  }
+  // dataUrl을 커밋해서 짧은 참조ID로 바꿔줍니다. IndexedDB 사용 불가 시 원본을 그대로 반환(안전한 폴백).
+  async function commitPhoto(dataUrl){
+    if(!dataUrl) return null;
+    const id = 'ph_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+    try{ await savePhotoToDB(id, dataUrl); return id; }
+    catch(err){ return dataUrl; }
+  }
+  // 참조ID 또는 예전 방식의 원본 dataURL 모두 처리 (하위 호환)
+  function resolvePhotoSrc(ref){
+    if(!ref) return Promise.resolve(null);
+    if(ref.startsWith('data:')) return Promise.resolve(ref);
+    return getPhotoFromDB(ref);
+  }
+  function deletePhotoRef(ref){
+    if(ref && !ref.startsWith('data:')) deletePhotoFromDB(ref);
+  }
+  // 예전 버전에서 localStorage에 통째로 저장돼 있던 사진들을 IndexedDB로 옮깁니다 (1회성, 조용히 실행).
+  async function migrateInlinePhotosToIndexedDB(){
+    let changed = false;
+    for(const t of tasks){
+      if(t.photo && typeof t.photo === 'string' && t.photo.startsWith('data:')){
+        t.photo = await commitPhoto(t.photo); changed = true;
+      }
+    }
+    for(const m of memos){
+      if(m.photo && typeof m.photo === 'string' && m.photo.startsWith('data:')){
+        m.photo = await commitPhoto(m.photo); changed = true;
+      }
+    }
+    if(changed){
+      saveTasks(); saveMemos();
+      render();
+      if($('#memosView').style.display !== 'none') renderMemosView();
+    }
+  }
 
   function pad(n){ return String(n).padStart(2,'0'); }
   function dateKey(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
   function todayKey(){ return dateKey(new Date()); }
   const WEEKDAY_KO = ['일','월','화','수','목','금','토'];
 
-  // 2026년 대한민국 공휴일 (음력 기반 공휴일은 매년 날짜가 바뀌므로 연도별로 갱신이 필요합니다)
-  const HOLIDAYS_KR = {
+  // 2026년 대한민국 공휴일 (오프라인 폴백용 — 정확도 확인됨). 그 외 연도는 아래 API로 자동 보강됩니다.
+  const HOLIDAYS_FALLBACK_KR = {
     '2026-01-01': '신정',
     '2026-02-16': '설날 연휴',
     '2026-02-17': '설날',
@@ -803,7 +885,28 @@
     '2026-10-09': '한글날',
     '2026-12-25': '기독탄신일'
   };
-  function holidayName(key){ return HOLIDAYS_KR[key] || null; }
+  let holidaysRuntime = Object.assign({}, HOLIDAYS_FALLBACK_KR);
+  const HOLIDAY_CACHE_PREFIX = 'jhb_holidays_';
+  function holidayName(key){ return holidaysRuntime[key] || null; }
+  // 외부 공휴일 API(Nager.Date, 무료·키 불필요)로 연도별 공휴일을 자동 보강합니다.
+  // 이미 폴백 데이터에 있는 날짜는 덮어쓰지 않고, 폴백에 없는 연도(2027년 이후 등)만 채워 넣습니다.
+  async function loadHolidaysForYear(year){
+    const cacheKey = HOLIDAY_CACHE_PREFIX + year;
+    const cached = localStorage.getItem(cacheKey);
+    if(cached){
+      try{ const map = JSON.parse(cached); for(const k in map){ if(!(k in holidaysRuntime)) holidaysRuntime[k] = map[k]; } return; }catch(e){}
+    }
+    try{
+      const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/KR`);
+      if(!res.ok) throw new Error('bad response');
+      const data = await res.json();
+      const map = {};
+      data.forEach(h=>{ if(h.date) map[h.date] = h.localName || h.name; });
+      localStorage.setItem(cacheKey, JSON.stringify(map));
+      for(const k in map){ if(!(k in holidaysRuntime)) holidaysRuntime[k] = map[k]; }
+      render();
+    }catch(err){ /* 네트워크 실패 시 폴백 데이터만으로 계속 동작 */ }
+  }
   function calLabelWithHoliday(key){
     const hn = holidayName(key);
     return hn ? `${relativeDateLabel(key)} · 🔴 ${hn}` : relativeDateLabel(key);
@@ -840,31 +943,101 @@
       str = str.replace(rangeMatch[0],'').trim();
       hasExplicitDate = true;
     } else {
-      if(/오늘/.test(str)){ str = str.replace(/오늘/,'').trim(); hasExplicitDate = true; }
+      const wdMap = {'일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6};
+
+      // "오늘부터 3일(간)" / "내일부터 3일(간)" — 상대 날짜 + 기간을 한번에
+      const relDurMatch = str.match(/(오늘|내일)\s*부터\s*(\d{1,2})\s*일(?:간)?/);
+      if(relDurMatch){
+        if(relDurMatch[1] === '내일') targetDate.setDate(targetDate.getDate()+1);
+        const days = parseInt(relDurMatch[2]);
+        if(days > 1){ endDateObj = new Date(targetDate); endDateObj.setDate(endDateObj.getDate() + (days-1)); }
+        str = str.replace(relDurMatch[0],'').trim();
+        hasExplicitDate = true;
+      }
+      // "이번주 내내" — 이번주 일요일~토요일 전체
+      else if(/이번\s*주\s*내내/.test(str)){
+        const weekStart = new Date(now); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate()+6);
+        targetDate = weekStart; endDateObj = weekEnd;
+        str = str.replace(/이번\s*주\s*내내/,'').trim();
+        hasExplicitDate = true;
+      }
+      // "월요일부터 금요일까지" — 요일 범위
+      else if(/([일월화수목금토])\s*요일\s*부터\s*([일월화수목금토])\s*요일\s*까지/.test(str)){
+        const rm = str.match(/([일월화수목금토])\s*요일\s*부터\s*([일월화수목금토])\s*요일\s*까지/);
+        const startWd = wdMap[rm[1]], endWd = wdMap[rm[2]];
+        const diff = (startWd - now.getDay() + 7) % 7;
+        targetDate.setDate(targetDate.getDate() + diff);
+        const span = (endWd - startWd + 7) % 7;
+        endDateObj = new Date(targetDate); endDateObj.setDate(endDateObj.getDate() + span);
+        str = str.replace(rm[0],'').trim();
+        hasExplicitDate = true;
+      }
+      else if(/오늘/.test(str)){ str = str.replace(/오늘/,'').trim(); hasExplicitDate = true; }
       else if(/내일모레|모레/.test(str)){ targetDate.setDate(targetDate.getDate()+2); str = str.replace(/내일모레|모레/,'').trim(); hasExplicitDate = true; }
       else if(/내일/.test(str)){ targetDate.setDate(targetDate.getDate()+1); str = str.replace(/내일/,'').trim(); hasExplicitDate = true; }
       else {
-        const wdMap = {'일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6};
-        const wdMatch = str.match(/(매주\s*|다음주\s*)?([일월화수목금토])요일/);
-        if(wdMatch){
+        // "이번달 15일" / "다음달 3일"
+        const monthRelMatch = str.match(/(이번\s*달|다음\s*달)\s*(\d{1,2})\s*일/);
+        // 요일 (매주/다음주/이번주 프리픽스 포함)
+        const wdMatch = str.match(/(매주\s*|다음주\s*|이번주\s*)?([일월화수목금토])\s*요일/);
+        // 명시적 "N월 N일"
+        const explicitDate = str.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/);
+        // 슬래시/점 날짜 "9/15" "9.15"
+        const slashDate = str.match(/(\d{1,2})\s*[\/.]\s*(\d{1,2})(?!\d)/);
+        // 일-only fallback "15일" / "15일까지"
+        const dayOnlyMatch = str.match(/(?<!월)(\d{1,2})\s*일(?:까지)?(?!간)/);
+
+        if(monthRelMatch){
+          const day = parseInt(monthRelMatch[2]);
+          const monthOffset = monthRelMatch[1].startsWith('다음') ? 1 : 0;
+          targetDate = new Date(now.getFullYear(), now.getMonth()+monthOffset, day);
+          str = str.replace(monthRelMatch[0],'').trim();
+          hasExplicitDate = true;
+        } else if(wdMatch){
           const targetWd = wdMap[wdMatch[2]];
-          let diff = (targetWd - now.getDay() + 7) % 7;
-          if(diff === 0) diff = 7;
-          if(wdMatch[1] && wdMatch[1].startsWith('다음주')) diff += 7;
-          targetDate.setDate(targetDate.getDate() + diff);
-          if(wdMatch[1] && wdMatch[1].startsWith('매주') && !recurrence){ recurrence = { type:'weekly', weekday: targetWd }; }
+          const prefix = wdMatch[1] ? wdMatch[1].trim() : '';
+          if(prefix.startsWith('이번주')){
+            const weekStart = new Date(now); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+            targetDate = new Date(weekStart); targetDate.setDate(targetDate.getDate() + targetWd);
+          } else if(prefix.startsWith('다음주')){
+            const weekStart = new Date(now); weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 7);
+            targetDate = new Date(weekStart); targetDate.setDate(targetDate.getDate() + targetWd);
+          } else {
+            let diff = (targetWd - now.getDay() + 7) % 7;
+            if(diff === 0) diff = 7;
+            targetDate.setDate(targetDate.getDate() + diff);
+          }
+          if(prefix.startsWith('매주') && !recurrence){ recurrence = { type:'weekly', weekday: targetWd }; }
           str = str.replace(wdMatch[0],'').trim();
           hasExplicitDate = true;
+        } else if(explicitDate){
+          targetDate = new Date(now.getFullYear(), parseInt(explicitDate[1])-1, parseInt(explicitDate[2]));
+          str = str.replace(explicitDate[0],'').trim();
+          hasExplicitDate = true;
+        } else if(slashDate){
+          targetDate = new Date(now.getFullYear(), parseInt(slashDate[1])-1, parseInt(slashDate[2]));
+          str = str.replace(slashDate[0],'').trim();
+          hasExplicitDate = true;
+        } else if(dayOnlyMatch){
+          const day = parseInt(dayOnlyMatch[1]);
+          if(day >= 1 && day <= 31){
+            let cand = new Date(now.getFullYear(), now.getMonth(), day);
+            if(day < now.getDate()) cand = new Date(now.getFullYear(), now.getMonth()+1, day);
+            targetDate = cand;
+            str = str.replace(dayOnlyMatch[0],'').trim();
+            hasExplicitDate = true;
+          }
         }
-        const explicitDate = str.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/);
-        if(explicitDate){ targetDate = new Date(now.getFullYear(), parseInt(explicitDate[1])-1, parseInt(explicitDate[2])); str = str.replace(explicitDate[0],'').trim(); hasExplicitDate = true; }
       }
-      // duration: "3일간" (only meaningful without recurrence)
-      const durMatch = str.match(/(\d{1,2})\s*일간/);
-      if(durMatch && !recurrence){
-        const days = parseInt(durMatch[1]);
-        if(days > 1){ endDateObj = new Date(targetDate); endDateObj.setDate(endDateObj.getDate() + (days-1)); }
-        str = str.replace(durMatch[0],'').trim();
+      // duration: "3일간" (only meaningful without recurrence, and if no range already set)
+      if(!endDateObj){
+        const durMatch = str.match(/(\d{1,2})\s*일간/);
+        if(durMatch && !recurrence){
+          const days = parseInt(durMatch[1]);
+          if(days > 1){ endDateObj = new Date(targetDate); endDateObj.setDate(endDateObj.getDate() + (days-1)); }
+          str = str.replace(durMatch[0],'').trim();
+        }
       }
     }
 
@@ -980,14 +1153,21 @@
     if(t.recurrence.type==='weekly') return new Date(key+'T00:00:00').getDay() === t.recurrence.weekday;
     return false;
   }
-  function isDoneOn(t, occDate){ return t.recurrence ? (t.doneDates||[]).includes(occDate) : !!t.done; }
+  function isMultiDay(t){ return !!(t.endDateKey && t.endDateKey !== t.dateKey); }
+  function isDoneOn(t, occDate){ return (t.recurrence || isMultiDay(t)) ? (t.doneDates||[]).includes(occDate) : !!t.done; }
   function toggleDoneOn(t, occDate){
-    if(!t.recurrence){ t.done = !t.done; return; }
+    if(!t.recurrence && !isMultiDay(t)){ t.done = !t.done; return; }
     t.doneDates = t.doneDates || [];
     const idx = t.doneDates.indexOf(occDate);
     if(idx>=0) t.doneDates.splice(idx,1); else t.doneDates.push(occDate);
   }
-  function isOverdueTemplate(t){ if(t.recurrence || t.done || t.dateKey === null) return false; return (t.endDateKey || t.dateKey) < todayKey(); }
+  function isOverdueTemplate(t){
+    if(t.recurrence || t.dateKey === null) return false;
+    const endKey = t.endDateKey || t.dateKey;
+    if(endKey >= todayKey()) return false;
+    if(isMultiDay(t)) return !(t.doneDates||[]).includes(t.endDateKey);
+    return !t.done;
+  }
   function buildOccurrence(t, occDate){ return Object.assign({}, t, { occDate, doneComputed: isDoneOn(t, occDate) }); }
   function priorityRank(p){ return p==='high'?0:p==='mid'?1:2; }
 
@@ -1157,7 +1337,8 @@
     if(!target){ showToast('복사할 날짜를 선택해주세요'); return; }
     const source = selectedCalDate;
     if(target === source){ showToast('같은 날짜로는 복사할 수 없어요'); return; }
-    const sourceTasks = tasks.filter(t => t.dateKey === source && !t.recurrence && (!t.endDateKey || t.endDateKey === t.dateKey));
+    // 반복/기간 일정도 포함 — 그 날짜의 occurrence를 단일 일정으로 복사합니다
+    const sourceTasks = tasks.filter(t => taskOccursOn(t, source));
     if(sourceTasks.length === 0){ showToast('복사할 일정이 없어요'); return; }
     sourceTasks.forEach((t, i)=>{
       tasks.push({
@@ -1396,7 +1577,7 @@
   $('#quickAddBtn').addEventListener('click', submitQuick);
   $('#quickInput').addEventListener('keydown', e=>{ if(e.key==='Enter') submitQuick(); });
 
-  function submitQuick(){
+  async function submitQuick(){
     const input = $('#quickInput');
     const val = input.value.trim();
     if(!val) return;
@@ -1412,7 +1593,8 @@
       parsed.dateKey = selectedCalDate;
     }
 
-    addTask(parsed, pendingPhoto);
+    const photoRef = pendingPhoto ? await commitPhoto(pendingPhoto) : null;
+    addTask(parsed, photoRef);
     input.value = '';
     pendingPhoto = null;
     $('#photoPreview').style.display = 'none';
@@ -1423,7 +1605,7 @@
   }
 
 
-  function submitBacklog(){
+  async function submitBacklog(){
     const input = $('#quickInput');
     const val = input.value.trim();
     if(!val){ showToast('먼저 입력창에 내용을 적어주세요'); return; }
@@ -1433,7 +1615,8 @@
     parsed.hour = null;
     parsed.minute = 0;
     parsed.recurrence = null;
-    addTask(parsed, pendingPhoto);
+    const photoRef = pendingPhoto ? await commitPhoto(pendingPhoto) : null;
+    addTask(parsed, photoRef);
     input.value = '';
     pendingPhoto = null;
     $('#photoPreview').style.display = 'none';
@@ -1512,7 +1695,11 @@
     const copyBtn = e.target.closest('#copyConfirmBtn');
     if(copyBtn){ submitCalendarCopy(); return; }
     const photoBtn = e.target.closest('[data-photo]');
-    if(photoBtn){ const t = tasks.find(x=>x.id===photoBtn.dataset.photo); if(t && t.photo) openLightbox(t.photo); return; }
+    if(photoBtn){
+      const t = tasks.find(x=>x.id===photoBtn.dataset.photo);
+      if(t && t.photo) resolvePhotoSrc(t.photo).then(url=>{ if(url) openLightbox(url); else showToast('사진을 불러오지 못했어요'); });
+      return;
+    }
     const timeTag = e.target.closest('.time-toggle');
     if(timeTag){
       const t = tasks.find(x=>x.id===timeTag.dataset.id);
@@ -1543,8 +1730,13 @@
       const t = tasks.find(x=>x.id===check.dataset.id);
       if(t){ toggleDoneOn(t, check.dataset.occ); saveTasks(); render(); }
     } else if(del){
-      tasks = tasks.filter(x=>x.id!==del.dataset.id);
-      saveTasks(); render();
+      const t = tasks.find(x=>x.id===del.dataset.id);
+      const msg = t && t.photo ? '사진이 첨부된 일정이에요. 정말 삭제할까요?' : '이 일정을 삭제할까요?';
+      if(confirm(msg)){
+        if(t && t.photo) deletePhotoRef(t.photo);
+        tasks = tasks.filter(x=>x.id!==del.dataset.id);
+        saveTasks(); render();
+      }
     }
   });
   $('#listWrap').addEventListener('keydown', e=>{
@@ -1676,7 +1868,7 @@
   }
   function renderMeetingsList(){
     const wrap = $('#mtgList'); wrap.innerHTML = '';
-    if(meetings.length === 0){ wrap.innerHTML = `<div class="empty"><div class="display">저장된 회의록이 없어요</div><p>위에서 녹음하거나 입력한 뒤 저장해보세요.</p></div>`; return; }
+    if(meetings.length === 0){ wrap.innerHTML = `<div class="empty"><div class="display">저장된 회의록이 없어요</div><p>위에서 음성으로 받아쓰거나 직접 입력한 뒤 저장해보세요.</p></div>`; return; }
     meetings.slice().sort((a,b)=>b.createdAt-a.createdAt).forEach(m=>{
       const el = document.createElement('div'); el.className='note-record'+(mtgExpandedId===m.id?' expanded':''); el.dataset.id=m.id;
       const actionCount = (m.actionItems||[]).length;
@@ -1699,16 +1891,16 @@
     let finalBuffer = '';
     mtgRecognition.addEventListener('start', ()=>{
       mtgRecording=true;
-      $('#mtgRecordBtn').classList.add('recording'); $('#mtgRecordLabel').textContent='녹음 중지'; $('#mtgRecordStatus').textContent='듣고 있어요... (눌러서 중지)';
+      $('#mtgRecordBtn').classList.add('recording'); $('#mtgRecordLabel').textContent='음성 입력 중지'; $('#mtgRecordStatus').textContent='듣고 받아쓰는 중이에요... (눌러서 중지)';
     });
     mtgRecognition.addEventListener('end', ()=>{
       mtgRecording=false;
       if(mtgWantRecording){
         // 브라우저/OS가 세션을 임의로 끊은 경우 - 자동으로 이어서 재시작
-        $('#mtgRecordStatus').textContent = '이어서 녹음 중...';
+        $('#mtgRecordStatus').textContent = '이어서 받아쓰는 중...';
         setTimeout(()=>{ if(mtgWantRecording){ try{ mtgRecognition.start(); }catch(err){} } }, 300);
       } else {
-        $('#mtgRecordBtn').classList.remove('recording'); $('#mtgRecordLabel').textContent='녹음 시작'; $('#mtgRecordStatus').textContent='눌러서 녹음 시작';
+        $('#mtgRecordBtn').classList.remove('recording'); $('#mtgRecordLabel').textContent='음성 입력 시작'; $('#mtgRecordStatus').textContent='눌러서 음성 입력 시작';
       }
     });
     mtgRecognition.addEventListener('result', e=>{
@@ -1722,7 +1914,7 @@
     mtgRecognition.addEventListener('error', e=>{
       if(e.error==='not-allowed'||e.error==='permission-denied'){
         mtgWantRecording = false; mtgRecording = false;
-        $('#mtgRecordBtn').classList.remove('recording'); $('#mtgRecordLabel').textContent='녹음 시작'; $('#mtgRecordStatus').textContent='눌러서 녹음 시작';
+        $('#mtgRecordBtn').classList.remove('recording'); $('#mtgRecordLabel').textContent='음성 입력 시작'; $('#mtgRecordStatus').textContent='눌러서 음성 입력 시작';
         showToast('마이크 권한을 허용해주세요');
       } else if(e.error !== 'no-speech' && e.error !== 'aborted'){
         showToast('음성 인식이 잠시 끊겼어요. 자동으로 다시 연결할게요');
@@ -1768,7 +1960,13 @@
   });
   $('#mtgList').addEventListener('click', e=>{
     const del = e.target.closest('.note-record-del');
-    if(del){ e.stopPropagation(); meetings = meetings.filter(m=>m.id!==del.dataset.id); saveMeetings(); renderMeetingsList(); return; }
+    if(del){
+      e.stopPropagation();
+      if(confirm('이 회의록을 삭제할까요?')){
+        meetings = meetings.filter(m=>m.id!==del.dataset.id); saveMeetings(); renderMeetingsList();
+      }
+      return;
+    }
     const record = e.target.closest('.note-record');
     if(record){ mtgExpandedId = mtgExpandedId===record.dataset.id ? null : record.dataset.id; renderMeetingsList(); }
   });
@@ -1818,7 +2016,7 @@
   });
 
   function resetMemoComposer(){
-    $('#memoTitle').value=''; $('#memoContent').value=''; memoPendingPhoto=null; $('#memoPhotoStatus').textContent='';
+    $('#memoTitle').value=''; $('#memoContent').value=''; memoPendingPhoto=null; memoPhotoIsFresh=false; $('#memoPhotoStatus').textContent='';
     selectedMemoColorIdx = null;
     $$('#memoColorRow .swatch').forEach(b=>b.classList.remove('selected'));
     editingMemoId = null;
@@ -1833,26 +2031,28 @@
     const file = e.target.files[0]; if(!file) return;
     try{
       memoPendingPhoto = await compressImage(file, 900, 0.72);
+      memoPhotoIsFresh = true;
       $('#memoPhotoStatus').textContent = '사진 첨부됨';
     }catch(err){ showToast('사진을 읽는 데 실패했어요'); }
     e.target.value = '';
   });
-  $('#memoSaveBtn').addEventListener('click', ()=>{
+  $('#memoSaveBtn').addEventListener('click', async ()=>{
     const title = $('#memoTitle').value.trim(), content = $('#memoContent').value.trim();
     if(!title && !content && !memoPendingPhoto && memoChecklistDraft.length===0){ showToast('내용을 입력해주세요'); return; }
+    const photoRef = memoPhotoIsFresh && memoPendingPhoto ? await commitPhoto(memoPendingPhoto) : memoPendingPhoto;
     if(editingMemoId){
       const m = memos.find(x=>x.id===editingMemoId);
       if(m){
         m.title = title || '제목 없는 메모';
         m.content = content;
-        m.photo = memoPendingPhoto;
+        m.photo = photoRef;
         m.colorIdx = selectedMemoColorIdx;
         m.checklist = memoChecklistDraft.slice();
         saveMemos();
         showToast('메모를 수정했어요');
       }
     } else {
-      memos.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), title: title||'제목 없는 메모', content, photo: memoPendingPhoto, colorIdx: selectedMemoColorIdx, checklist: memoChecklistDraft.slice(), dateKey: todayKey(), createdAt: Date.now() });
+      memos.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), title: title||'제목 없는 메모', content, photo: photoRef, colorIdx: selectedMemoColorIdx, checklist: memoChecklistDraft.slice(), dateKey: todayKey(), createdAt: Date.now() });
       saveMemos();
       showToast('메모를 저장했어요');
     }
@@ -1860,6 +2060,14 @@
     renderMemosView();
   });
   $('#memoCancelEditBtn').addEventListener('click', resetMemoComposer);
+
+  function hydrateMemoThumbnails(){
+    $$('.note-record-thumb[data-photo-ref]').forEach(img=>{
+      const ref = img.dataset.photoRef;
+      if(!ref) return;
+      resolvePhotoSrc(ref).then(url=>{ if(url) img.src = url; });
+    });
+  }
 
   function renderMemosList(){
     const wrap = $('#memoList'); wrap.innerHTML='';
@@ -1872,7 +2080,7 @@
         <div class="note-record-title">${escapeHtml(m.title)}</div>
         <div class="note-record-meta"><span>${relativeDateLabel(m.dateKey)}</span>${(m.checklist&&m.checklist.length) ? `<span>· 체크리스트 ${m.checklist.filter(c=>c.done).length}/${m.checklist.length}</span>` : ''}</div>
         <div class="note-record-body">
-          ${m.photo ? `<img class="note-record-thumb" src="${m.photo}" data-photo="${m.id}">` : ''}
+          ${m.photo ? `<img class="note-record-thumb" src="" data-photo-ref="${m.photo}" data-photo="${m.id}">` : ''}
           ${m.content ? `<div class="note-record-transcript">${escapeHtml(m.content)}</div>` : ''}
           ${(m.checklist && m.checklist.length) ? `<div class="checklist-view">${m.checklist.map((c,idx)=>`
             <div class="checklist-row${c.done?' done':''}">
@@ -1884,11 +2092,17 @@
         </div>`;
       wrap.appendChild(el);
     });
+    hydrateMemoThumbnails();
   }
   function renderMemosView(){ $('#memoDateLabel').textContent = formatBriefDate(new Date()); renderMemosList(); }
   $('#memoList').addEventListener('click', e=>{
     const photo = e.target.closest('[data-photo]');
-    if(photo){ e.stopPropagation(); const m = memos.find(x=>x.id===photo.dataset.photo); if(m && m.photo) openLightbox(m.photo); return; }
+    if(photo){
+      e.stopPropagation();
+      const m = memos.find(x=>x.id===photo.dataset.photo);
+      if(m && m.photo) resolvePhotoSrc(m.photo).then(url=>{ if(url) openLightbox(url); else showToast('사진을 불러오지 못했어요'); });
+      return;
+    }
     const chk = e.target.closest('.chk-box');
     if(chk){
       e.stopPropagation();
@@ -1907,6 +2121,7 @@
       $('#memoTitle').value = m.title;
       $('#memoContent').value = m.content || '';
       memoPendingPhoto = m.photo || null;
+      memoPhotoIsFresh = false;
       $('#memoPhotoStatus').textContent = m.photo ? '사진 첨부됨' : '';
       selectedMemoColorIdx = (m.colorIdx!=null) ? m.colorIdx : null;
       $$('#memoColorRow .swatch').forEach(b=>b.classList.remove('selected'));
@@ -1921,7 +2136,16 @@
       return;
     }
     const del = e.target.closest('.note-record-del');
-    if(del){ e.stopPropagation(); memos = memos.filter(m=>m.id!==del.dataset.id); saveMemos(); renderMemosList(); return; }
+    if(del){
+      e.stopPropagation();
+      const m = memos.find(x=>x.id===del.dataset.id);
+      const msg = m && m.photo ? '사진이 첨부된 메모예요. 정말 삭제할까요?' : '이 메모를 삭제할까요?';
+      if(confirm(msg)){
+        if(m && m.photo) deletePhotoRef(m.photo);
+        memos = memos.filter(x=>x.id!==del.dataset.id); saveMemos(); renderMemosList();
+      }
+      return;
+    }
     const record = e.target.closest('.note-record');
     if(record){ memoExpandedId = memoExpandedId===record.dataset.id ? null : record.dataset.id; renderMemosList(); }
   });
@@ -1940,6 +2164,21 @@
 
   selectedCalDate = todayKey();
   render();
+  migrateInlinePhotosToIndexedDB();
+  loadHolidaysForYear(new Date().getFullYear());
+  loadHolidaysForYear(new Date().getFullYear() + 1);
+
+  // ---------- 모바일 가상 키보드 대응 (하단 입력바/탭바가 키보드에 가려지지 않도록) ----------
+  if(window.visualViewport){
+    const vv = window.visualViewport;
+    function adjustForKeyboard(){
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty('--kb-offset', offset + 'px');
+    }
+    vv.addEventListener('resize', adjustForKeyboard);
+    vv.addEventListener('scroll', adjustForKeyboard);
+    adjustForKeyboard();
+  }
 
   // ---------- Home-screen shortcut deep links ----------
   (function handleShortcutParams(){
