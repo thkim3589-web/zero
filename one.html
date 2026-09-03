@@ -1078,7 +1078,13 @@ async function callVisionOCR(dataUrl){
     })
   });
   if(!resp.ok){
-    throw new Error('Vision API 요청 실패 (HTTP '+resp.status+')');
+    // 구글이 응답 본문에 실제 실패 사유(JSON)를 함께 보내는 경우가 많아 그대로 노출한다.
+    let detail = '';
+    try{
+      const errJson = await resp.json();
+      detail = (errJson.error && errJson.error.message) || '';
+    }catch(e){ /* 본문이 JSON이 아니면 무시 */ }
+    throw new Error(`HTTP ${resp.status}${detail ? ' - ' + detail : ''}`);
   }
   const json = await resp.json();
   const res0 = json.responses && json.responses[0];
@@ -1099,7 +1105,7 @@ async function recognizeText(dataUrl, onStatus){
     }catch(err){
       console.error('Vision API 실패, 기본 엔진으로 대체', err);
       onStatus && onStatus('Vision 인식 실패 — 기본 엔진으로 재시도 중…');
-      showToast('Vision 실패: ' + (err.message || '알 수 없는 오류') + ' → 기본 엔진으로 인식해요.', 4200);
+      showToast('Vision 실패: ' + (err.message || '알 수 없는 오류') + ' → 기본 엔진으로 인식해요.', 7000);
     }
   } else if(apiKey && !navigator.onLine){
     showToast('오프라인 상태예요. 기본 엔진(Tesseract)으로 인식해요.');
