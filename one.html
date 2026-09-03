@@ -1144,70 +1144,64 @@ async function callVisionOCR(dataUrl){
   const text = ((res0 && res0.fullTextAnnotation && res0.fullTextAnnotation.text) || '').trim();
   const pages = (res0 && res0.fullTextAnnotation && res0.fullTextAnnotation.pages) || [];
   let autoRows = [];
-  pages.forEach(p=>{ autoRows = autoRows.concat(reconstructTableRows(wordsFromVisionPage(p))); });
+  pages.forEach(p=>{ autoRows = autoRows.concat(reconstructTableRows(paragraphsFromVisionPage(p))); });
   return { text, autoRows };
 }
 
 /* Vision 응답의 블록/문단/단어 구조에서 단어별 좌표(픽셀)를 추출 */
-function wordsFromVisionPage(page){
-  const words = [];
+/* Vision이 이미 "하나의 문단(=대체로 표의 한 칸)"으로 묶어놓은 단위를 그대로 사용한다.
+   단어 단위로 쪼개면 긴 문장이 들어있는 칸이 단어 간격 때문에 여러 칸으로 잘못 나뉘는 문제가 있어,
+   문단 단위로 다루면 그런 오분할이 크게 줄어든다. */
+function paragraphsFromVisionPage(page){
+  const paras = [];
   (page.blocks || []).forEach(block=>{
     (block.paragraphs || []).forEach(para=>{
-      (para.words || []).forEach(word=>{
-        const text = (word.symbols || []).map(s=>s.text).join('');
+      let text = '';
+      let x0=Infinity, x1=-Infinity, y0=Infinity, y1=-Infinity;
+      (para.words || []).forEach((word, wi)=>{
+        const wordText = (word.symbols || []).map(s=>s.text).join('');
+        text += (wi>0 ? ' ' : '') + wordText;
         const verts = (word.boundingBox && (word.boundingBox.vertices || word.boundingBox.normalizedVertices)) || [];
-        if(verts.length < 4 || !text) return;
-        const xs = verts.map(v=>v.x||0);
-        const ys = verts.map(v=>v.y||0);
-        const x0 = Math.min(...xs), x1 = Math.max(...xs);
-        const y0 = Math.min(...ys), y1 = Math.max(...ys);
-        words.push({ text, x0, x1, y0, y1, yc:(y0+y1)/2, h:Math.max(1, y1-y0) });
+        verts.forEach(v=>{
+          const vx = v.x||0, vy = v.y||0;
+          if(vx<x0) x0=vx; if(vx>x1) x1=vx;
+          if(vy<y0) y0=vy; if(vy>y1) y1=vy;
+        });
       });
+      text = text.trim();
+      if(text && x1>x0 && y1>y0){
+        paras.push({ text, x0, x1, y0, y1, h: Math.max(1, y1-y0) });
+      }
     });
   });
-  return words;
+  return paras;
 }
 
-/* 단어들의 실제 위치(좌표)를 이용해 같은 줄(행)끼리 묶고, 그 안에서 큰 간격을 기준으로 열을 나눠 표를 재구성 */
-function reconstructTableRows(words){
-  if(words.length === 0) return [];
-  const avgH = words.reduce((s,w)=>s+w.h,0) / words.length;
+/* 문단들의 실제 위치(좌표)를 이용해 같은 줄(행)끼리 묶고, 각 문단을 그대로 한 칸으로 삼아 표를 재구성 */
+function reconstructTableRows(paragraphs){
+  if(paragraphs.length === 0) return [];
+  const avgH = paragraphs.reduce((s,w)=>s+w.h,0) / paragraphs.length;
   // 세로 겹침(overlap) 기준으로 같은 줄을 묶는다 — 사진이 살짝 기울어져도
   // 중심점 거리 비교보다 훨씬 안정적으로 행이 나뉜다.
   const margin = avgH * 0.25;
-  const sorted = [...words].sort((a,b)=>a.y0-b.y0);
+  const sorted = [...paragraphs].sort((a,b)=>a.y0-b.y0);
   const rowGroups = [];
-  let current = { y0: sorted[0].y0, y1: sorted[0].y1, words: [sorted[0]] };
+  let current = { y0: sorted[0].y0, y1: sorted[0].y1, items: [sorted[0]] };
   for(let i=1; i<sorted.length; i++){
-    const w = sorted[i];
-    if(w.y0 < current.y1 - margin){
-      current.words.push(w);
-      current.y1 = Math.max(current.y1, w.y1);
+    const p = sorted[i];
+    if(p.y0 < current.y1 - margin){
+      current.items.push(p);
+      current.y1 = Math.max(current.y1, p.y1);
     } else {
       rowGroups.push(current);
-      current = { y0: w.y0, y1: w.y1, words: [w] };
+      current = { y0: p.y0, y1: p.y1, items: [p] };
     }
   }
   rowGroups.push(current);
 
-  const colGapThreshold = avgH * 1.8; // 이 값보다 간격이 크면 다른 칸(열)으로 판단
+  // 같은 행 안의 문단들은 이미 각자 하나의 칸이므로, x좌표 순서로 정렬만 하면 된다.
   return rowGroups.map(g=>{
-    const ws = [...g.words].sort((a,b)=>a.x0-b.x0);
-    const cells = [];
-    let cur = null;
-    ws.forEach(w=>{
-      if(!cur){
-        cur = { text: w.text, x1: w.x1 };
-      } else if(w.x0 - cur.x1 > colGapThreshold){
-        cells.push(cur.text);
-        cur = { text: w.text, x1: w.x1 };
-      } else {
-        cur.text += ' ' + w.text;
-        cur.x1 = Math.max(cur.x1, w.x1);
-      }
-    });
-    if(cur) cells.push(cur.text);
-    return cells;
+    return [...g.items].sort((a,b)=>a.x0-b.x0).map(p=>p.text);
   });
 }
 
