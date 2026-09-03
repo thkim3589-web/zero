@@ -279,6 +279,8 @@
   .cal-cell.today{ border-color:var(--orange); }
   .cal-cell.selected{ background:var(--navy); }
   .cal-cell.selected .cal-num{ color:#fff; }
+  .cal-cell.holiday .cal-num{ color:var(--red); }
+  .cal-cell.selected.holiday .cal-num{ color:#fff; }
   .cal-num{ font-size:calc(13px * var(--fs-scale)); font-weight:600; color:var(--ink); }
   .cal-dots{ display:flex; gap:2px; margin-top:4px; }
   .cal-dot{ width:5px;height:5px;border-radius:50%; }
@@ -729,6 +731,7 @@
   </div>
 </div>
 
+<input type="time" id="taskTimeInput" style="position:fixed; opacity:0; pointer-events:none; left:-9999px; width:1px; height:1px;">
 <div class="lightbox" id="lightbox"><img id="lightboxImg" src=""></div>
 
 <script>
@@ -771,6 +774,38 @@
   function dateKey(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
   function todayKey(){ return dateKey(new Date()); }
   const WEEKDAY_KO = ['일','월','화','수','목','금','토'];
+
+  // 2026년 대한민국 공휴일 (음력 기반 공휴일은 매년 날짜가 바뀌므로 연도별로 갱신이 필요합니다)
+  const HOLIDAYS_KR = {
+    '2026-01-01': '신정',
+    '2026-02-16': '설날 연휴',
+    '2026-02-17': '설날',
+    '2026-02-18': '설날 연휴',
+    '2026-03-01': '삼일절',
+    '2026-03-02': '대체공휴일(삼일절)',
+    '2026-05-01': '근로자의 날',
+    '2026-05-05': '어린이날',
+    '2026-05-24': '부처님오신날',
+    '2026-05-25': '대체공휴일(부처님오신날)',
+    '2026-06-03': '전국동시지방선거',
+    '2026-06-06': '현충일',
+    '2026-07-17': '제헌절',
+    '2026-08-15': '광복절',
+    '2026-08-17': '대체공휴일(광복절)',
+    '2026-09-24': '추석 연휴',
+    '2026-09-25': '추석',
+    '2026-09-26': '추석 연휴',
+    '2026-10-03': '개천절',
+    '2026-10-05': '대체공휴일(개천절)',
+    '2026-10-09': '한글날',
+    '2026-12-25': '기독탄신일'
+  };
+  function holidayName(key){ return HOLIDAYS_KR[key] || null; }
+  function calLabelWithHoliday(key){
+    const hn = holidayName(key);
+    return hn ? `${relativeDateLabel(key)} · 🔴 ${hn}` : relativeDateLabel(key);
+  }
+
   function formatBriefDate(d){ return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${WEEKDAY_KO[d.getDay()]}요일`; }
 
   // ---------- Natural-language quick parser ----------
@@ -960,7 +995,8 @@
   }
 
   function render(){
-    $('#briefDate').textContent = formatBriefDate(new Date());
+    const todayHoliday = holidayName(todayKey());
+    $('#briefDate').textContent = formatBriefDate(new Date()) + (todayHoliday ? ` · 🔴 ${todayHoliday}` : '');
     $('#quickHint').textContent = baseHintText();
     const today = todayKey();
     const todaysOcc = tasks.filter(t=>taskOccursOn(t,today)).map(t=>buildOccurrence(t,today));
@@ -989,7 +1025,7 @@
     if(visible.length === 0){
       const emptyTitle = currentView === 'calendar' ? `${relativeDateLabel(selectedCalDate)}에는 일정이 없어요` : currentView === 'backlog' ? '보관함이 비어있어요' : (currentView==='today' ? '오늘은 등록된 일정이 없어요' : '일정이 없습니다');
       if(currentView === 'calendar'){
-        const h = document.createElement('div'); h.className='cal-selected-label'; h.textContent = relativeDateLabel(selectedCalDate);
+        const h = document.createElement('div'); h.className='cal-selected-label'; h.textContent = calLabelWithHoliday(selectedCalDate);
         wrap.appendChild(h);
         wrap.appendChild(buildCalendarInlineAdd());
         const emptyDiv = document.createElement('div'); emptyDiv.className='empty';
@@ -1010,7 +1046,7 @@
     }
 
     if(currentView === 'calendar'){
-      const h = document.createElement('div'); h.className='cal-selected-label'; h.textContent = relativeDateLabel(selectedCalDate);
+      const h = document.createElement('div'); h.className='cal-selected-label'; h.textContent = calLabelWithHoliday(selectedCalDate);
       wrap.appendChild(h);
       wrap.appendChild(buildCalendarInlineAdd());
       wrap.appendChild(buildCalendarCopyRow());
@@ -1120,7 +1156,7 @@
     const today = todayKey();
     cells.forEach((c, idx)=>{
       const cell = document.createElement('div');
-      cell.className = 'cal-cell' + (c.muted?' muted':'') + (c.dKey===today?' today':'') + (c.dKey===selectedCalDate?' selected':'');
+      cell.className = 'cal-cell' + (c.muted?' muted':'') + (c.dKey===today?' today':'') + (c.dKey===selectedCalDate?' selected':'') + (!c.muted && holidayName(c.dKey) ? ' holiday' : '');
       const num = document.createElement('div'); num.className='cal-num'; num.textContent=c.day; cell.appendChild(num);
       if(!c.muted){
         const dayTasks = tasks.filter(t=>taskOccursOn(t, c.dKey));
@@ -1196,7 +1232,7 @@
         <div class="task-title">${escapeHtml(o.title)}</div>
         <div class="task-meta">
           ${o.category ? `<span class="tag ${categoryClass(o.category)}">${escapeHtml(o.category)}</span>` : ''}
-          <span class="tag">${timeLabel(o)}</span>
+          <button class="tag clickable time-toggle" data-id="${o.id}" title="눌러서 시간 설정">${timeLabel(o)}</button>
           <button class="tag clickable priority-toggle priority-${o.priority}" data-id="${o.id}" title="눌러서 중요도 변경">${priorityLabel(o.priority)}</button>
           ${o.assignee ? `<span class="tag">@${escapeHtml(o.assignee)}</span>` : ''}
           ${recLabel ? `<span class="tag">🔁 ${recLabel}</span>` : ''}
@@ -1423,6 +1459,20 @@
   });
   $('#photoPreviewRemove').addEventListener('click', ()=>{ pendingPhoto = null; $('#photoPreview').style.display='none'; });
 
+  $('#taskTimeInput').addEventListener('change', e=>{
+    const t = tasks.find(x=>x.id===e.target.dataset.targetId);
+    if(!t) return;
+    const val = e.target.value;
+    if(val){
+      const [h,m] = val.split(':');
+      t.hour = parseInt(h); t.minute = parseInt(m);
+    } else {
+      t.hour = null; t.minute = 0;
+    }
+    saveTasks(); render();
+    showToast(val ? `시간을 ${timeLabel(t)}(으)로 설정했어요` : '시간을 미정으로 바꿨어요');
+  });
+
   $('#listWrap').addEventListener('click', e=>{
     const calAdd = e.target.closest('#calInlineAddBtn');
     if(calAdd){ submitCalendarInline(); return; }
@@ -1430,6 +1480,18 @@
     if(copyBtn){ submitCalendarCopy(); return; }
     const photoBtn = e.target.closest('[data-photo]');
     if(photoBtn){ const t = tasks.find(x=>x.id===photoBtn.dataset.photo); if(t && t.photo) openLightbox(t.photo); return; }
+    const timeTag = e.target.closest('.time-toggle');
+    if(timeTag){
+      const t = tasks.find(x=>x.id===timeTag.dataset.id);
+      if(t){
+        const timeInput = $('#taskTimeInput');
+        timeInput.dataset.targetId = t.id;
+        timeInput.value = t.hour!=null ? `${pad(t.hour)}:${pad(t.minute)}` : '';
+        timeInput.click();
+        if(timeInput.showPicker){ try{ timeInput.showPicker(); }catch(err){} }
+      }
+      return;
+    }
     const prio = e.target.closest('.priority-toggle');
     if(prio){
       const t = tasks.find(x=>x.id===prio.dataset.id);
