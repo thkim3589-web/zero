@@ -273,6 +273,7 @@
   .cal-month{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:calc(19px * var(--fs-scale)); color:var(--ink); }
   .cal-nav{ width:30px;height:30px; border-radius:50%; border:1px solid var(--paper-dim); background:#fff; color:var(--ink-soft); font-size:calc(16px * var(--fs-scale)); cursor:pointer; display:flex;align-items:center;justify-content:center; }
   .cal-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:calc(11px * var(--fs-scale)); color:var(--ink-soft); font-weight:600; margin-bottom:4px; }
+  .cal-weekdays .sun{ color:var(--red); }
   .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
   .cal-cell{ aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:6px; border-radius:var(--radius-card); cursor:pointer; background:#fff; border:1px solid transparent; position:relative; }
   .cal-cell.muted{ color:rgba(32,36,43,0.28); }
@@ -280,6 +281,8 @@
   .cal-cell.selected{ background:var(--navy); }
   .cal-cell.selected .cal-num{ color:#fff; }
   .cal-cell.holiday .cal-num{ color:var(--red); }
+  .cal-cell.sunday .cal-num{ color:var(--red); }
+  .cal-cell.selected.sunday .cal-num{ color:#fff; }
   .cal-cell.selected.holiday .cal-num{ color:#fff; }
   .cal-num{ font-size:calc(13px * var(--fs-scale)); font-weight:600; color:var(--ink); }
   .cal-dots{ display:flex; gap:2px; margin-top:4px; }
@@ -578,7 +581,7 @@
         <div class="cal-month" id="calMonthLabel"></div>
         <button id="calNext" class="cal-nav" aria-label="다음 달">›</button>
       </div>
-      <div class="cal-weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div class="cal-weekdays"><span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
       <div class="cal-grid" id="calGrid"></div>
     </div>
 
@@ -888,10 +891,40 @@
   }
 
 
+  // 제목에 들어간 키워드로 어울리는 이모지를 자동으로 붙여줍니다.
+  const EMOJI_RULES = [
+    { re:/생일/, emoji:'🎂' },
+    { re:/기념일|축하/, emoji:'🎉' },
+    { re:/결혼|웨딩/, emoji:'💒' },
+    { re:/회의|미팅/, emoji:'💼' },
+    { re:/안전점검|안전교육/, emoji:'🦺' },
+    { re:/소화기|화재/, emoji:'🧯' },
+    { re:/전기|배선/, emoji:'⚡' },
+    { re:/콘크리트|타설/, emoji:'🏗️' },
+    { re:/점검|검사/, emoji:'🔍' },
+    { re:/자재|발주|구매/, emoji:'📦' },
+    { re:/청소/, emoji:'🧹' },
+    { re:/식사|점심|저녁|회식/, emoji:'🍽️' },
+    { re:/병원|검진|치료/, emoji:'🏥' },
+    { re:/교육|강의|연수/, emoji:'📚' },
+    { re:/전화|통화/, emoji:'☎️' },
+    { re:/이메일|메일/, emoji:'📧' },
+    { re:/여행|출장/, emoji:'✈️' },
+    { re:/운동|헬스/, emoji:'🏋️' },
+    { re:/장보기|쇼핑/, emoji:'🛒' },
+    { re:/공연|행사/, emoji:'🎭' }
+  ];
+  const EMOJI_START_RE = /^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}]/u;
+  function withSuggestedEmoji(title){
+    if(!title || EMOJI_START_RE.test(title.trim())) return title;
+    for(const rule of EMOJI_RULES){ if(rule.re.test(title)) return `${rule.emoji} ${title}`; }
+    return title;
+  }
+
   function addTask(parsed, photo){
     tasks.push({
       id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-      title: parsed.title, dateKey: parsed.dateKey, endDateKey: parsed.endDateKey || null,
+      title: withSuggestedEmoji(parsed.title), dateKey: parsed.dateKey, endDateKey: parsed.endDateKey || null,
       hour: parsed.hour, minute: parsed.minute, category: parsed.category || null,
       priority: parsed.priority, assignee: parsed.assignee || null, recurrence: parsed.recurrence || null,
       doneDates: [], photo: photo || null, done: false, createdAt: Date.now()
@@ -1103,7 +1136,7 @@
     const parsed = parseQuickInput(val);
     if(!parsed.hasExplicitDate) parsed.dateKey = selectedCalDate;
     addTask(parsed, null);
-    showToast(`"${parsed.title}" 일정을 ${relativeDateLabel(parsed.dateKey)}${parsed.hour!==null?' '+timeLabel(parsed):''}(으)로 등록했어요`);
+    showToast(`"${withSuggestedEmoji(parsed.title)}" 일정을 ${relativeDateLabel(parsed.dateKey)}${parsed.hour!==null?' '+timeLabel(parsed):''}(으)로 등록했어요`);
     render();
     setTimeout(()=>{ const ni = $('#calInlineInput'); if(ni) ni.focus(); }, 0);
   }
@@ -1156,7 +1189,7 @@
     const today = todayKey();
     cells.forEach((c, idx)=>{
       const cell = document.createElement('div');
-      cell.className = 'cal-cell' + (c.muted?' muted':'') + (c.dKey===today?' today':'') + (c.dKey===selectedCalDate?' selected':'') + (!c.muted && holidayName(c.dKey) ? ' holiday' : '');
+      cell.className = 'cal-cell' + (c.muted?' muted':'') + (c.dKey===today?' today':'') + (c.dKey===selectedCalDate?' selected':'') + (!c.muted && holidayName(c.dKey) ? ' holiday' : '') + (!c.muted && idx % 7 === 0 ? ' sunday' : '');
       const num = document.createElement('div'); num.className='cal-num'; num.textContent=c.day; cell.appendChild(num);
       if(!c.muted){
         const dayTasks = tasks.filter(t=>taskOccursOn(t, c.dKey));
@@ -1385,7 +1418,7 @@
     $('#photoPreview').style.display = 'none';
     $('#rangeStart').value = ''; $('#rangeEnd').value = '';
     const rangeMsg = parsed.endDateKey ? ` ~ ${relativeDateLabel(parsed.endDateKey)}` : '';
-    showToast(`"${parsed.title}" 일정을 ${relativeDateLabel(parsed.dateKey)}${rangeMsg}${parsed.hour!==null ? ' '+timeLabel(parsed) : ''}(으)로 등록했어요`);
+    showToast(`"${withSuggestedEmoji(parsed.title)}" 일정을 ${relativeDateLabel(parsed.dateKey)}${rangeMsg}${parsed.hour!==null ? ' '+timeLabel(parsed) : ''}(으)로 등록했어요`);
     render();
   }
 
@@ -1404,7 +1437,7 @@
     input.value = '';
     pendingPhoto = null;
     $('#photoPreview').style.display = 'none';
-    showToast(`"${parsed.title}" 항목을 보관함에 넣었어요`);
+    showToast(`"${withSuggestedEmoji(parsed.title)}" 항목을 보관함에 넣었어요`);
     render();
   }
 
