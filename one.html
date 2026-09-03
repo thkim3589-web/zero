@@ -595,7 +595,8 @@
       <li>결제 계정 연결 안내가 뜨면 카드 등록 (월 1,000장 이내는 요금 청구 안 됨)</li>
       <li>좌측 메뉴 "API 및 서비스" → "사용자 인증 정보" → 상단 "+ 사용자 인증 정보 만들기" → "API 키" 선택</li>
       <li>생성된 키를 복사해서 위 입력칸에 붙여넣고 저장</li>
-      <li><b>(보안 권장)</b> 방금 만든 키를 눌러 편집 → "API 제한사항"에서 "Cloud Vision API"만 체크 → "애플리케이션 제한사항"에서 "HTTP 리퍼러"를 선택하고 본인 앱 주소(예: <code>https://아이디.github.io/*</code>) 등록 → 저장. 이렇게 하면 키가 유출돼도 이 앱 용도로만 쓰이도록 제한됩니다.</li>
+      <li><b>(보안 권장)</b> 방금 만든 키를 눌러 편집 → "API 제한사항"에서 "Cloud Vision API"만 체크 → "애플리케이션 제한사항"은 <b>"없음"으로 두세요</b> (Cloud Vision API는 서버용 API로 분류되어 HTTP 리퍼러/웹사이트 제한과 호환되지 않아요 — 이 제한을 걸면 정상 키인데도 요청이 거부됩니다). API 제한사항만으로도 키가 유출돼도 Cloud Vision API 외에는 못 쓰게 막아줍니다. → 저장.</li>
+      <li>참고: 사용량 급증을 막고 싶다면 Cloud Console의 "결제 → 예산 및 알림"에서 예산 알림을 설정해두면 좋아요.</li>
     </ol>
 
     <div class="modal-actions">
@@ -1098,6 +1099,7 @@ async function recognizeText(dataUrl, onStatus){
     }catch(err){
       console.error('Vision API 실패, 기본 엔진으로 대체', err);
       onStatus && onStatus('Vision 인식 실패 — 기본 엔진으로 재시도 중…');
+      showToast('Vision 실패: ' + (err.message || '알 수 없는 오류') + ' → 기본 엔진으로 인식해요.', 4200);
     }
   } else if(apiKey && !navigator.onLine){
     showToast('오프라인 상태예요. 기본 엔진(Tesseract)으로 인식해요.');
