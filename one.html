@@ -313,6 +313,24 @@
     word-break:break-word;
   }
   table.grid td:last-child{border-right:none;}
+  /* 간략히 보기: 셀 내용이 길면 3줄까지만 보이고 나머지는 잘라서 표시.
+     칸을 눌러 편집(focus)하면 그 칸만 전체 내용이 펼쳐진다. */
+  table.grid.compact td:not(.rownum):not(.rowdel):not(.colhead){
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;
+    overflow:hidden;
+    max-height:5.2em;
+  }
+  table.grid.compact td:not(.rownum):not(.rowdel):not(.colhead):focus{
+    display:block;
+    -webkit-line-clamp:unset;
+    overflow:visible;
+    max-height:none;
+    background:var(--surface-2);
+    position:relative;
+    z-index:2;
+  }
   table.grid td.rownum{
     background:var(--surface-2);
     color:var(--ink-dim);
@@ -359,7 +377,8 @@
     font-family:inherit;
   }
 
-  .table-header-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 6px;}
+  .table-header-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 6px;flex-wrap:wrap;}
+  .table-header-btns{display:flex;gap:6px;flex-shrink:0;}
   .findreplace-btn{
     flex:0 0 auto;
     background:none;
@@ -724,15 +743,23 @@
           <div class="chip" data-delim="tab">탭</div>
           <div class="chip" data-delim="comma">쉼표(,)</div>
           <div class="chip" data-delim="line">줄바꿈만(1열)</div>
+          <div class="chip" data-delim="groupN">N줄씩 묶기</div>
           <div class="chip" data-delim="doc">문서형(표 없음)</div>
+        </div>
+        <div class="col-range-row" id="groupNRow" style="display:none;">
+          <input type="number" id="groupNInput" class="range-input" placeholder="한 행당 칸(열) 개수, 예: 8" min="1" style="flex:1;">
+          <button type="button" class="range-apply-btn" id="groupNApplyBtn">적용</button>
         </div>
 
         <div class="table-header-row" id="tableHeaderRow">
           <div class="field-label" id="tableFieldLabel" style="margin:0;">인식된 표 (칸을 눌러 직접 수정, 열/행 × 로 삭제)</div>
-          <button class="findreplace-btn" id="findReplaceBtn">글자 일괄 바꾸기</button>
+          <div class="table-header-btns">
+            <button class="findreplace-btn" id="compactToggleBtn">표 전체 보기</button>
+            <button class="findreplace-btn" id="findReplaceBtn">글자 일괄 바꾸기</button>
+          </div>
         </div>
         <p class="pattern-legend" id="patternLegend">테두리 색: <span class="leg-phone">전화번호</span> · <span class="leg-bizno">사업자번호</span> · <span class="leg-amount">금액</span> 형식 자동 감지(자동수정 아님, 확인 후 필요시 직접 수정)</p>
-        <div class="table-wrap" id="tableWrapEl"><table class="grid" id="grid"></table></div>
+        <div class="table-wrap" id="tableWrapEl"><table class="grid compact" id="grid"></table></div>
         <div class="row-btn-group" id="rowBtnGroup">
           <div class="row-add-btn" id="addRowBtn">+ 행 추가</div>
           <div class="row-add-btn" id="addColBtn">+ 열 추가</div>
@@ -776,10 +803,13 @@
 
       <div class="table-header-row" id="detailTableHeaderRow">
         <div class="field-label" id="detailTableFieldLabel" style="margin:0;">표 데이터 (칸을 눌러 직접 수정, 열/행 × 로 삭제)</div>
-        <button class="findreplace-btn" id="detailFindReplaceBtn">글자 일괄 바꾸기</button>
+        <div class="table-header-btns">
+          <button class="findreplace-btn" id="detailCompactToggleBtn">표 전체 보기</button>
+          <button class="findreplace-btn" id="detailFindReplaceBtn">글자 일괄 바꾸기</button>
+        </div>
       </div>
       <p class="pattern-legend" id="detailPatternLegend">테두리 색: <span class="leg-phone">전화번호</span> · <span class="leg-bizno">사업자번호</span> · <span class="leg-amount">금액</span> 형식 자동 감지(자동수정 아님, 확인 후 필요시 직접 수정)</p>
-      <div class="table-wrap" id="detailTableWrapEl"><table class="grid" id="detailGrid"></table></div>
+      <div class="table-wrap" id="detailTableWrapEl"><table class="grid compact" id="detailGrid"></table></div>
       <div class="row-btn-group" id="detailRowBtnGroup">
         <div class="row-add-btn" id="detailAddRowBtn">+ 행 추가</div>
         <div class="row-add-btn" id="detailAddColBtn">+ 열 추가</div>
@@ -1150,6 +1180,15 @@ function splitToRows(text, delim){
     if(cells.length===0) cells=[l.trim()];
     return cells;
   });
+}
+/* 줄마다 셀 하나씩 나온 OCR 결과를 N개씩 묶어서 한 행으로 재구성 */
+function groupLinesIntoRows(text, n){
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  const rows = [];
+  for(let i=0; i<lines.length; i+=n){
+    rows.push(lines.slice(i, i+n));
+  }
+  return rows;
 }
 function maxCols(rows){ return rows.reduce((m,r)=>Math.max(m,r.length),1); }
 
@@ -1738,6 +1777,7 @@ function openEditor(){
   sheetRow.style.display='none';
   colRangeLabel.style.display='none';
   colRangeRow.style.display='none';
+  groupNRow.style.display='none';
   delimLabel.style.display='block';
   delimRow.style.display='flex';
   retakeBtn.textContent = '다시 찍기';
@@ -1768,8 +1808,19 @@ delimRow.addEventListener('click', (e)=>{
   const chip = e.target.closest('.chip');
   if(!chip) return;
   [...delimRow.children].forEach(c=>c.classList.toggle('active', c===chip));
+  groupNRow.style.display = 'none';
   if(chip.dataset.delim === 'doc'){
     currentFormat = 'text';
+    applyFormatUI();
+    return;
+  }
+  if(chip.dataset.delim === 'groupN'){
+    currentFormat = 'table';
+    currentDelim = 'groupN';
+    groupNRow.style.display = 'flex';
+    groupNInput.value = currentGroupN;
+    currentRows = groupLinesIntoRows(rawTextEl.value, currentGroupN);
+    renderGrid(gridEl, currentRows);
     applyFormatUI();
     return;
   }
@@ -1780,9 +1831,28 @@ delimRow.addEventListener('click', (e)=>{
   applyFormatUI();
 });
 
+const groupNRow = document.getElementById('groupNRow');
+const groupNInput = document.getElementById('groupNInput');
+let currentGroupN = 8;
+document.getElementById('groupNApplyBtn').addEventListener('click', ()=>{
+  const n = parseInt(groupNInput.value, 10);
+  if(!n || n < 1){
+    alert('1 이상의 숫자를 입력해주세요.');
+    return;
+  }
+  currentGroupN = n;
+  currentRows = groupLinesIntoRows(rawTextEl.value, n);
+  renderGrid(gridEl, currentRows);
+});
+
 rawTextEl.addEventListener('change', ()=>{
   if(currentEngine === 'excel') return; // 엑셀 표는 원문 재분리 대상이 아님
   if(currentFormat === 'text') return; // 문서형은 그대로 문단 텍스트로 저장
+  if(currentDelim === 'groupN'){
+    currentRows = groupLinesIntoRows(rawTextEl.value, currentGroupN);
+    renderGrid(gridEl, currentRows);
+    return;
+  }
   currentRows = splitToRows(rawTextEl.value, currentDelim);
   renderGrid(gridEl, currentRows);
 });
@@ -2042,6 +2112,22 @@ document.getElementById('findReplaceBtn').addEventListener('click', ()=>{
 document.getElementById('detailFindReplaceBtn').addEventListener('click', ()=>{
   openFindReplace(detailRows, ()=>renderGrid(detailGrid, detailRows));
 });
+
+/* 표 간략히 보기 ↔ 전체 보기 토글 (셀이 길 때 세로로 늘어지는 문제 완화) */
+function setupCompactToggle(btn, tableEl){
+  const update = ()=>{
+    const isCompact = tableEl.classList.contains('compact');
+    btn.textContent = isCompact ? '표 전체 보기' : '표 간략히 보기';
+  };
+  btn.addEventListener('click', ()=>{
+    tableEl.classList.toggle('compact');
+    update();
+  });
+  update();
+}
+setupCompactToggle(document.getElementById('compactToggleBtn'), gridEl);
+setupCompactToggle(document.getElementById('detailCompactToggleBtn'), detailGrid);
+
 document.getElementById('frCancelBtn').addEventListener('click', ()=>{
   document.getElementById('findReplaceOverlay').style.display='none';
 });
