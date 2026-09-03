@@ -1161,7 +1161,7 @@ function wordsFromVisionPage(page){
         const ys = verts.map(v=>v.y||0);
         const x0 = Math.min(...xs), x1 = Math.max(...xs);
         const y0 = Math.min(...ys), y1 = Math.max(...ys);
-        words.push({ text, x0, x1, yc:(y0+y1)/2, h:Math.max(1, y1-y0) });
+        words.push({ text, x0, x1, y0, y1, yc:(y0+y1)/2, h:Math.max(1, y1-y0) });
       });
     });
   });
@@ -1172,37 +1172,41 @@ function wordsFromVisionPage(page){
 function reconstructTableRows(words){
   if(words.length === 0) return [];
   const avgH = words.reduce((s,w)=>s+w.h,0) / words.length;
-  const rowThreshold = avgH * 0.6;
-  const sorted = [...words].sort((a,b)=>a.yc-b.yc);
+  // 세로 겹침(overlap) 기준으로 같은 줄을 묶는다 — 사진이 살짝 기울어져도
+  // 중심점 거리 비교보다 훨씬 안정적으로 행이 나뉜다.
+  const margin = avgH * 0.25;
+  const sorted = [...words].sort((a,b)=>a.y0-b.y0);
   const rowGroups = [];
-  sorted.forEach(w=>{
-    let group = rowGroups.find(g=>Math.abs(g.yc - w.yc) < rowThreshold);
-    if(!group){
-      group = { yc: w.yc, words: [] };
-      rowGroups.push(group);
+  let current = { y0: sorted[0].y0, y1: sorted[0].y1, words: [sorted[0]] };
+  for(let i=1; i<sorted.length; i++){
+    const w = sorted[i];
+    if(w.y0 < current.y1 - margin){
+      current.words.push(w);
+      current.y1 = Math.max(current.y1, w.y1);
+    } else {
+      rowGroups.push(current);
+      current = { y0: w.y0, y1: w.y1, words: [w] };
     }
-    group.words.push(w);
-    group.yc = group.words.reduce((s,x)=>s+x.yc,0) / group.words.length;
-  });
-  rowGroups.sort((a,b)=>a.yc-b.yc);
+  }
+  rowGroups.push(current);
 
   const colGapThreshold = avgH * 1.8; // 이 값보다 간격이 크면 다른 칸(열)으로 판단
   return rowGroups.map(g=>{
     const ws = [...g.words].sort((a,b)=>a.x0-b.x0);
     const cells = [];
-    let current = null;
+    let cur = null;
     ws.forEach(w=>{
-      if(!current){
-        current = { text: w.text, x1: w.x1 };
-      } else if(w.x0 - current.x1 > colGapThreshold){
-        cells.push(current.text);
-        current = { text: w.text, x1: w.x1 };
+      if(!cur){
+        cur = { text: w.text, x1: w.x1 };
+      } else if(w.x0 - cur.x1 > colGapThreshold){
+        cells.push(cur.text);
+        cur = { text: w.text, x1: w.x1 };
       } else {
-        current.text += ' ' + w.text;
-        current.x1 = Math.max(current.x1, w.x1);
+        cur.text += ' ' + w.text;
+        cur.x1 = Math.max(cur.x1, w.x1);
       }
     });
-    if(current) cells.push(current.text);
+    if(cur) cells.push(cur.text);
     return cells;
   });
 }
