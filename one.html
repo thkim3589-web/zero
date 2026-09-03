@@ -299,16 +299,19 @@
   .table-wrap{
     border:1px solid var(--line);
     border-radius:var(--radius);
-    overflow:hidden;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
     background:var(--surface);
   }
-  table.grid{width:100%;border-collapse:collapse;}
+  table.grid{width:auto;min-width:100%;border-collapse:collapse;}
   table.grid tr:not(:last-child) td{border-bottom:1px solid var(--line);}
   table.grid td{
     border-right:1px solid var(--line);
     padding:8px 9px;
     font-size:13px;
-    min-width:60px;
+    min-width:110px;
+    max-width:220px;
     vertical-align:top;
     outline:none;
     word-break:break-word;
@@ -340,6 +343,9 @@
     min-width:26px;
     width:26px;
     user-select:none;
+    position:sticky;
+    left:0;
+    z-index:1;
   }
   table.grid td.rowdel{
     background:var(--surface-2);
@@ -754,7 +760,7 @@
         </div>
 
         <div class="table-header-row" id="tableHeaderRow">
-          <div class="field-label" id="tableFieldLabel" style="margin:0;">인식된 표 (칸을 눌러 직접 수정, 열/행 × 로 삭제)</div>
+          <div class="field-label" id="tableFieldLabel" style="margin:0;">인식된 표 (칸을 눌러 직접 수정, 열/행 × 로 삭제, 옆으로 스크롤 가능)</div>
           <div class="table-header-btns">
             <button class="findreplace-btn" id="compactToggleBtn">표 전체 보기</button>
             <button class="findreplace-btn" id="findReplaceBtn">글자 일괄 바꾸기</button>
@@ -810,7 +816,7 @@
       </div>
 
       <div class="table-header-row" id="detailTableHeaderRow">
-        <div class="field-label" id="detailTableFieldLabel" style="margin:0;">표 데이터 (칸을 눌러 직접 수정, 열/행 × 로 삭제)</div>
+        <div class="field-label" id="detailTableFieldLabel" style="margin:0;">표 데이터 (칸을 눌러 직접 수정, 열/행 × 로 삭제, 옆으로 스크롤 가능)</div>
         <div class="table-header-btns">
           <button class="findreplace-btn" id="detailCompactToggleBtn">표 전체 보기</button>
           <button class="findreplace-btn" id="detailFindReplaceBtn">글자 일괄 바꾸기</button>
