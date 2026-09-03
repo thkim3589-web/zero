@@ -195,19 +195,31 @@
   .batch-progress p{color:var(--ink-dim);font-size:13px;margin:0;}
 
   .crop-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-  .crop-hint{
-    color:var(--ink-dim);font-size:12.5px;line-height:1.5;
-    margin:0;padding:12px 18px;flex-shrink:0;
+  .crop-toprow{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 14px;flex-shrink:0;
   }
+  .crop-hint{
+    color:var(--ink-dim);font-size:11px;line-height:1.4;
+    margin:0;flex:1;min-width:0;
+  }
+  .zoom-controls{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+  .zoom-btn{
+    background:var(--surface);border:1px solid var(--line);color:var(--ink);
+    width:30px;height:30px;border-radius:8px;font-size:16px;line-height:1;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .zoom-btn.zoom-reset{width:auto;padding:0 8px;font-size:11px;color:var(--ink-dim);}
   .crop-canvas-holder{
     flex:1;
-    display:flex;align-items:center;justify-content:center;
-    overflow:hidden;
+    overflow:auto;
+    touch-action:none;
     background:#000;
     padding:8px;
+    position:relative;
   }
   #cropCanvas{
-    max-width:100%;max-height:100%;
+    display:block;
     touch-action:none;
     border-radius:4px;
   }
@@ -711,8 +723,15 @@
     </div>
 
     <div class="crop-wrap" id="cropWrap" style="display:none;">
-      <p class="crop-hint">인식할 영역을 손가락으로 드래그해서 표시하세요. 표시하지 않으면 사진 전체를 인식합니다.</p>
-      <div class="crop-canvas-holder">
+      <div class="crop-toprow">
+        <p class="crop-hint">드래그로 영역 표시 · 모서리를 잡아 크기 조절 · 안쪽을 잡아 이동</p>
+        <div class="zoom-controls">
+          <button type="button" class="zoom-btn" id="zoomOutBtn">－</button>
+          <button type="button" class="zoom-btn zoom-reset" id="zoomResetBtn">100%</button>
+          <button type="button" class="zoom-btn" id="zoomInBtn">＋</button>
+        </div>
+      </div>
+      <div class="crop-canvas-holder" id="cropCanvasHolder">
         <canvas id="cropCanvas"></canvas>
       </div>
       <div class="crop-actions">
@@ -1415,6 +1434,10 @@ const batchStatusText = document.getElementById('batchStatusText');
 const cropWrap = document.getElementById('cropWrap');
 const cropCanvas = document.getElementById('cropCanvas');
 const cropCtx = cropCanvas.getContext('2d');
+const cropCanvasHolder = document.getElementById('cropCanvasHolder');
+const mainEl = document.querySelector('main');
+let baseScale = 1;
+let zoomFactor = 1;
 let editorCategory = currentCategory;
 let cropImg = null;
 let cropSel = null; // {x0,y0,x1,y1} in canvas pixel space
@@ -1610,14 +1633,29 @@ function openCropStep(dataUrl){
   captureEmpty.style.display='none';
   cropWrap.style.display='flex';
   cropSel = null;
+  mainEl.style.overflow='hidden'; // 크롭 중에는 뒤 화면이 같이 스크롤되지 않도록 잠근다
   const img = new Image();
   img.onload = ()=>{
     cropImg = img;
     cropCanvas.width = img.naturalWidth;
     cropCanvas.height = img.naturalHeight;
+    zoomFactor = 1;
+    computeBaseScale();
+    applyCropZoom();
     drawCrop();
   };
   img.src = dataUrl;
+}
+
+function computeBaseScale(){
+  if(!cropImg) return;
+  const availW = Math.max(50, cropCanvasHolder.clientWidth - 16);
+  baseScale = availW / cropImg.naturalWidth;
+}
+function applyCropZoom(){
+  if(!cropImg) return;
+  cropCanvas.style.width = (cropImg.naturalWidth * baseScale * zoomFactor) + 'px';
+  cropCanvas.style.height = (cropImg.naturalHeight * baseScale * zoomFactor) + 'px';
 }
 
 function normRect(r){
@@ -1639,6 +1677,14 @@ function drawCrop(){
     cropCtx.strokeStyle = '#E8622C';
     cropCtx.lineWidth = Math.max(2, cropCanvas.width*0.003);
     cropCtx.strokeRect(r.x, r.y, r.w, r.h);
+    // 모서리 손잡이: 여기를 잡으면 크기 조절, 사각형 안쪽을 잡으면 이동
+    const hr = getHandleRadius();
+    cropCtx.fillStyle = '#E8622C';
+    [[r.x,r.y],[r.x+r.w,r.y],[r.x,r.y+r.h],[r.x+r.w,r.y+r.h]].forEach(([hx,hy])=>{
+      cropCtx.beginPath();
+      cropCtx.arc(hx, hy, hr*0.55, 0, Math.PI*2);
+      cropCtx.fill();
+    });
   }
 }
 
@@ -1652,21 +1698,87 @@ function canvasPointFromEvent(evt){
   };
 }
 
+/* 화면상 손가락 크기(약 34px)에 해당하는 캔버스 내부 좌표 반경 — 확대해도 잡기 편하도록 CSS 표시 비율에 맞춰 계산 */
+function getHandleRadius(){
+  const rect = cropCanvas.getBoundingClientRect();
+  const scale = rect.width > 0 ? cropCanvas.width / rect.width : 1;
+  return 34 * scale;
+}
+
+let dragMode = null; // 'new' | 'move' | 'resize'
+let dragCorner = null; // 'tl' | 'tr' | 'bl' | 'br'
+let dragStartPoint = null;
+let dragOrigRect = null; // {x0,y0,x1,y1} 스냅샷
+
 cropCanvas.addEventListener('pointerdown', (e)=>{
-  cropDragging = true;
   const p = canvasPointFromEvent(e);
+  const r = normRect(cropSel);
+  const hr = getHandleRadius();
+  cropDragging = true;
+  dragStartPoint = p;
+
+  if(r && r.w>4 && r.h>4){
+    const corners = {
+      tl:{x:r.x,       y:r.y},
+      tr:{x:r.x+r.w,   y:r.y},
+      bl:{x:r.x,       y:r.y+r.h},
+      br:{x:r.x+r.w,   y:r.y+r.h}
+    };
+    let hit = null;
+    Object.keys(corners).forEach(key=>{
+      const c = corners[key];
+      if(Math.hypot(p.x-c.x, p.y-c.y) <= hr) hit = key;
+    });
+    if(hit){
+      dragMode = 'resize';
+      dragCorner = hit;
+      dragOrigRect = { ...cropSel };
+      cropCanvas.setPointerCapture(e.pointerId);
+      return;
+    }
+    if(p.x>r.x && p.x<r.x+r.w && p.y>r.y && p.y<r.y+r.h){
+      dragMode = 'move';
+      dragOrigRect = { ...cropSel };
+      cropCanvas.setPointerCapture(e.pointerId);
+      return;
+    }
+  }
+  // 빈 곳을 누르면 새 영역을 그린다
+  dragMode = 'new';
   cropSel = { x0:p.x, y0:p.y, x1:p.x, y1:p.y };
   cropCanvas.setPointerCapture(e.pointerId);
   drawCrop();
 });
+
 cropCanvas.addEventListener('pointermove', (e)=>{
   if(!cropDragging) return;
   const p = canvasPointFromEvent(e);
-  cropSel.x1 = p.x; cropSel.y1 = p.y;
+
+  if(dragMode === 'new'){
+    cropSel.x1 = p.x; cropSel.y1 = p.y;
+  } else if(dragMode === 'move'){
+    const dx = p.x - dragStartPoint.x;
+    const dy = p.y - dragStartPoint.y;
+    cropSel.x0 = clampX(dragOrigRect.x0 + dx);
+    cropSel.x1 = clampX(dragOrigRect.x1 + dx);
+    cropSel.y0 = clampY(dragOrigRect.y0 + dy);
+    cropSel.y1 = clampY(dragOrigRect.y1 + dy);
+  } else if(dragMode === 'resize'){
+    const leftIsX0 = dragOrigRect.x0 <= dragOrigRect.x1;
+    const topIsY0 = dragOrigRect.y0 <= dragOrigRect.y1;
+    const xField = (dragCorner==='tl'||dragCorner==='bl') === leftIsX0 ? 'x0' : 'x1';
+    const yField = (dragCorner==='tl'||dragCorner==='tr') === topIsY0 ? 'y0' : 'y1';
+    cropSel[xField] = clampX(p.x);
+    cropSel[yField] = clampY(p.y);
+  }
   drawCrop();
 });
-cropCanvas.addEventListener('pointerup', ()=>{ cropDragging=false; });
-cropCanvas.addEventListener('pointercancel', ()=>{ cropDragging=false; });
+
+function clampX(v){ return Math.max(0, Math.min(cropCanvas.width, v)); }
+function clampY(v){ return Math.max(0, Math.min(cropCanvas.height, v)); }
+
+cropCanvas.addEventListener('pointerup', ()=>{ cropDragging=false; dragMode=null; });
+cropCanvas.addEventListener('pointercancel', ()=>{ cropDragging=false; dragMode=null; });
 
 document.getElementById('cropRotateBtn').addEventListener('click', ()=>{
   if(!cropImg) return;
@@ -1684,9 +1796,27 @@ document.getElementById('cropRotateBtn').addEventListener('click', ()=>{
     cropCanvas.width = newImg.naturalWidth;
     cropCanvas.height = newImg.naturalHeight;
     cropSel = null;
+    zoomFactor = 1;
+    computeBaseScale();
+    applyCropZoom();
     drawCrop();
   };
   newImg.src = rotatedUrl;
+});
+
+document.getElementById('zoomInBtn').addEventListener('click', ()=>{
+  zoomFactor = Math.min(4, zoomFactor * 1.25);
+  applyCropZoom();
+});
+document.getElementById('zoomOutBtn').addEventListener('click', ()=>{
+  zoomFactor = Math.max(1, zoomFactor / 1.25);
+  applyCropZoom();
+});
+document.getElementById('zoomResetBtn').addEventListener('click', ()=>{
+  zoomFactor = 1;
+  applyCropZoom();
+  cropCanvasHolder.scrollLeft = 0;
+  cropCanvasHolder.scrollTop = 0;
 });
 
 document.getElementById('cropRedoBtn').addEventListener('click', ()=>{
@@ -1717,6 +1847,7 @@ document.getElementById('cropConfirmBtn').addEventListener('click', ()=>{
 });
 
 function proceedToOcr(dataUrl){
+  mainEl.style.overflow='';
   currentImageDataUrl = dataUrl;
   currentEngine = 'tesseract';
   previewImg.src = dataUrl;
@@ -2006,6 +2137,7 @@ document.getElementById('shiftRightBtn').addEventListener('click', ()=>shiftFrom
 document.getElementById('retakeBtn').addEventListener('click', resetCapture);
 
 function resetCapture(){
+  mainEl.style.overflow='';
   currentImageDataUrl=null; currentRawText=''; currentRows=[]; currentAutoRows=null;
   cropImg=null; cropSel=null;
   excelWorkbook=null; excelFileBaseName=''; excelColRangeStr=''; excelCurrentSheet='';
