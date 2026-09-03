@@ -23,6 +23,16 @@
     --good:#4FA07A;
     --radius:10px;
   }
+  body.theme-light{
+    --bg:#F5F3EE;
+    --surface:#FFFFFF;
+    --surface-2:#ECE8E0;
+    --line:#DBD5C9;
+    --ink:#1C1B18;
+    --ink-dim:#746C60;
+    --accent:#C94E17;
+    --accent-dim:#F4DBC8;
+  }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
   body{
@@ -202,9 +212,10 @@
   }
   .crop-actions{
     display:flex;gap:8px;
-    padding:12px 18px calc(12px + env(safe-area-inset-bottom));
+    padding:8px 18px;
     flex-shrink:0;
   }
+  .crop-actions:last-of-type{padding-bottom:calc(12px + env(safe-area-inset-bottom));}
   .crop-actions .btn-ghost{flex:1;padding:13px 10px;font-size:13px;}
 
   .preview-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
@@ -332,6 +343,65 @@
   }
   .row-btn-group{display:flex;gap:8px;}
   .row-btn-group .row-add-btn{flex:1;margin-top:10px;}
+
+  .export-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .export-btn{
+    flex:1 1 auto;
+    min-width:120px;
+    padding:11px 10px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    color:var(--ink);
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    font-family:inherit;
+  }
+
+  .table-header-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 6px;}
+  .findreplace-btn{
+    flex:0 0 auto;
+    background:none;
+    border:1px solid var(--line);
+    color:var(--ink-dim);
+    font-size:11.5px;
+    padding:6px 10px;
+    border-radius:999px;
+    cursor:pointer;
+    font-family:inherit;
+    white-space:nowrap;
+  }
+  .pattern-legend{
+    font-size:10.5px;
+    color:var(--ink-dim);
+    line-height:1.6;
+    margin:0 0 8px;
+  }
+  .pattern-legend .leg-phone{color:var(--good);}
+  .pattern-legend .leg-bizno{color:#5B8DEF;}
+  .pattern-legend .leg-amount{color:var(--accent);}
+  table.grid td.pat-phone{box-shadow:inset 0 0 0 1.5px var(--good);}
+  table.grid td.pat-bizno{box-shadow:inset 0 0 0 1.5px #5B8DEF;}
+  table.grid td.pat-amount{box-shadow:inset 0 0 0 1.5px var(--accent);}
+
+  .fr-preset-list{display:flex;flex-direction:column;gap:2px;margin-bottom:4px;}
+  .fr-preset-row{display:flex;align-items:center;gap:10px;padding:9px 2px;font-size:13px;}
+  .fr-preset-row input[type="checkbox"]{width:17px;height:17px;accent-color:var(--accent);flex-shrink:0;}
+  .fr-custom-row{display:flex;align-items:center;gap:8px;}
+  .fr-arrow{color:var(--ink-dim);font-size:14px;flex-shrink:0;}
+
+  .batch-mode-option{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px;
+    margin-top:10px;
+    cursor:pointer;
+    background:var(--surface);
+  }
+  .batch-mode-option:active{background:var(--surface-2);}
+  .batch-mode-title{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--ink);}
+  .batch-mode-desc{font-size:12px;color:var(--ink-dim);line-height:1.5;}
   table.grid td.colhead{
     background:var(--surface-2);
     color:var(--ink-dim);
@@ -451,6 +521,25 @@
 
   ::-webkit-scrollbar{width:0;height:0;}
 
+  .toast{
+    position:fixed;
+    left:50%; bottom:84px;
+    transform:translateX(-50%) translateY(16px);
+    background:var(--surface-2);
+    color:var(--ink);
+    border:1px solid var(--line);
+    padding:10px 18px;
+    border-radius:999px;
+    font-size:12.5px;
+    max-width:88%;
+    text-align:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.2s, transform 0.2s;
+    z-index:200;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
   /* 가로 모드일 때 레이아웃 보정 */
   @media (orientation: landscape){
     .capture-empty{
@@ -469,6 +558,8 @@
 </head>
 <body>
 
+<div class="toast" id="toastEl"></div>
+
 <header class="topbar">
   <h1 id="pageTitle">문서인식</h1>
   <div class="topbar-right">
@@ -481,7 +572,13 @@
 
 <div class="modal-overlay" id="settingsOverlay" style="display:none;">
   <div class="modal-box">
-    <h2>텍스트 인식 엔진</h2>
+    <h2>화면 테마</h2>
+    <div class="delim-row" id="themeRow">
+      <div class="chip" data-theme="dark">다크 모드</div>
+      <div class="chip" data-theme="light">라이트 모드 (야외용)</div>
+    </div>
+
+    <h2 style="margin-top:20px;">텍스트 인식 엔진</h2>
     <p class="modal-desc">기본은 무료 오프라인 엔진(Tesseract)이에요. 정확도를 높이려면 구글 클라우드 Vision API 키를 입력하세요 — 입력하면 앞으로 촬영/업로드 시 자동으로 Vision API를 우선 사용하고, 실패하거나 키가 없으면 기본 엔진으로 인식합니다. <b>이 기기에만 적용</b>되니, 팀원마다 각자 자기 휴대폰에 본인 키를 넣어서 따로 쓰면 됩니다.</p>
 
     <div class="field-label">Google Cloud Vision API 키</div>
@@ -515,6 +612,42 @@
     <div id="categoryManageList"></div>
     <div class="modal-actions">
       <button class="btn btn-primary" id="categoryManageCloseBtn" style="flex:1;">닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="findReplaceOverlay" style="display:none;">
+  <div class="modal-box">
+    <h2>글자 일괄 바꾸기</h2>
+    <p class="modal-desc">표의 모든 칸에서 자주 헷갈리는 글자를 한 번에 바꿔요. 원하는 항목을 체크하고 적용하세요.</p>
+    <div id="frPresetList" class="fr-preset-list"></div>
+    <div class="field-label">직접 지정 (선택)</div>
+    <div class="fr-custom-row">
+      <input type="text" id="frCustomFind" class="range-input" placeholder="찾을 글자">
+      <span class="fr-arrow">→</span>
+      <input type="text" id="frCustomTo" class="range-input" placeholder="바꿀 글자">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="frCancelBtn">취소</button>
+      <button class="btn btn-primary" id="frApplyBtn">적용</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="batchModeOverlay" style="display:none;">
+  <div class="modal-box">
+    <h2>여러 장 저장 방식</h2>
+    <p class="modal-desc">선택한 사진 여러 장을 어떻게 저장할까요?</p>
+    <div class="batch-mode-option" data-mode="separate">
+      <div class="batch-mode-title">각각 별도 문서로 저장</div>
+      <div class="batch-mode-desc">사진마다 독립된 문서로 자동 인식·저장돼요.</div>
+    </div>
+    <div class="batch-mode-option" data-mode="merge">
+      <div class="batch-mode-title">하나의 문서로 합치기 (행 이어붙임)</div>
+      <div class="batch-mode-desc">여러 페이지를 순서대로 이어 붙여 하나의 표로 만들고, 저장 전에 확인·수정할 수 있어요.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="batchModeCancelBtn" style="flex:1;">취소</button>
     </div>
   </div>
 </div>
@@ -555,7 +688,10 @@
         <canvas id="cropCanvas"></canvas>
       </div>
       <div class="crop-actions">
+        <button class="btn btn-ghost" id="cropRotateBtn" title="90도 회전">↻ 회전</button>
         <button class="btn btn-ghost" id="cropRedoBtn">영역 지우기</button>
+      </div>
+      <div class="crop-actions">
         <button class="btn btn-ghost" id="cropAllBtn">전체 인식</button>
         <button class="btn btn-primary" id="cropConfirmBtn">선택 영역 인식</button>
       </div>
@@ -590,7 +726,11 @@
           <div class="chip" data-delim="doc">문서형(표 없음)</div>
         </div>
 
-        <div class="field-label" id="tableFieldLabel">인식된 표 (칸을 눌러 직접 수정, 열/행 × 로 삭제)</div>
+        <div class="table-header-row" id="tableHeaderRow">
+          <div class="field-label" id="tableFieldLabel" style="margin:0;">인식된 표 (칸을 눌러 직접 수정, 열/행 × 로 삭제)</div>
+          <button class="findreplace-btn" id="findReplaceBtn">글자 일괄 바꾸기</button>
+        </div>
+        <p class="pattern-legend" id="patternLegend">테두리 색: <span class="leg-phone">전화번호</span> · <span class="leg-bizno">사업자번호</span> · <span class="leg-amount">금액</span> 형식 자동 감지(자동수정 아님, 확인 후 필요시 직접 수정)</p>
         <div class="table-wrap" id="tableWrapEl"><table class="grid" id="grid"></table></div>
         <div class="row-btn-group" id="rowBtnGroup">
           <div class="row-add-btn" id="addRowBtn">+ 행 추가</div>
@@ -624,7 +764,20 @@
       <input class="title-input" id="detailTitle">
       <div class="field-label">분류</div>
       <div class="category-row" id="detailCategoryRow" style="justify-content:flex-start;"></div>
-      <div class="field-label" id="detailTableFieldLabel">표 데이터 (칸을 눌러 직접 수정, 열/행 × 로 삭제)</div>
+
+      <div class="field-label">내보내기 / 공유</div>
+      <div class="export-row">
+        <button class="export-btn" id="exportXlsxBtn">엑셀 다운로드</button>
+        <button class="export-btn" id="exportTsvBtn">표 복사</button>
+        <button class="export-btn" id="exportCsvBtn">CSV 복사</button>
+        <button class="export-btn" id="exportShareBtn">공유하기</button>
+      </div>
+
+      <div class="table-header-row" id="detailTableHeaderRow">
+        <div class="field-label" id="detailTableFieldLabel" style="margin:0;">표 데이터 (칸을 눌러 직접 수정, 열/행 × 로 삭제)</div>
+        <button class="findreplace-btn" id="detailFindReplaceBtn">글자 일괄 바꾸기</button>
+      </div>
+      <p class="pattern-legend" id="detailPatternLegend">테두리 색: <span class="leg-phone">전화번호</span> · <span class="leg-bizno">사업자번호</span> · <span class="leg-amount">금액</span> 형식 자동 감지(자동수정 아님, 확인 후 필요시 직접 수정)</p>
       <div class="table-wrap" id="detailTableWrapEl"><table class="grid" id="detailGrid"></table></div>
       <div class="row-btn-group" id="detailRowBtnGroup">
         <div class="row-add-btn" id="detailAddRowBtn">+ 행 추가</div>
@@ -655,6 +808,39 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
+/* ---------------- 토스트 ---------------- */
+let toastTimer = null;
+function showToast(msg, ms){
+  const el = document.getElementById('toastEl');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), ms || 2600);
+}
+
+/* ---------------- 화면 테마 ---------------- */
+const THEME_STORAGE = 'docScanTheme';
+function getTheme(){
+  return localStorage.getItem(THEME_STORAGE) || 'dark';
+}
+function applyTheme(theme){
+  document.body.classList.toggle('theme-light', theme === 'light');
+  localStorage.setItem(THEME_STORAGE, theme);
+  const row = document.getElementById('themeRow');
+  if(row){
+    [...row.children].forEach(c=>c.classList.toggle('active', c.dataset.theme===theme));
+  }
+}
+applyTheme(getTheme());
+
+/* ---------------- 네트워크 상태 감지 ---------------- */
+window.addEventListener('offline', ()=>{
+  showToast('오프라인 상태예요. 앞으로는 기본 엔진(Tesseract)으로 인식돼요.');
+});
+window.addEventListener('online', ()=>{
+  showToast('네트워크가 다시 연결됐어요.');
+});
+
 /* ---------------- IndexedDB ---------------- */
 const DB_NAME='doc-scan-db', STORE='documents';
 function openDB(){
@@ -846,7 +1032,13 @@ const settingsOverlay = document.getElementById('settingsOverlay');
 const visionKeyInput = document.getElementById('visionKeyInput');
 document.getElementById('settingsBtn').addEventListener('click', ()=>{
   visionKeyInput.value = getVisionApiKey();
+  applyTheme(getTheme());
   settingsOverlay.style.display='flex';
+});
+document.getElementById('themeRow').addEventListener('click', (e)=>{
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  applyTheme(chip.dataset.theme);
 });
 document.getElementById('settingsCancelBtn').addEventListener('click', ()=>{
   settingsOverlay.style.display='none';
@@ -898,7 +1090,7 @@ async function callVisionOCR(dataUrl){
 /* 우선순위: Vision API 키가 있으면 Vision 먼저 시도 → 실패 시 Tesseract로 자동 대체 */
 async function recognizeText(dataUrl, onStatus){
   const apiKey = getVisionApiKey();
-  if(apiKey){
+  if(apiKey && navigator.onLine){
     onStatus && onStatus('Google Vision으로 인식 중…');
     try{
       const text = await callVisionOCR(dataUrl);
@@ -907,6 +1099,8 @@ async function recognizeText(dataUrl, onStatus){
       console.error('Vision API 실패, 기본 엔진으로 대체', err);
       onStatus && onStatus('Vision 인식 실패 — 기본 엔진으로 재시도 중…');
     }
+  } else if(apiKey && !navigator.onLine){
+    showToast('오프라인 상태예요. 기본 엔진(Tesseract)으로 인식해요.');
   }
   const ocrSource = await preprocessForOcr(dataUrl);
   onStatus && onStatus('텍스트 인식 중… (첫 실행 시 시간이 걸릴 수 있어요)');
@@ -951,6 +1145,20 @@ function splitToRows(text, delim){
 }
 function maxCols(rows){ return rows.reduce((m,r)=>Math.max(m,r.length),1); }
 
+/* 자주 쓰는 형식 감지 (자동 수정 없이 시각 표시만) */
+const PATTERNS = {
+  phone: /01[016789]-?\d{3,4}-?\d{4}/,
+  bizno: /\d{3}-\d{2}-\d{5}/,
+  amount: /\d{1,3}(,\d{3})+(\s*원)?/
+};
+function detectPatternClass(text){
+  if(!text) return null;
+  if(PATTERNS.phone.test(text)) return 'pat-phone';
+  if(PATTERNS.bizno.test(text)) return 'pat-bizno';
+  if(PATTERNS.amount.test(text)) return 'pat-amount';
+  return null;
+}
+
 /* ---------------- 표 렌더링 (공용) ---------------- */
 function renderGrid(tableEl, rows, onChange){
   tableEl.innerHTML='';
@@ -980,8 +1188,17 @@ function renderGrid(tableEl, rows, onChange){
     for(let ci=0; ci<cols; ci++){
       const td = document.createElement('td');
       td.contentEditable='true';
-      td.textContent = row[ci] || '';
-      td.addEventListener('input', ()=>{ rows[ri][ci] = td.textContent; onChange && onChange(); });
+      const cellText = row[ci] || '';
+      td.textContent = cellText;
+      const patCls = detectPatternClass(cellText);
+      if(patCls) td.classList.add(patCls);
+      td.addEventListener('input', ()=>{
+        rows[ri][ci] = td.textContent;
+        td.classList.remove('pat-phone','pat-bizno','pat-amount');
+        const cls = detectPatternClass(td.textContent);
+        if(cls) td.classList.add(cls);
+        onChange && onChange();
+      });
       tr.appendChild(td);
     }
     const tdDel = document.createElement('td');
@@ -1031,6 +1248,8 @@ const sheetLabel = document.getElementById('sheetLabel');
 const sheetRow = document.getElementById('sheetRow');
 const delimLabel = document.getElementById('delimLabel');
 const tableFieldLabel = document.getElementById('tableFieldLabel');
+const tableHeaderRow = document.getElementById('tableHeaderRow');
+const patternLegend = document.getElementById('patternLegend');
 const tableWrapEl = document.getElementById('tableWrapEl');
 const rowBtnGroup = document.getElementById('rowBtnGroup');
 const rawTextFieldLabel = document.getElementById('rawTextFieldLabel');
@@ -1068,6 +1287,7 @@ fileInput.addEventListener('change', (e)=>{
   handleSingleFileReview(files[0]);
 });
 
+let pendingBatchFiles = null;
 galleryInput.addEventListener('change', (e)=>{
   const files = [...e.target.files];
   galleryInput.value='';
@@ -1075,8 +1295,24 @@ galleryInput.addEventListener('change', (e)=>{
   if(files.length===1){
     handleSingleFileReview(files[0]);
   } else {
-    handleBatchFiles(files);
+    pendingBatchFiles = files;
+    document.getElementById('batchModeOverlay').style.display='flex';
   }
+});
+document.getElementById('batchModeCancelBtn').addEventListener('click', ()=>{
+  pendingBatchFiles = null;
+  document.getElementById('batchModeOverlay').style.display='none';
+});
+document.getElementById('batchModeOverlay').addEventListener('click', (e)=>{
+  const opt = e.target.closest('.batch-mode-option');
+  if(!opt) return;
+  const mode = opt.dataset.mode;
+  document.getElementById('batchModeOverlay').style.display='none';
+  const files = pendingBatchFiles;
+  pendingBatchFiles = null;
+  if(!files) return;
+  if(mode === 'merge') handleBatchMerge(files);
+  else handleBatchFiles(files);
 });
 
 excelInput.addEventListener('change', (e)=>{
@@ -1278,6 +1514,27 @@ cropCanvas.addEventListener('pointermove', (e)=>{
 cropCanvas.addEventListener('pointerup', ()=>{ cropDragging=false; });
 cropCanvas.addEventListener('pointercancel', ()=>{ cropDragging=false; });
 
+document.getElementById('cropRotateBtn').addEventListener('click', ()=>{
+  if(!cropImg) return;
+  const off = document.createElement('canvas');
+  off.width = cropImg.naturalHeight;
+  off.height = cropImg.naturalWidth;
+  const octx = off.getContext('2d');
+  octx.translate(off.width/2, off.height/2);
+  octx.rotate(Math.PI/2);
+  octx.drawImage(cropImg, -cropImg.naturalWidth/2, -cropImg.naturalHeight/2);
+  const rotatedUrl = off.toDataURL('image/jpeg', 0.92);
+  const newImg = new Image();
+  newImg.onload = ()=>{
+    cropImg = newImg;
+    cropCanvas.width = newImg.naturalWidth;
+    cropCanvas.height = newImg.naturalHeight;
+    cropSel = null;
+    drawCrop();
+  };
+  newImg.src = rotatedUrl;
+});
+
 document.getElementById('cropRedoBtn').addEventListener('click', ()=>{
   cropSel = null;
   drawCrop();
@@ -1354,6 +1611,44 @@ async function handleBatchFiles(files){
   selectedFilter = batchCategory;
   await refreshList();
   showView('list');
+}
+
+/* 여러 장을 하나의 표로 이어 붙여서, 저장 전에 확인/수정할 수 있게 편집 화면으로 넘긴다 */
+async function handleBatchMerge(files){
+  captureEmpty.style.display='none';
+  batchProgress.style.display='flex';
+  batchCountText.textContent = `0 / ${files.length}`;
+  const rawParts = [];
+  let firstImage = null;
+  let usedVision = false;
+  let done = 0;
+  for(const file of files){
+    batchStatusText.textContent = `"${file.name}" 인식 중…`;
+    try{
+      const dataUrl = await resizeImageToDataUrl(file, 1800, 0.82);
+      if(!firstImage) firstImage = dataUrl;
+      const { text, engine } = await recognizeText(dataUrl, (msg)=>{ batchStatusText.textContent = `"${file.name}" — ${msg}`; });
+      if(engine === 'vision') usedVision = true;
+      rawParts.push(text);
+    }catch(err){
+      console.error('병합 인식 실패', file.name, err);
+    }
+    done++;
+    batchCountText.textContent = `${done} / ${files.length}`;
+  }
+  batchProgress.style.display='none';
+  captureEmpty.style.display='flex';
+
+  currentImageDataUrl = firstImage;
+  currentEngine = usedVision ? 'vision' : 'tesseract';
+  currentRawText = rawParts.filter(t=>t.trim().length>0).join('\n\n');
+  editorCategory = currentCategory;
+  previewImg.src = firstImage || '';
+  previewImgHolder.style.display='flex';
+  previewWrap.style.display='flex';
+  ocrStatus.style.display='none';
+  openEditor();
+  showToast(`사진 ${files.length}장을 이어 붙였어요. 확인 후 저장하세요.`);
 }
 
 function resizeImageToDataUrl(file, maxDim, quality){
@@ -1453,7 +1748,8 @@ function openEditor(){
 /* 표 모드 ↔ 문서형(표 없음) 모드에 따라 편집 화면 요소를 전환 */
 function applyFormatUI(){
   const isText = currentFormat === 'text';
-  tableFieldLabel.style.display = isText ? 'none' : 'block';
+  tableHeaderRow.style.display = isText ? 'none' : 'flex';
+  patternLegend.style.display = isText ? 'none' : 'block';
   tableWrapEl.style.display = isText ? 'none' : 'block';
   rowBtnGroup.style.display = isText ? 'none' : 'flex';
   rawTextFieldLabel.textContent = isText ? '문서 내용 (문단으로 자유롭게 수정)' : '인식된 원문 텍스트';
@@ -1611,6 +1907,8 @@ const detailGrid = document.getElementById('detailGrid');
 const detailRawText = document.getElementById('detailRawText');
 const detailCategoryRow = document.getElementById('detailCategoryRow');
 const detailTableFieldLabel = document.getElementById('detailTableFieldLabel');
+const detailTableHeaderRow = document.getElementById('detailTableHeaderRow');
+const detailPatternLegend = document.getElementById('detailPatternLegend');
 const detailTableWrapEl = document.getElementById('detailTableWrapEl');
 const detailRowBtnGroup = document.getElementById('detailRowBtnGroup');
 const detailRawTextFieldLabel = document.getElementById('detailRawTextFieldLabel');
@@ -1642,7 +1940,8 @@ async function openDetail(id){
 
 function applyDetailFormatUI(){
   const isText = detailFormat === 'text';
-  detailTableFieldLabel.style.display = isText ? 'none' : 'block';
+  detailTableHeaderRow.style.display = isText ? 'none' : 'flex';
+  detailPatternLegend.style.display = isText ? 'none' : 'block';
   detailTableWrapEl.style.display = isText ? 'none' : 'block';
   detailRowBtnGroup.style.display = isText ? 'none' : 'flex';
   detailRawTextFieldLabel.textContent = isText ? '문서 내용 (문단으로 자유롭게 수정)' : '원문 텍스트';
@@ -1702,6 +2001,140 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('service-worker.js').catch(()=>{});
   });
 }
+/* ---------------- 글자 일괄 바꾸기 (Find & Replace) ---------------- */
+const PRESET_REPLACEMENTS = [
+  { label: '영문 l → 숫자 1', find: 'l', to: '1' },
+  { label: '영문 I → 숫자 1', find: 'I', to: '1' },
+  { label: '영문 O → 숫자 0', find: 'O', to: '0' },
+  { label: '영문 o → 숫자 0', find: 'o', to: '0' }
+];
+let frTargetRows = null;
+let frTargetRender = null;
+
+function escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function openFindReplace(rowsRef, renderFn){
+  frTargetRows = rowsRef;
+  frTargetRender = renderFn;
+  const list = document.getElementById('frPresetList');
+  list.innerHTML='';
+  PRESET_REPLACEMENTS.forEach((p, i)=>{
+    const row = document.createElement('label');
+    row.className = 'fr-preset-row';
+    row.innerHTML = `<input type="checkbox" data-idx="${i}"><span>${p.label}</span>`;
+    list.appendChild(row);
+  });
+  document.getElementById('frCustomFind').value='';
+  document.getElementById('frCustomTo').value='';
+  document.getElementById('findReplaceOverlay').style.display='flex';
+}
+document.getElementById('findReplaceBtn').addEventListener('click', ()=>{
+  openFindReplace(currentRows, ()=>renderGrid(gridEl, currentRows));
+});
+document.getElementById('detailFindReplaceBtn').addEventListener('click', ()=>{
+  openFindReplace(detailRows, ()=>renderGrid(detailGrid, detailRows));
+});
+document.getElementById('frCancelBtn').addEventListener('click', ()=>{
+  document.getElementById('findReplaceOverlay').style.display='none';
+});
+document.getElementById('frApplyBtn').addEventListener('click', ()=>{
+  if(!frTargetRows){ document.getElementById('findReplaceOverlay').style.display='none'; return; }
+  const checked = [...document.querySelectorAll('#frPresetList input[type="checkbox"]:checked')];
+  const pairs = checked.map(c => PRESET_REPLACEMENTS[parseInt(c.dataset.idx,10)]);
+  const customFind = document.getElementById('frCustomFind').value;
+  const customTo = document.getElementById('frCustomTo').value;
+  if(customFind) pairs.push({ find: customFind, to: customTo });
+  document.getElementById('findReplaceOverlay').style.display='none';
+  if(pairs.length===0) return;
+  let count = 0;
+  frTargetRows.forEach(row=>{
+    row.forEach((cell, ci)=>{
+      let updated = cell;
+      pairs.forEach(p=>{
+        if(!p.find) return;
+        const re = new RegExp(escapeRegExp(p.find), 'g');
+        const matches = updated.match(re);
+        if(matches) count += matches.length;
+        updated = updated.replace(re, p.to);
+      });
+      row[ci] = updated;
+    });
+  });
+  frTargetRender && frTargetRender();
+  showToast(count>0 ? `${count}곳을 바꿨어요.` : '바뀐 곳이 없어요.');
+});
+
+/* ---------------- 내보내기 / 공유 ---------------- */
+function docRowsForExport(doc){
+  if(doc.format === 'text'){
+    return (doc.rawText||'').split('\n').map(l=>[l]);
+  }
+  return doc.rows && doc.rows.length ? doc.rows : [['']];
+}
+function docTsv(doc){
+  return docRowsForExport(doc).map(r=>r.join('\t')).join('\n');
+}
+function docCsv(doc){
+  const esc = (v)=>{
+    const s = String(v ?? '');
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  };
+  return docRowsForExport(doc).map(r=>r.map(esc).join(',')).join('\n');
+}
+function safeFileName(name){
+  return (name||'문서').replace(/[\\/:*?"<>|]/g, '_').slice(0,60) || '문서';
+}
+function currentDetailDocSnapshot(){
+  return {
+    title: detailTitle.value.trim() || '제목 없음',
+    format: detailFormat,
+    rawText: detailRawText.value,
+    rows: detailRows
+  };
+}
+document.getElementById('exportXlsxBtn').addEventListener('click', ()=>{
+  const doc = currentDetailDocSnapshot();
+  const rows = docRowsForExport(doc);
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '시트1');
+  XLSX.writeFile(wb, `${safeFileName(doc.title)}.xlsx`);
+});
+document.getElementById('exportTsvBtn').addEventListener('click', async ()=>{
+  const doc = currentDetailDocSnapshot();
+  try{
+    await navigator.clipboard.writeText(docTsv(doc));
+    showToast('표가 복사됐어요. 엑셀/문서에 붙여넣기 하세요.');
+  }catch(err){
+    showToast('복사에 실패했어요. 브라우저 권한을 확인해주세요.');
+  }
+});
+document.getElementById('exportCsvBtn').addEventListener('click', async ()=>{
+  const doc = currentDetailDocSnapshot();
+  try{
+    await navigator.clipboard.writeText(docCsv(doc));
+    showToast('CSV 형식으로 복사됐어요.');
+  }catch(err){
+    showToast('복사에 실패했어요. 브라우저 권한을 확인해주세요.');
+  }
+});
+document.getElementById('exportShareBtn').addEventListener('click', async ()=>{
+  const doc = currentDetailDocSnapshot();
+  const text = doc.format === 'text' ? doc.rawText : docTsv(doc);
+  if(navigator.share){
+    try{
+      await navigator.share({ title: doc.title, text });
+    }catch(err){ /* 사용자가 취소한 경우 등 — 무시 */ }
+  } else {
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast('이 브라우저는 공유하기를 지원하지 않아 대신 복사했어요.');
+    }catch(err){
+      showToast('공유하기가 지원되지 않는 브라우저예요.');
+    }
+  }
+});
+
 refreshList();
 </script>
 </body>
