@@ -24,6 +24,7 @@
     --red:#C4432B;
     --radius-card: 6px;
     --radius-pill: 999px;
+    --fs-scale: 1;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -61,12 +62,12 @@
     margin-bottom:18px;
   }
   .brief-date{
-    font-size:13px;
+    font-size:calc(13px * var(--fs-scale));
     color:var(--orange-soft);
     font-weight:600;
     margin-bottom:2px;
   }
-  .brief-title{ font-size:30px; line-height:1.1; margin:0; color:#fff; }
+  .brief-title{ font-size:calc(30px * var(--fs-scale)); line-height:1.1; margin:0; color:#fff; }
   .brief-avatar{
     width:40px;height:40px;
     border-radius:50%;
@@ -74,11 +75,16 @@
     display:flex;align-items:center;justify-content:center;
     font-family:'Barlow Condensed',sans-serif;
     font-weight:700;
-    font-size:16px;
+    font-size:calc(16px * var(--fs-scale));
     color:#fff;
     flex-shrink:0;
   }
   .brief-stats{ display:flex; gap:10px; }
+  .font-size-btn{
+    width:32px; height:32px; border-radius:50%; border:1px solid rgba(255,255,255,0.25); background:rgba(255,255,255,0.08);
+    color:#fff; font-weight:700; font-size:calc(14px * var(--fs-scale)); cursor:pointer; flex-shrink:0;
+    font-family:'Inter',sans-serif;
+  }
   .stat{
     flex:1;
     background:rgba(255,255,255,0.05);
@@ -88,14 +94,14 @@
   }
   .stat .num{
     font-family:'Barlow Condensed',sans-serif;
-    font-size:26px;
+    font-size:calc(26px * var(--fs-scale));
     font-weight:700;
     line-height:1;
     color:#fff;
   }
   .stat.warn .num{ color:var(--orange-soft); }
-  .stat .label{ font-size:11.5px; color:rgba(255,255,255,0.55); margin-top:3px; }
-  .brief-msg{ margin-top:14px; font-size:13.5px; color:rgba(255,255,255,0.88); line-height:1.5; }
+  .stat .label{ font-size:calc(11.5px * var(--fs-scale)); color:rgba(255,255,255,0.55); margin-top:3px; }
+  .brief-msg{ margin-top:14px; font-size:calc(13.5px * var(--fs-scale)); color:rgba(255,255,255,0.88); line-height:1.5; }
 
   .weather-row{
     margin-top:12px;
@@ -106,14 +112,14 @@
     border:1px solid rgba(255,255,255,0.08);
     border-radius:var(--radius-card);
     padding:9px 12px;
-    font-size:12.5px;
+    font-size:calc(12.5px * var(--fs-scale));
     color:rgba(255,255,255,0.75);
   }
   .weather-row button{
     background:var(--orange);
     border:none;
     color:#fff;
-    font-size:11.5px;
+    font-size:calc(11.5px * var(--fs-scale));
     font-weight:600;
     padding:5px 11px;
     border-radius:var(--radius-pill);
@@ -136,7 +142,7 @@
     border-radius:var(--radius-card);
     padding:11px 12px;
     color:#fff;
-    font-size:14px;
+    font-size:calc(14px * var(--fs-scale));
     font-family:'Inter',sans-serif;
   }
   .quickadd input::placeholder{ color:rgba(255,255,255,0.4); }
@@ -146,7 +152,7 @@
     border:none;
     color:#fff;
     font-weight:600;
-    font-size:13.5px;
+    font-size:calc(13.5px * var(--fs-scale));
     padding:0 14px;
     border-radius:var(--radius-card);
     cursor:pointer;
@@ -178,16 +184,46 @@
     50%{ box-shadow:0 0 0 7px rgba(196,67,43,0); }
   }
   .icon-btn.active{ background:var(--orange); border-color:var(--orange); color:#fff; }
-  .quickadd-hint{ margin-top:8px; font-size:11.5px; color:rgba(255,255,255,0.4); }
+
+  /* ---------- FAB expandable menu (Voice/Scan/Range) ---------- */
+  .fab-wrap{ position:relative; flex-shrink:0; }
+  .fab-btn{
+    width:38px; height:38px; border-radius:50%; border:none; background:var(--orange); color:#fff;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+    transition:transform 0.2s ease;
+  }
+  .fab-btn.open{ transform:rotate(45deg); background:var(--navy-2); border:1px solid rgba(255,255,255,0.2); }
+  .fab-btn.listening, .fab-btn.processing{ background:var(--red); animation:mic-pulse 1.1s ease-in-out infinite; }
+  .fab-btn.processing svg{ animation:spin 0.9s linear infinite; }
+  .fab-menu{
+    position:absolute; bottom:calc(100% + 10px); right:0; display:flex; flex-direction:column; gap:7px;
+    opacity:0; pointer-events:none; transform:translateY(6px); transition:opacity 0.15s ease, transform 0.15s ease;
+    z-index:20;
+  }
+  .fab-menu.open{ opacity:1; pointer-events:auto; transform:translateY(0); }
+  .fab-menu-item{
+    display:flex; align-items:center; gap:8px; background:var(--navy-2); border:1px solid rgba(255,255,255,0.12);
+    color:#fff; font-size:calc(13px * var(--fs-scale)); font-weight:600; padding:9px 14px; border-radius:var(--radius-pill);
+    cursor:pointer; white-space:nowrap; font-family:'Inter',sans-serif; box-shadow:0 4px 14px rgba(0,0,0,0.3);
+  }
+  .fab-menu-item.active{ background:var(--orange); border-color:var(--orange); }
+  .fab-menu-item.listening{ background:var(--red); animation:mic-pulse 1.1s ease-in-out infinite; }
+  .fab-menu-item.processing{ background:var(--red); }
+  .fab-menu-item.processing svg{ animation:spin 0.9s linear infinite; }
+  .ai-badge{
+    background:#3FBF7F; color:#fff; font-size:calc(9.5px * var(--fs-scale)); font-weight:800; padding:1.5px 6px; border-radius:var(--radius-pill);
+    letter-spacing:0.3px;
+  }
+  .quickadd-hint{ margin-top:8px; font-size:calc(11.5px * var(--fs-scale)); color:rgba(255,255,255,0.4); }
   .range-row{
     margin-top:8px; display:flex; align-items:center; gap:8px;
   }
   .range-row input[type=date]{
     background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius-card);
-    padding:8px 9px; color:#fff; font-size:12.5px; font-family:'Inter',sans-serif;
+    padding:8px 9px; color:#fff; font-size:calc(12.5px * var(--fs-scale)); font-family:'Inter',sans-serif;
   }
-  .range-row span{ font-size:12px; color:rgba(255,255,255,0.5); }
-  .range-row .range-hint{ font-size:11px; }
+  .range-row span{ font-size:calc(12px * var(--fs-scale)); color:rgba(255,255,255,0.5); }
+  .range-row .range-hint{ font-size:calc(11px * var(--fs-scale)); }
   .photo-preview{
     margin-top:8px;
     display:flex;
@@ -198,8 +234,8 @@
     padding:6px 8px;
   }
   .photo-preview img{ width:34px; height:34px; object-fit:cover; border-radius:4px; }
-  .photo-preview span{ flex:1; font-size:12px; color:rgba(255,255,255,0.7); }
-  .photo-preview button{ background:none; border:none; color:rgba(255,255,255,0.6); font-size:16px; cursor:pointer; }
+  .photo-preview span{ flex:1; font-size:calc(12px * var(--fs-scale)); color:rgba(255,255,255,0.7); }
+  .photo-preview button{ background:none; border:none; color:rgba(255,255,255,0.6); font-size:calc(16px * var(--fs-scale)); cursor:pointer; }
 
   /* ---------- Body / list ---------- */
   main{ flex:1; background:var(--paper); color:var(--ink); border-radius:18px 18px 0 0; margin-top:-2px; padding:20px 18px 100px; }
@@ -215,14 +251,14 @@
   }
   .day-nav .seg button{
     border:none; background:transparent; padding:6px 10px; border-radius:var(--radius-pill);
-    font-size:12.5px; font-weight:600; color:var(--ink-soft); cursor:pointer;
+    font-size:calc(12.5px * var(--fs-scale)); font-weight:600; color:var(--ink-soft); cursor:pointer;
     font-family:'Inter',sans-serif; white-space:nowrap;
   }
   .day-nav .seg button.active{ background:var(--navy); color:#fff; }
   .day-nav-utils{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:10px; }
-  .sort-toggle{ font-size:12px; color:var(--ink-soft); background:none; border:none; cursor:pointer; text-decoration:underline; font-family:'Inter',sans-serif; }
+  .sort-toggle{ font-size:calc(12px * var(--fs-scale)); color:var(--ink-soft); background:none; border:none; cursor:pointer; text-decoration:underline; font-family:'Inter',sans-serif; }
   .util-toggle{
-    font-size:11.5px; font-weight:600; padding:6px 11px; border-radius:var(--radius-pill);
+    font-size:calc(11.5px * var(--fs-scale)); font-weight:600; padding:6px 11px; border-radius:var(--radius-pill);
     border:1px solid var(--paper-dim); background:#fff; color:var(--ink-soft); cursor:pointer;
   }
   .util-toggle.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
@@ -234,16 +270,16 @@
   /* ---------- Calendar ---------- */
   .calendar{ margin-bottom:18px; }
   .cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-  .cal-month{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:19px; color:var(--ink); }
-  .cal-nav{ width:30px;height:30px; border-radius:50%; border:1px solid var(--paper-dim); background:#fff; color:var(--ink-soft); font-size:16px; cursor:pointer; display:flex;align-items:center;justify-content:center; }
-  .cal-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:11px; color:var(--ink-soft); font-weight:600; margin-bottom:4px; }
+  .cal-month{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:calc(19px * var(--fs-scale)); color:var(--ink); }
+  .cal-nav{ width:30px;height:30px; border-radius:50%; border:1px solid var(--paper-dim); background:#fff; color:var(--ink-soft); font-size:calc(16px * var(--fs-scale)); cursor:pointer; display:flex;align-items:center;justify-content:center; }
+  .cal-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:calc(11px * var(--fs-scale)); color:var(--ink-soft); font-weight:600; margin-bottom:4px; }
   .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
   .cal-cell{ aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:6px; border-radius:var(--radius-card); cursor:pointer; background:#fff; border:1px solid transparent; position:relative; }
   .cal-cell.muted{ color:rgba(32,36,43,0.28); }
   .cal-cell.today{ border-color:var(--orange); }
   .cal-cell.selected{ background:var(--navy); }
   .cal-cell.selected .cal-num{ color:#fff; }
-  .cal-num{ font-size:13px; font-weight:600; color:var(--ink); }
+  .cal-num{ font-size:calc(13px * var(--fs-scale)); font-weight:600; color:var(--ink); }
   .cal-dots{ display:flex; gap:2px; margin-top:4px; }
   .cal-dot{ width:5px;height:5px;border-radius:50%; }
   .cal-dot.p-high{ background:var(--red); }
@@ -258,18 +294,28 @@
   .cal-range-bar.p-mid{ background:var(--orange); }
   .cal-range-bar.p-low{ background:var(--green); }
   .cal-selected-label, .group-label{
-    font-size:12px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.6px; margin:18px 0 8px;
+    font-size:calc(12px * var(--fs-scale)); font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.6px; margin:18px 0 8px;
   }
   .group-label:first-child{ margin-top:0; }
   .cal-inline-add{ display:flex; gap:8px; margin-bottom:14px; }
   .cal-inline-add input{
     flex:1; min-width:0; border:1.5px solid var(--orange); border-radius:var(--radius-card);
-    padding:10px 12px; font-size:13.5px; font-family:'Inter',sans-serif; color:var(--ink); background:#fff;
+    padding:10px 12px; font-size:calc(13.5px * var(--fs-scale)); font-family:'Inter',sans-serif; color:var(--ink); background:#fff;
   }
   .cal-inline-add input:focus{ outline:none; border-color:var(--navy); }
   .cal-inline-add button{
-    background:var(--orange); border:none; color:#fff; font-weight:700; font-size:13px;
+    background:var(--orange); border:none; color:#fff; font-weight:700; font-size:calc(13px * var(--fs-scale));
     padding:0 18px; border-radius:var(--radius-card); cursor:pointer; flex-shrink:0;
+  }
+  .cal-copy-row{ display:flex; align-items:center; gap:7px; margin-bottom:16px; flex-wrap:wrap; }
+  .cal-copy-label{ font-size:calc(12px * var(--fs-scale)); color:var(--ink-soft); font-weight:600; white-space:nowrap; }
+  .cal-copy-row input[type=date]{
+    border:1px solid var(--paper-dim); border-radius:var(--radius-card); padding:6px 8px;
+    font-size:calc(12.5px * var(--fs-scale)); font-family:'Inter',sans-serif; color:var(--ink); flex:1; min-width:0;
+  }
+  .cal-copy-row button{
+    background:var(--navy); border:none; color:#fff; font-weight:600; font-size:calc(12px * var(--fs-scale));
+    padding:6px 14px; border-radius:var(--radius-pill); cursor:pointer; flex-shrink:0;
   }
 
   .task{
@@ -286,36 +332,38 @@
     width:21px;height:21px; border-radius:50%; border:2px solid var(--paper-dim); flex-shrink:0; margin-top:1px;
     cursor:pointer; display:flex;align-items:center;justify-content:center; background:#fff;
   }
-  .task-check.static{ cursor:default; border:none; background:none; font-size:15px; }
-  .task.done .task-check{ background:var(--green); border-color:var(--green); color:#fff; font-size:12px; }
-  .dday-badge{ font-size:9.5px; font-weight:700; padding:1.5px 6px; border-radius:var(--radius-pill); white-space:nowrap; line-height:1.4; }
+  .task-check.static{ cursor:default; border:none; background:none; font-size:calc(15px * var(--fs-scale)); }
+  .task.done .task-check{ background:var(--green); border-color:var(--green); color:#fff; font-size:calc(12px * var(--fs-scale)); }
+  .dday-badge{ font-size:calc(9.5px * var(--fs-scale)); font-weight:700; padding:1.5px 6px; border-radius:var(--radius-pill); white-space:nowrap; line-height:1.4; }
   .dday-badge.dday-today{ background:var(--red); color:#fff; }
   .dday-badge.dday-future{ background:var(--paper-dim); color:var(--ink-soft); }
   .dday-badge.dday-past{ background:#f6d9d1; color:#a3341e; }
   .task-body{ flex:1; min-width:0; }
-  .task-title{ font-size:15.5px; font-weight:700; color:var(--ink); margin-bottom:4px; word-break:break-word; }
-  .task-meta{ font-size:12px; color:var(--ink); font-weight:500; display:flex; gap:6px; flex-wrap:wrap; }
+  .task-title{ font-size:calc(15.5px * var(--fs-scale)); font-weight:700; color:var(--ink); margin-bottom:4px; word-break:break-word; }
+  .task-meta{ font-size:calc(12px * var(--fs-scale)); color:var(--ink); font-weight:500; display:flex; gap:6px; flex-wrap:wrap; }
   .task-meta .tag{ background:var(--paper-dim); padding:1px 7px; border-radius:var(--radius-pill); border:none; font-family:'Inter',sans-serif; cursor:default; font-weight:700; }
-  .task-meta .tag.cat-safety{ background:#FFD9D9; color:#B23A3A; }
-  .task-meta .tag.cat-material{ background:#FFE7C2; color:#B26A1E; }
-  .task-meta .tag.cat-site{ background:#D3E7FF; color:#2E5FA3; }
-  .task-meta .tag.cat-personal{ background:#E4D6FF; color:#6B3FA0; }
+  .task-meta .tag.cat-c0{ background:#FFD9D9; color:#B23A3A; }
+  .task-meta .tag.cat-c1{ background:#FFE7C2; color:#B26A1E; }
+  .task-meta .tag.cat-c2{ background:#D3E7FF; color:#2E5FA3; }
+  .task-meta .tag.cat-c3{ background:#DAF5E3; color:#2F7A4E; }
+  .task-meta .tag.cat-c4{ background:#E9DCFF; color:#6B3FA0; }
+  .task-meta .tag.cat-c5{ background:#FFE3C7; color:#A3611E; }
   .task-meta .tag.clickable{ cursor:pointer; }
-  .task-del{ border:none; background:none; color:var(--ink-soft); font-size:18px; cursor:pointer; padding:0 2px; line-height:1; }
+  .task-del{ border:none; background:none; color:var(--ink-soft); font-size:calc(18px * var(--fs-scale)); cursor:pointer; padding:0 2px; line-height:1; }
   .task-actions{ display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; }
-  .task-edit{ border:none; background:none; color:var(--ink-soft); font-size:14px; cursor:pointer; padding:0 2px; line-height:1; }
+  .task-edit{ border:none; background:none; color:var(--ink-soft); font-size:calc(14px * var(--fs-scale)); cursor:pointer; padding:0 2px; line-height:1; }
   .tag.priority-toggle{ font-family:'Inter',sans-serif; }
   .tag.priority-high{ background:#FFD9D9; color:#B23A3A; }
   .tag.priority-mid{ background:#FFE7C2; color:#B26A1E; }
   .tag.priority-low{ background:#D5F2DD; color:#2F7A4E; }
 
   .empty{ text-align:center; padding:50px 20px; color:var(--ink-soft); }
-  .empty .display{ font-size:22px; color:var(--ink); margin-bottom:6px; }
-  .empty p{ font-size:13.5px; line-height:1.5; }
+  .empty .display{ font-size:calc(22px * var(--fs-scale)); color:var(--ink); margin-bottom:6px; }
+  .empty p{ font-size:calc(13.5px * var(--fs-scale)); line-height:1.5; }
 
   .toast{
     position:fixed; left:50%; bottom:74px; transform:translateX(-50%); background:var(--navy); color:#fff;
-    padding:11px 18px; border-radius:var(--radius-pill); font-size:13px; box-shadow:0 6px 20px rgba(0,0,0,0.25);
+    padding:11px 18px; border-radius:var(--radius-pill); font-size:calc(13px * var(--fs-scale)); box-shadow:0 6px 20px rgba(0,0,0,0.25);
     opacity:0; pointer-events:none; transition:opacity 0.25s ease, transform 0.25s ease; max-width:90%; text-align:center; z-index:30;
   }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
@@ -325,45 +373,70 @@
     position:fixed; left:0; right:0; bottom:0; max-width:520px; margin:0 auto; display:flex;
     background:var(--navy); border-top:1px solid rgba(255,255,255,0.08); padding:6px 0 calc(6px + env(safe-area-inset-bottom)); z-index:10;
   }
-  .tabbar button{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:rgba(255,255,255,0.45); font-family:'Inter',sans-serif; font-size:11px; font-weight:600; padding:6px 0; cursor:pointer; }
+  .tabbar button{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; color:rgba(255,255,255,0.45); font-family:'Inter',sans-serif; font-size:calc(11px * var(--fs-scale)); font-weight:600; padding:6px 0; cursor:pointer; }
   .tabbar button.active{ color:var(--orange-soft); }
 
   /* ---------- Notes composer (meetings + memos share styles) ---------- */
   #meetingsView main, #memosView main{ padding-bottom:96px; }
   .note-composer{ background:#fff; border-radius:var(--radius-card); padding:14px; margin-bottom:6px; }
-  .note-title-input{ width:100%; border:1px solid var(--paper-dim); border-radius:var(--radius-card); padding:10px 12px; font-size:14.5px; font-family:'Inter',sans-serif; color:var(--ink); margin-bottom:10px; }
+  .note-title-input{ width:100%; border:1px solid var(--paper-dim); border-radius:var(--radius-card); padding:10px 12px; font-size:calc(14.5px * var(--fs-scale)); font-family:'Inter',sans-serif; color:var(--ink); margin-bottom:10px; }
   .note-title-input:focus{ outline:none; border-color:var(--orange); }
   .note-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
   .btn-dark-pill{ display:flex; align-items:center; justify-content:center; gap:0; background:var(--navy); color:#fff; border:none; border-radius:50%; width:58px; height:58px; cursor:pointer; flex-shrink:0; }
   .btn-dark-pill svg{ width:22px; height:22px; }
   .btn-dark-pill span{ display:none; }
   .btn-dark-pill.recording{ background:var(--red); animation:mic-pulse 1.1s ease-in-out infinite; }
-  .note-status{ font-size:12px; color:var(--ink-soft); }
-  .note-textarea{ width:100%; border:1px solid var(--paper-dim); border-radius:var(--radius-card); padding:11px 12px; font-size:13.5px; font-family:'Inter',sans-serif; color:var(--ink); resize:vertical; line-height:1.55; }
+  .note-status{ font-size:calc(12px * var(--fs-scale)); color:var(--ink-soft); }
+  .note-textarea{ width:100%; border:1px solid var(--paper-dim); border-radius:var(--radius-card); padding:11px 12px; font-size:calc(13.5px * var(--fs-scale)); font-family:'Inter',sans-serif; color:var(--ink); resize:vertical; line-height:1.55; }
   .note-textarea:focus{ outline:none; border-color:var(--orange); }
   .note-actions-row{ display:flex; gap:8px; margin-top:10px; }
-  .btn-secondary, .btn-primary{ flex:1; border:none; border-radius:var(--radius-card); padding:10px 0; font-size:13.5px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; }
+  .btn-secondary, .btn-primary{ flex:1; border:none; border-radius:var(--radius-card); padding:10px 0; font-size:calc(13.5px * var(--fs-scale)); font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; }
   .btn-secondary{ background:var(--paper-dim); color:var(--ink); }
   .btn-primary{ background:var(--orange); color:#fff; }
   .note-action-items{ margin-top:12px; }
-  .note-action-item{ display:flex; align-items:flex-start; gap:8px; background:var(--paper); border:1px solid var(--paper-dim); border-radius:var(--radius-card); padding:9px 10px; margin-bottom:6px; font-size:13px; }
+  .note-action-item{ display:flex; align-items:flex-start; gap:8px; background:var(--paper); border:1px solid var(--paper-dim); border-radius:var(--radius-card); padding:9px 10px; margin-bottom:6px; font-size:calc(13px * var(--fs-scale)); }
   .note-action-item span{ flex:1; line-height:1.4; }
-  .note-action-item button{ border:none; background:var(--navy); color:#fff; font-size:11px; font-weight:600; border-radius:var(--radius-pill); padding:5px 10px; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+  .note-action-item button{ border:none; background:var(--navy); color:#fff; font-size:calc(11px * var(--fs-scale)); font-weight:600; border-radius:var(--radius-pill); padding:5px 10px; cursor:pointer; white-space:nowrap; flex-shrink:0; }
   .note-action-item button.added{ background:var(--green); }
   .note-record{ background:#fff; border-radius:var(--radius-card); padding:12px 14px; margin-bottom:8px; border-left:4px solid var(--navy-2); cursor:pointer; }
-  .note-record-title{ font-size:14px; font-weight:600; color:var(--ink); margin-bottom:3px; }
-  .note-record-meta{ font-size:11.5px; color:var(--ink-soft); display:flex; gap:8px; align-items:center; }
+  .note-record-title{ font-size:calc(14px * var(--fs-scale)); font-weight:600; color:var(--ink); margin-bottom:3px; }
+  .note-record-meta{ font-size:calc(11.5px * var(--fs-scale)); color:var(--ink-soft); display:flex; gap:8px; align-items:center; }
   .note-record-body{ margin-top:10px; display:none; }
   .note-record.expanded .note-record-body{ display:block; }
-  .note-record-transcript{ font-size:12.5px; color:var(--ink-soft); line-height:1.6; white-space:pre-wrap; background:var(--paper); border-radius:var(--radius-card); padding:10px; margin-bottom:8px; }
+  .note-record-transcript{ font-size:calc(12.5px * var(--fs-scale)); color:var(--ink-soft); line-height:1.6; white-space:pre-wrap; background:var(--paper); border-radius:var(--radius-card); padding:10px; margin-bottom:8px; }
   .note-record-thumb{ width:100%; max-width:220px; border-radius:var(--radius-card); margin-bottom:8px; cursor:pointer; display:block; }
-  .note-record-del{ border:none; background:none; color:var(--red); font-size:12px; cursor:pointer; text-decoration:underline; }
-  .note-record-edit{ border:none; background:none; color:var(--navy); font-size:12px; cursor:pointer; text-decoration:underline; margin-right:14px; }
+  .note-record-del{ border:none; background:none; color:var(--red); font-size:calc(12px * var(--fs-scale)); cursor:pointer; text-decoration:underline; }
+  .note-record-edit{ border:none; background:none; color:var(--navy); font-size:calc(12px * var(--fs-scale)); cursor:pointer; text-decoration:underline; margin-right:14px; }
   .color-swatch-row{ display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
-  .swatch-label{ font-size:12px; color:var(--ink-soft); font-weight:600; margin-right:2px; }
+  .swatch-label{ font-size:calc(12px * var(--fs-scale)); color:var(--ink-soft); font-weight:600; margin-right:2px; }
   .swatch{ width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
   .swatch.selected{ border-color:var(--navy); }
-  .swatch.none{ background:#fff; border:1px solid var(--paper-dim); color:var(--ink-soft); font-size:12px; display:flex; align-items:center; justify-content:center; }
+  .swatch.none{ background:#fff; border:1px solid var(--paper-dim); color:var(--ink-soft); font-size:calc(12px * var(--fs-scale)); display:flex; align-items:center; justify-content:center; }
+
+  /* ---------- Memo checklist ---------- */
+  .checklist-add-row{ display:flex; gap:8px; margin-bottom:8px; }
+  .checklist-add-row input{
+    flex:1; min-width:0; border:1px solid var(--paper-dim); border-radius:var(--radius-card);
+    padding:9px 11px; font-size:calc(13px * var(--fs-scale)); font-family:'Inter',sans-serif; color:var(--ink);
+  }
+  .checklist-add-row input:focus{ outline:none; border-color:var(--orange); }
+  .checklist-add-row button{
+    background:var(--navy); border:none; color:#fff; font-weight:600; font-size:calc(12.5px * var(--fs-scale));
+    padding:0 14px; border-radius:var(--radius-card); cursor:pointer; flex-shrink:0;
+  }
+  .checklist-draft{ margin-bottom:10px; }
+  .checklist-item{
+    display:flex; align-items:center; gap:8px; padding:6px 2px; font-size:calc(13px * var(--fs-scale)); color:var(--ink);
+  }
+  .checklist-item .chk-remove{ margin-left:auto; border:none; background:none; color:var(--ink-soft); font-size:calc(16px * var(--fs-scale)); cursor:pointer; line-height:1; }
+  .checklist-view{ margin-bottom:10px; }
+  .checklist-row{ display:flex; align-items:center; gap:8px; padding:5px 0; font-size:calc(13px * var(--fs-scale)); color:var(--ink); }
+  .checklist-row .chk-box{
+    width:18px; height:18px; border-radius:4px; border:2px solid var(--paper-dim); flex-shrink:0; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; background:#fff; font-size:calc(11px * var(--fs-scale)); color:#fff;
+  }
+  .checklist-row.done .chk-box{ background:var(--green); border-color:var(--green); }
+  .checklist-row.done .chk-text{ text-decoration:line-through; color:var(--ink-soft); }
 
   /* ---------- Lightbox ---------- */
   .lightbox{ position:fixed; inset:0; background:rgba(0,0,0,0.88); display:none; align-items:center; justify-content:center; z-index:50; padding:24px; cursor:zoom-out; }
@@ -377,25 +450,25 @@
     border-radius:16px 16px 0 0; padding-bottom:8px;
   }
   .modal-header{ display:flex; align-items:center; justify-content:space-between; padding:16px; border-bottom:1px solid var(--paper-dim); }
-  .modal-header h3{ margin:0; font-size:20px; color:var(--ink); }
-  .modal-close{ border:none; background:none; font-size:22px; color:var(--ink-soft); cursor:pointer; line-height:1; }
+  .modal-header h3{ margin:0; font-size:calc(20px * var(--fs-scale)); color:var(--ink); }
+  .modal-close{ border:none; background:none; font-size:calc(22px * var(--fs-scale)); color:var(--ink-soft); cursor:pointer; line-height:1; }
   .modal-body{ padding:14px 16px 4px; display:flex; flex-direction:column; gap:12px; }
   .modal-body .note-title-input{ margin-bottom:0; }
   .edit-field{ display:flex; flex-direction:column; gap:6px; }
-  .edit-field label{ font-size:11.5px; font-weight:600; color:var(--ink-soft); }
+  .edit-field label{ font-size:calc(11.5px * var(--fs-scale)); font-weight:600; color:var(--ink-soft); }
   .edit-field input[type=date], .edit-field input[type=time]{
-    border:1px solid var(--paper-dim); border-radius:var(--radius-card); padding:9px 10px; font-size:13.5px; font-family:'Inter',sans-serif; color:var(--ink);
+    border:1px solid var(--paper-dim); border-radius:var(--radius-card); padding:9px 10px; font-size:calc(13.5px * var(--fs-scale)); font-family:'Inter',sans-serif; color:var(--ink);
   }
   .edit-field-row{ display:flex; gap:10px; }
   .edit-field-row .edit-field{ flex:1; }
   .seg-inline{ display:flex; gap:6px; }
   .seg-inline.wrap{ flex-wrap:wrap; }
   .seg-inline button{
-    border:1px solid var(--paper-dim); background:#fff; color:var(--ink-soft); font-size:12.5px; font-weight:600;
+    border:1px solid var(--paper-dim); background:#fff; color:var(--ink-soft); font-size:calc(12.5px * var(--fs-scale)); font-weight:600;
     padding:7px 11px; border-radius:var(--radius-pill); cursor:pointer; font-family:'Inter',sans-serif;
   }
   .seg-inline button.selected{ background:var(--navy); color:#fff; border-color:var(--navy); }
-  .checkbox-label{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink); font-weight:500; }
+  .checkbox-label{ display:flex; align-items:center; gap:8px; font-size:calc(13px * var(--fs-scale)); color:var(--ink); font-weight:500; }
   .lightbox img{ max-width:100%; max-height:100%; border-radius:6px; }
 
   @media (min-width:521px){
@@ -414,7 +487,10 @@
         <div class="brief-date" id="briefDate">2026년 9월 1일 화요일</div>
         <h1 class="brief-title">오늘의 브리핑</h1>
       </div>
-      <div class="brief-avatar">비서</div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="fontSizeBtn" class="font-size-btn" type="button" aria-label="글자 크기 조절" title="글자 크기 조절">가</button>
+        <div class="brief-avatar">비서</div>
+      </div>
     </div>
     <div class="brief-stats">
       <div class="stat"><div class="num" id="statToday">0</div><div class="label">오늘 할 일</div></div>
@@ -431,15 +507,31 @@
   <div class="quickadd">
     <div class="quickadd-row">
       <input type="text" id="quickInput" placeholder="예: [안전점검] 내일 밤 9시 소화기 점검 !중요 @김반장">
-      <button id="rangeToggleBtn" class="icon-btn" type="button" aria-label="기간 설정">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
-      </button>
-      <button id="photoBtn" class="icon-btn" type="button" aria-label="사진으로 등록">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      </button>
-      <button id="micBtn" class="icon-btn" type="button" aria-label="음성으로 입력">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-      </button>
+      <div class="fab-wrap">
+        <div class="fab-menu" id="fabMenu">
+          <button id="fabBacklogBtn" class="fab-menu-item" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+            <span>보관함에 추가</span>
+          </button>
+          <button id="rangeToggleBtn" class="fab-menu-item" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+            <span>기간 설정</span>
+          </button>
+          <button id="photoBtn" class="fab-menu-item" type="button">
+            <span class="ai-badge">AI</span>
+            <span>사진 스캔</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </button>
+          <button id="micBtn" class="fab-menu-item" type="button">
+            <span class="ai-badge">AI</span>
+            <span>음성 입력</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          </button>
+        </div>
+        <button id="fabToggleBtn" class="fab-btn" type="button" aria-label="추가 입력 옵션">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
       <button id="quickAddBtn" class="add-btn">추가</button>
       <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;">
     </div>
@@ -449,7 +541,7 @@
       <input type="date" id="rangeEnd">
       <span class="range-hint">기간 일정으로 등록돼요</span>
     </div>
-    <div class="quickadd-hint" id="quickHint">날짜·시간(밤/새벽 포함)·우선순위(!중요)·담당자(@이름)·카테고리([안전점검])·반복·기간을 자동 인식해요</div>
+    <div class="quickadd-hint" id="quickHint">날짜·시간(밤/새벽 포함)·우선순위(!중요)·담당자(@이름)·카테고리([아무 이름])·반복·기간을 자동 인식해요</div>
     <div class="photo-preview" id="photoPreview" style="display:none;">
       <img id="photoPreviewImg" src="">
       <span>사진이 첨부돼요. 텍스트를 읽어 내용을 채워봤어요.</span>
@@ -465,6 +557,7 @@
         <button data-view="week">이번 주</button>
         <button data-view="calendar">달력</button>
         <button data-view="all">전체</button>
+        <button data-view="backlog">보관함</button>
       </div>
       <div class="day-nav-utils">
         <button class="util-toggle" id="mineToggle">내 담당만</button>
@@ -554,6 +647,11 @@
         <span class="note-status" id="memoPhotoStatus"></span>
         <input type="file" id="memoPhotoInput" accept="image/*" style="display:none;">
       </div>
+      <div class="checklist-add-row">
+        <input type="text" id="memoChecklistInput" placeholder="체크리스트 항목 입력 (예: 현미 2kg)">
+        <button id="memoChecklistAddBtn" type="button">추가</button>
+      </div>
+      <div id="memoChecklistDraft" class="checklist-draft"></div>
       <div class="note-actions-row">
         <button id="memoSaveBtn" class="btn-primary" type="button">메모 저장</button>
         <button id="memoCancelEditBtn" class="btn-secondary" type="button" style="display:none; flex:none; padding:10px 16px;">취소</button>
@@ -613,14 +711,8 @@
         </div>
       </div>
       <div class="edit-field">
-        <label>카테고리</label>
-        <div class="seg-inline wrap" id="editCategorySeg">
-          <button type="button" data-c="">없음</button>
-          <button type="button" data-c="안전점검">안전점검</button>
-          <button type="button" data-c="자재발주">자재발주</button>
-          <button type="button" data-c="현장점검">현장점검</button>
-          <button type="button" data-c="개인용무">개인용무</button>
-        </div>
+        <label>카테고리 (자유 입력, 없으면 비워두세요)</label>
+        <input type="text" id="editCategory" class="note-title-input" placeholder="예: 안전점검">
       </div>
       <div class="edit-field">
         <label>담당자 (@ 없이 이름만)</label>
@@ -645,6 +737,9 @@
   const MTG_STORAGE_KEY = 'jhb_meeting_records_v1';
   const MEMO_STORAGE_KEY = 'jhb_memos_v1';
   const MYNAME_KEY = 'jhb_my_name';
+  const FONT_SCALE_KEY = 'jhb_font_scale';
+  const FONT_LEVELS = [1, 1.15, 1.3];
+  const FONT_LEVEL_LABELS = ['보통 글자 크기', '큰 글자 크기', '아주 큰 글자 크기'];
   const WEATHER_KEY_PREFIX = 'jhb_weather_';
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -663,6 +758,7 @@
   let memoPendingPhoto = null;
   let memoExpandedId = null;
   let editingMemoId = null;
+  let memoChecklistDraft = [];
 
   function loadTasks(){ try{ const r=localStorage.getItem(STORAGE_KEY); return r?JSON.parse(r):[]; }catch(e){ return []; } }
   function saveTasks(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }catch(e){ showToast('저장 공간이 부족해요 (사진 용량 확인)'); } }
@@ -685,8 +781,8 @@
     let endDateObj = null;
     let hasTime = false, hour = null, minute = 0, priority = 'mid', assignee = null, recurrence = null, category = null;
 
-    const catMatch = str.match(/\[(안전점검|자재발주|현장점검|개인용무)\]/);
-    if(catMatch){ category = catMatch[1]; str = str.replace(catMatch[0],'').trim(); }
+    const catMatch = str.match(/\[([^\[\]]{1,12})\]/);
+    if(catMatch){ category = catMatch[1].trim(); str = str.replace(catMatch[0],'').trim(); }
 
     const assigneeMatch = str.match(/@(\S+)/);
     if(assigneeMatch){ assignee = assigneeMatch[1]; str = str.replace(assigneeMatch[0],'').trim(); }
@@ -806,6 +902,7 @@
   }
 
   function taskOccursOn(t, key){
+    if(t.dateKey === null) return false;
     if(!t.recurrence){
       if(t.endDateKey) return key >= t.dateKey && key <= t.endDateKey;
       return t.dateKey === key;
@@ -822,7 +919,7 @@
     const idx = t.doneDates.indexOf(occDate);
     if(idx>=0) t.doneDates.splice(idx,1); else t.doneDates.push(occDate);
   }
-  function isOverdueTemplate(t){ if(t.recurrence || t.done) return false; return (t.endDateKey || t.dateKey) < todayKey(); }
+  function isOverdueTemplate(t){ if(t.recurrence || t.done || t.dateKey === null) return false; return (t.endDateKey || t.dateKey) < todayKey(); }
   function buildOccurrence(t, occDate){ return Object.assign({}, t, { occDate, doneComputed: isDoneOn(t, occDate) }); }
   function priorityRank(p){ return p==='high'?0:p==='mid'?1:2; }
 
@@ -844,8 +941,10 @@
       tasks.forEach(t=>{ if(isOverdueTemplate(t)) occ.push(buildOccurrence(t, t.dateKey)); });
     } else if(currentView === 'calendar'){
       tasks.forEach(t=>{ if(taskOccursOn(t, selectedCalDate)) occ.push(buildOccurrence(t, selectedCalDate)); });
+    } else if(currentView === 'backlog'){
+      occ = tasks.filter(t=>t.dateKey===null).map(t=>Object.assign({}, t, { occDate:null, doneComputed: !!t.done }));
     } else {
-      occ = tasks.map(t => buildOccurrence(t, t.dateKey));
+      occ = tasks.filter(t=>t.dateKey!==null).map(t => buildOccurrence(t, t.dateKey));
     }
     const myName = localStorage.getItem(MYNAME_KEY);
     if(filterMine && myName){ occ = occ.filter(o => o.assignee === myName); }
@@ -857,7 +956,7 @@
     if(currentView === 'calendar' && selectedCalDate){
       return `날짜를 안 적으면 "${relativeDateLabel(selectedCalDate)}"(으)로 바로 등록돼요 · 다른 항목은 자동 인식`;
     }
-    return '날짜·시간(밤/새벽 포함)·우선순위(!중요)·담당자(@이름)·카테고리([안전점검])·반복·기간을 자동 인식해요';
+    return '날짜·시간(밤/새벽 포함)·우선순위(!중요)·담당자(@이름)·카테고리([아무 이름])·반복·기간을 자동 인식해요';
   }
 
   function render(){
@@ -888,13 +987,21 @@
     let visible = getVisibleTasks();
 
     if(visible.length === 0){
-      const emptyTitle = currentView === 'calendar' ? `${relativeDateLabel(selectedCalDate)}에는 일정이 없어요` : (currentView==='today' ? '오늘은 등록된 일정이 없어요' : '일정이 없습니다');
+      const emptyTitle = currentView === 'calendar' ? `${relativeDateLabel(selectedCalDate)}에는 일정이 없어요` : currentView === 'backlog' ? '보관함이 비어있어요' : (currentView==='today' ? '오늘은 등록된 일정이 없어요' : '일정이 없습니다');
       if(currentView === 'calendar'){
         const h = document.createElement('div'); h.className='cal-selected-label'; h.textContent = relativeDateLabel(selectedCalDate);
         wrap.appendChild(h);
         wrap.appendChild(buildCalendarInlineAdd());
         const emptyDiv = document.createElement('div'); emptyDiv.className='empty';
         emptyDiv.innerHTML = `<div class="display">${emptyTitle}</div><p>위에 바로 입력하거나 아래 입력창을 사용해보세요.</p>`;
+        wrap.appendChild(emptyDiv);
+        return;
+      }
+      if(currentView === 'backlog'){
+        const h = document.createElement('div'); h.className='cal-selected-label'; h.textContent = '보관함';
+        wrap.appendChild(h);
+        const emptyDiv = document.createElement('div'); emptyDiv.className='empty';
+        emptyDiv.innerHTML = `<div class="display">${emptyTitle}</div><p>날짜를 아직 못 정한 할 일을 여기 담아두세요. (+ 메뉴의 "보관함에 추가" 이용)</p>`;
         wrap.appendChild(emptyDiv);
         return;
       }
@@ -906,7 +1013,15 @@
       const h = document.createElement('div'); h.className='cal-selected-label'; h.textContent = relativeDateLabel(selectedCalDate);
       wrap.appendChild(h);
       wrap.appendChild(buildCalendarInlineAdd());
+      wrap.appendChild(buildCalendarCopyRow());
       visible.sort((a,b)=>(a.hour??99)-(b.hour??99));
+      visible.forEach(o => wrap.appendChild(renderTask(o)));
+      return;
+    }
+
+    if(currentView === 'backlog'){
+      const h = document.createElement('div'); h.className='cal-selected-label'; h.textContent = '보관함';
+      wrap.appendChild(h);
       visible.forEach(o => wrap.appendChild(renderTask(o)));
       return;
     }
@@ -955,6 +1070,38 @@
     showToast(`"${parsed.title}" 일정을 ${relativeDateLabel(parsed.dateKey)}${parsed.hour!==null?' '+timeLabel(parsed):''}(으)로 등록했어요`);
     render();
     setTimeout(()=>{ const ni = $('#calInlineInput'); if(ni) ni.focus(); }, 0);
+  }
+
+  function buildCalendarCopyRow(){
+    const div = document.createElement('div');
+    div.className = 'cal-copy-row';
+    div.innerHTML = `
+      <span class="cal-copy-label">📋 이 날짜 일정을</span>
+      <input type="date" id="copyTargetDate">
+      <button id="copyConfirmBtn" type="button">복사</button>
+    `;
+    return div;
+  }
+
+  function submitCalendarCopy(){
+    const target = $('#copyTargetDate').value;
+    if(!target){ showToast('복사할 날짜를 선택해주세요'); return; }
+    const source = selectedCalDate;
+    if(target === source){ showToast('같은 날짜로는 복사할 수 없어요'); return; }
+    const sourceTasks = tasks.filter(t => t.dateKey === source && !t.recurrence && (!t.endDateKey || t.endDateKey === t.dateKey));
+    if(sourceTasks.length === 0){ showToast('복사할 일정이 없어요'); return; }
+    sourceTasks.forEach((t, i)=>{
+      tasks.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2,6) + i,
+        title: t.title, dateKey: target, endDateKey: null, hour: t.hour, minute: t.minute,
+        category: t.category, priority: t.priority, assignee: t.assignee, recurrence: null,
+        doneDates: [], photo: null, done: false, createdAt: Date.now()
+      });
+    });
+    saveTasks();
+    showToast(`${sourceTasks.length}건을 ${relativeDateLabel(target)}(으)로 복사했어요`);
+    $('#copyTargetDate').value = '';
+    render();
   }
 
   function renderCalendar(){
@@ -1010,15 +1157,17 @@
     items.forEach(o => wrap.appendChild(renderTask(o)));
   }
 
-  const CATEGORY_INFO = {
-    '안전점검': { cls:'cat-safety' },
-    '자재발주': { cls:'cat-material' },
-    '현장점검': { cls:'cat-site' },
-    '개인용무': { cls:'cat-personal' }
-  };
+  // 카테고리는 자유 입력([현장청소], [자재구매] 등 무엇이든 가능)이며,
+  // 같은 이름은 항상 같은 색으로 매핑되도록 해시로 색을 자동 배정합니다.
+  const CATEGORY_PALETTE = ['cat-c0','cat-c1','cat-c2','cat-c3','cat-c4','cat-c5'];
+  function categoryClass(name){
+    let hash = 0;
+    for(let i=0;i<name.length;i++){ hash = (hash*31 + name.charCodeAt(i)) >>> 0; }
+    return CATEGORY_PALETTE[hash % CATEGORY_PALETTE.length];
+  }
 
   function ddayInfo(o){
-    if(o.recurrence) return null;
+    if(o.recurrence || !o.occDate) return null;
     const diff = Math.round((new Date(o.occDate+'T00:00:00') - new Date(todayKey()+'T00:00:00'))/86400000);
     if(diff === 0) return { text:'D-DAY', cls:'dday-today' };
     if(diff > 0) return { text:'D-'+diff, cls:'dday-future' };
@@ -1040,13 +1189,13 @@
       </div>`;
     const recLabel = recurrenceLabel(o);
     const rgLabel = rangeLabel(o);
-    const isOver = !o.recurrence && o.occDate < todayKey() && !o.doneComputed;
+    const isOver = !o.recurrence && o.occDate && o.occDate < todayKey() && !o.doneComputed;
     el.innerHTML = `
       ${checkHtml}
       <div class="task-body">
         <div class="task-title">${escapeHtml(o.title)}</div>
         <div class="task-meta">
-          ${o.category ? `<span class="tag ${CATEGORY_INFO[o.category] ? CATEGORY_INFO[o.category].cls : ''}">${escapeHtml(o.category)}</span>` : ''}
+          ${o.category ? `<span class="tag ${categoryClass(o.category)}">${escapeHtml(o.category)}</span>` : ''}
           <span class="tag">${timeLabel(o)}</span>
           <button class="tag clickable priority-toggle priority-${o.priority}" data-id="${o.id}" title="눌러서 중요도 변경">${priorityLabel(o.priority)}</button>
           ${o.assignee ? `<span class="tag">@${escapeHtml(o.assignee)}</span>` : ''}
@@ -1083,12 +1232,12 @@
     if(!t) return;
     editingTaskId = taskId;
     $('#editTitle').value = t.title;
-    $('#editDate').value = t.dateKey;
+    $('#editDate').value = t.dateKey || '';
     $('#editEndDate').value = t.endDateKey || '';
     $('#editTime').value = t.hour!=null ? `${pad(t.hour)}:${pad(t.minute)}` : '';
     $('#editAssignee').value = t.assignee || '';
+    $('#editCategory').value = t.category || '';
     setSegSelected('#editPrioritySeg', 'p', t.priority);
-    setSegSelected('#editCategorySeg', 'c', t.category || '');
     const recNote = $('#editRecurrenceNote');
     if(t.recurrence){
       recNote.style.display = '';
@@ -1108,10 +1257,6 @@
     const btn = e.target.closest('button'); if(!btn) return;
     setSegSelected('#editPrioritySeg', 'p', btn.dataset.p);
   });
-  $('#editCategorySeg').addEventListener('click', e=>{
-    const btn = e.target.closest('button'); if(!btn) return;
-    setSegSelected('#editCategorySeg', 'c', btn.dataset.c);
-  });
 
   $('#editSaveBtn').addEventListener('click', ()=>{
     const t = tasks.find(x=>x.id===editingTaskId);
@@ -1122,7 +1267,7 @@
     const endVal = $('#editEndDate').value;
     const timeVal = $('#editTime').value;
     const selectedPrio = $('#editPrioritySeg button.selected');
-    const selectedCat = $('#editCategorySeg button.selected');
+    const categoryVal = $('#editCategory').value.trim();
     const assigneeVal = $('#editAssignee').value.trim();
 
     t.title = title;
@@ -1131,7 +1276,7 @@
     if(timeVal){ const [h,m] = timeVal.split(':'); t.hour = parseInt(h); t.minute = parseInt(m); }
     else { t.hour = null; t.minute = 0; }
     t.priority = selectedPrio ? selectedPrio.dataset.p : t.priority;
-    t.category = (selectedCat && selectedCat.dataset.c) ? selectedCat.dataset.c : null;
+    t.category = categoryVal || null;
     t.assignee = assigneeVal || null;
     if(t.recurrence && $('#editRemoveRecurrence').checked){ t.recurrence = null; t.doneDates = []; }
 
@@ -1209,20 +1354,51 @@
   }
 
 
-  $('#rangeToggleBtn').addEventListener('click', ()=>{
-    const active = $('#rangeToggleBtn').classList.toggle('active');
-    $('#rangeRow').style.display = active ? 'flex' : 'none';
-    if(!active){ $('#rangeStart').value=''; $('#rangeEnd').value=''; }
+  function submitBacklog(){
+    const input = $('#quickInput');
+    const val = input.value.trim();
+    if(!val){ showToast('먼저 입력창에 내용을 적어주세요'); return; }
+    const parsed = parseQuickInput(val);
+    parsed.dateKey = null;
+    parsed.endDateKey = null;
+    parsed.hour = null;
+    parsed.minute = 0;
+    parsed.recurrence = null;
+    addTask(parsed, pendingPhoto);
+    input.value = '';
+    pendingPhoto = null;
+    $('#photoPreview').style.display = 'none';
+    showToast(`"${parsed.title}" 항목을 보관함에 넣었어요`);
+    render();
+  }
+
+  function closeFabMenu(){ $('#fabMenu').classList.remove('open'); $('#fabToggleBtn').classList.remove('open'); }
+  $('#fabToggleBtn').addEventListener('click', ()=>{
+    const open = $('#fabMenu').classList.toggle('open');
+    $('#fabToggleBtn').classList.toggle('open', open);
+  });
+  document.addEventListener('click', e=>{
+    if(!e.target.closest('.fab-wrap') && $('#fabMenu').classList.contains('open')) closeFabMenu();
   });
 
-  $('#photoBtn').addEventListener('click', ()=> $('#photoInput').click());
+  $('#fabBacklogBtn').addEventListener('click', ()=>{ submitBacklog(); closeFabMenu(); });
+
+  $('#rangeToggleBtn').addEventListener('click', ()=>{
+    const active = $('#rangeToggleBtn').classList.toggle('active');
+    $('#fabToggleBtn').classList.toggle('active', active);
+    $('#rangeRow').style.display = active ? 'flex' : 'none';
+    if(!active){ $('#rangeStart').value=''; $('#rangeEnd').value=''; }
+    closeFabMenu();
+  });
+
+  $('#photoBtn').addEventListener('click', ()=>{ $('#photoInput').click(); closeFabMenu(); });
   $('#photoInput').addEventListener('change', async e=>{
     const file = e.target.files[0];
     if(!file) return;
     let dataUrl;
-    $('#photoBtn').classList.add('processing');
+    $('#photoBtn').classList.add('processing'); $('#fabToggleBtn').classList.add('processing');
     try{ dataUrl = await compressImage(file, 900, 0.72); }
-    catch(err){ showToast('사진을 읽는 데 실패했어요'); e.target.value=''; $('#photoBtn').classList.remove('processing'); return; }
+    catch(err){ showToast('사진을 읽는 데 실패했어요'); e.target.value=''; $('#photoBtn').classList.remove('processing'); $('#fabToggleBtn').classList.remove('processing'); return; }
     pendingPhoto = dataUrl;
     $('#photoPreviewImg').src = dataUrl;
     $('#photoPreview').style.display = 'flex';
@@ -1241,7 +1417,7 @@
     }catch(err){
       showToast('사진은 첨부됐지만 글자 인식에는 실패했어요');
     }
-    $('#photoBtn').classList.remove('processing');
+    $('#photoBtn').classList.remove('processing'); $('#fabToggleBtn').classList.remove('processing');
     $('#quickHint').textContent = baseHintText();
     e.target.value = '';
   });
@@ -1250,6 +1426,8 @@
   $('#listWrap').addEventListener('click', e=>{
     const calAdd = e.target.closest('#calInlineAddBtn');
     if(calAdd){ submitCalendarInline(); return; }
+    const copyBtn = e.target.closest('#copyConfirmBtn');
+    if(copyBtn){ submitCalendarCopy(); return; }
     const photoBtn = e.target.closest('[data-photo]');
     if(photoBtn){ const t = tasks.find(x=>x.id===photoBtn.dataset.photo); if(t && t.photo) openLightbox(t.photo); return; }
     const prio = e.target.closest('.priority-toggle');
@@ -1358,18 +1536,18 @@
   if(SpeechRecognitionAPI){
     recognition = new SpeechRecognitionAPI();
     recognition.lang = 'ko-KR'; recognition.continuous = false; recognition.interimResults = false; recognition.maxAlternatives = 1;
-    recognition.addEventListener('start', ()=>{ isListening=true; $('#micBtn').classList.add('listening'); $('#quickHint').textContent='듣고 있어요... 말씀해주세요'; });
-    recognition.addEventListener('end', ()=>{ isListening=false; $('#micBtn').classList.remove('listening'); $('#quickHint').textContent=baseHintText(); });
+    recognition.addEventListener('start', ()=>{ isListening=true; $('#micBtn').classList.add('listening'); $('#fabToggleBtn').classList.add('listening'); $('#quickHint').textContent='듣고 있어요... 말씀해주세요'; });
+    recognition.addEventListener('end', ()=>{ isListening=false; $('#micBtn').classList.remove('listening'); $('#fabToggleBtn').classList.remove('listening'); $('#quickHint').textContent=baseHintText(); });
     recognition.addEventListener('result', e=>{ const tr = e.results[0][0].transcript; $('#quickInput').value = tr; showToast(`인식됨: "${tr}"`); });
     recognition.addEventListener('error', e=>{
-      isListening=false; $('#micBtn').classList.remove('listening');
+      isListening=false; $('#micBtn').classList.remove('listening'); $('#fabToggleBtn').classList.remove('listening');
       if(e.error==='not-allowed'||e.error==='permission-denied') showToast('마이크 권한을 허용해주세요');
       else if(e.error==='no-speech') showToast('음성이 감지되지 않았어요');
       else showToast('음성 인식 중 오류가 발생했어요');
     });
-    $('#micBtn').addEventListener('click', ()=>{ if(isListening) recognition.stop(); else { try{ recognition.start(); }catch(err){} } });
+    $('#micBtn').addEventListener('click', ()=>{ closeFabMenu(); if(isListening) recognition.stop(); else { try{ recognition.start(); }catch(err){} } });
   } else {
-    $('#micBtn').addEventListener('click', ()=> showToast('이 브라우저는 음성 인식을 지원하지 않아요'));
+    $('#micBtn').addEventListener('click', ()=>{ closeFabMenu(); showToast('이 브라우저는 음성 인식을 지원하지 않아요'); });
   }
 
   // ---------- Tab switching ----------
@@ -1519,11 +1697,38 @@
     btn.classList.add('selected');
   });
 
+  function renderMemoChecklistDraft(){
+    const wrap = $('#memoChecklistDraft'); wrap.innerHTML = '';
+    memoChecklistDraft.forEach((item, idx)=>{
+      const row = document.createElement('div'); row.className = 'checklist-item';
+      row.innerHTML = `<span>☐ ${escapeHtml(item.text)}</span><button class="chk-remove" data-idx="${idx}" type="button">×</button>`;
+      wrap.appendChild(row);
+    });
+  }
+  $('#memoChecklistAddBtn').addEventListener('click', ()=>{
+    const el = $('#memoChecklistInput');
+    const val = el.value.trim();
+    if(!val) return;
+    memoChecklistDraft.push({ text: val, done: false });
+    el.value = '';
+    renderMemoChecklistDraft();
+  });
+  $('#memoChecklistInput').addEventListener('keydown', e=>{
+    if(e.key === 'Enter'){ e.preventDefault(); $('#memoChecklistAddBtn').click(); }
+  });
+  $('#memoChecklistDraft').addEventListener('click', e=>{
+    const btn = e.target.closest('.chk-remove'); if(!btn) return;
+    memoChecklistDraft.splice(parseInt(btn.dataset.idx), 1);
+    renderMemoChecklistDraft();
+  });
+
   function resetMemoComposer(){
     $('#memoTitle').value=''; $('#memoContent').value=''; memoPendingPhoto=null; $('#memoPhotoStatus').textContent='';
     selectedMemoColorIdx = null;
     $$('#memoColorRow .swatch').forEach(b=>b.classList.remove('selected'));
     editingMemoId = null;
+    memoChecklistDraft = [];
+    renderMemoChecklistDraft();
     $('#memoSaveBtn').textContent = '메모 저장';
     $('#memoCancelEditBtn').style.display = 'none';
   }
@@ -1539,7 +1744,7 @@
   });
   $('#memoSaveBtn').addEventListener('click', ()=>{
     const title = $('#memoTitle').value.trim(), content = $('#memoContent').value.trim();
-    if(!title && !content && !memoPendingPhoto){ showToast('내용을 입력해주세요'); return; }
+    if(!title && !content && !memoPendingPhoto && memoChecklistDraft.length===0){ showToast('내용을 입력해주세요'); return; }
     if(editingMemoId){
       const m = memos.find(x=>x.id===editingMemoId);
       if(m){
@@ -1547,11 +1752,12 @@
         m.content = content;
         m.photo = memoPendingPhoto;
         m.colorIdx = selectedMemoColorIdx;
+        m.checklist = memoChecklistDraft.slice();
         saveMemos();
         showToast('메모를 수정했어요');
       }
     } else {
-      memos.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), title: title||'제목 없는 메모', content, photo: memoPendingPhoto, colorIdx: selectedMemoColorIdx, dateKey: todayKey(), createdAt: Date.now() });
+      memos.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), title: title||'제목 없는 메모', content, photo: memoPendingPhoto, colorIdx: selectedMemoColorIdx, checklist: memoChecklistDraft.slice(), dateKey: todayKey(), createdAt: Date.now() });
       saveMemos();
       showToast('메모를 저장했어요');
     }
@@ -1569,10 +1775,15 @@
       if(pal){ el.style.background = pal.bg; el.style.borderLeftColor = pal.border; }
       el.innerHTML = `
         <div class="note-record-title">${escapeHtml(m.title)}</div>
-        <div class="note-record-meta"><span>${relativeDateLabel(m.dateKey)}</span></div>
+        <div class="note-record-meta"><span>${relativeDateLabel(m.dateKey)}</span>${(m.checklist&&m.checklist.length) ? `<span>· 체크리스트 ${m.checklist.filter(c=>c.done).length}/${m.checklist.length}</span>` : ''}</div>
         <div class="note-record-body">
           ${m.photo ? `<img class="note-record-thumb" src="${m.photo}" data-photo="${m.id}">` : ''}
-          <div class="note-record-transcript">${escapeHtml(m.content||'(내용 없음)')}</div>
+          ${m.content ? `<div class="note-record-transcript">${escapeHtml(m.content)}</div>` : ''}
+          ${(m.checklist && m.checklist.length) ? `<div class="checklist-view">${m.checklist.map((c,idx)=>`
+            <div class="checklist-row${c.done?' done':''}">
+              <div class="chk-box" data-memo="${m.id}" data-chk="${idx}">${c.done?'✓':''}</div>
+              <span class="chk-text">${escapeHtml(c.text)}</span>
+            </div>`).join('')}</div>` : ''}
           <button class="note-record-edit" data-id="${m.id}">수정</button>
           <button class="note-record-del" data-id="${m.id}">이 메모 삭제</button>
         </div>`;
@@ -1583,6 +1794,16 @@
   $('#memoList').addEventListener('click', e=>{
     const photo = e.target.closest('[data-photo]');
     if(photo){ e.stopPropagation(); const m = memos.find(x=>x.id===photo.dataset.photo); if(m && m.photo) openLightbox(m.photo); return; }
+    const chk = e.target.closest('.chk-box');
+    if(chk){
+      e.stopPropagation();
+      const m = memos.find(x=>x.id===chk.dataset.memo);
+      if(m && m.checklist){
+        const item = m.checklist[parseInt(chk.dataset.chk)];
+        if(item){ item.done = !item.done; saveMemos(); renderMemosList(); }
+      }
+      return;
+    }
     const edit = e.target.closest('.note-record-edit');
     if(edit){
       e.stopPropagation();
@@ -1596,6 +1817,8 @@
       $$('#memoColorRow .swatch').forEach(b=>b.classList.remove('selected'));
       const sel = $(`#memoColorRow .swatch[data-idx="${selectedMemoColorIdx!=null ? selectedMemoColorIdx : -1}"]`);
       if(sel) sel.classList.add('selected');
+      memoChecklistDraft = (m.checklist || []).map(c=>({ text:c.text, done:c.done }));
+      renderMemoChecklistDraft();
       editingMemoId = m.id;
       $('#memoSaveBtn').textContent = '수정 저장';
       $('#memoCancelEditBtn').style.display = '';
@@ -1606,6 +1829,18 @@
     if(del){ e.stopPropagation(); memos = memos.filter(m=>m.id!==del.dataset.id); saveMemos(); renderMemosList(); return; }
     const record = e.target.closest('.note-record');
     if(record){ memoExpandedId = memoExpandedId===record.dataset.id ? null : record.dataset.id; renderMemosList(); }
+  });
+
+  // ---------- Font size control ----------
+  let fontLevelIdx = parseInt(localStorage.getItem(FONT_SCALE_KEY) || '0', 10);
+  if(isNaN(fontLevelIdx) || fontLevelIdx < 0 || fontLevelIdx >= FONT_LEVELS.length) fontLevelIdx = 0;
+  function applyFontScale(){ document.documentElement.style.setProperty('--fs-scale', FONT_LEVELS[fontLevelIdx]); }
+  applyFontScale();
+  $('#fontSizeBtn').addEventListener('click', ()=>{
+    fontLevelIdx = (fontLevelIdx + 1) % FONT_LEVELS.length;
+    localStorage.setItem(FONT_SCALE_KEY, String(fontLevelIdx));
+    applyFontScale();
+    showToast(FONT_LEVEL_LABELS[fontLevelIdx]);
   });
 
   selectedCalDate = todayKey();
