@@ -186,6 +186,7 @@
 
   .filter-bar{display:flex;gap:6px;overflow-x:auto;padding:2px 18px 12px;flex-shrink:0;}
   .filter-bar .chip{white-space:nowrap;flex-shrink:0;}
+  .filter-bar + .filter-bar{padding-top:0;margin-top:-6px;}
 
   .batch-progress{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;
@@ -361,6 +362,7 @@
   }
   .row-btn-group{display:flex;gap:8px;}
   .row-btn-group .row-add-btn{flex:1;margin-top:10px;}
+  .shift-hint{font-size:11px;color:var(--ink-dim);line-height:1.5;margin:10px 0 0;}
 
   .export-row{display:flex;flex-wrap:wrap;gap:8px;}
   .export-btn{
@@ -764,6 +766,11 @@
           <div class="row-add-btn" id="addRowBtn">+ 행 추가</div>
           <div class="row-add-btn" id="addColBtn">+ 열 추가</div>
         </div>
+        <p class="shift-hint">칸이 밀려서 어긋났나요? 바로잡을 지점의 칸을 탭한 뒤 아래 버튼을 누르세요.</p>
+        <div class="row-btn-group">
+          <div class="row-add-btn" id="shiftLeftBtn">◀ 여기서 당기기</div>
+          <div class="row-add-btn" id="shiftRightBtn">▶ 여기서 밀기</div>
+        </div>
 
         <div class="field-label" id="rawTextFieldLabel">인식된 원문 텍스트</div>
         <textarea class="rawtext" id="rawText" spellcheck="false"></textarea>
@@ -780,6 +787,7 @@
   <section id="view-list" class="view">
     <div class="search-bar"><input id="searchInput" placeholder="제목, 내용으로 검색"></div>
     <div class="filter-bar" id="filterBar"></div>
+    <div class="filter-bar" id="formatFilterBar"></div>
     <div class="list-scroll" id="listScroll"></div>
   </section>
 
@@ -813,6 +821,11 @@
       <div class="row-btn-group" id="detailRowBtnGroup">
         <div class="row-add-btn" id="detailAddRowBtn">+ 행 추가</div>
         <div class="row-add-btn" id="detailAddColBtn">+ 열 추가</div>
+      </div>
+      <p class="shift-hint">칸이 밀려서 어긋났나요? 바로잡을 지점의 칸을 탭한 뒤 아래 버튼을 누르세요.</p>
+      <div class="row-btn-group">
+        <div class="row-add-btn" id="detailShiftLeftBtn">◀ 여기서 당기기</div>
+        <div class="row-add-btn" id="detailShiftRightBtn">▶ 여기서 밀기</div>
       </div>
       <div class="field-label" id="detailRawTextFieldLabel">원문 텍스트</div>
       <textarea class="rawtext" id="detailRawText" spellcheck="false"></textarea>
@@ -1239,6 +1252,9 @@ function renderGrid(tableEl, rows, onChange){
       td.textContent = cellText;
       const patCls = detectPatternClass(cellText);
       if(patCls) td.classList.add(patCls);
+      td.addEventListener('focus', ()=>{
+        lastFocusedCell = { tableEl, rows, ri, ci, onChange };
+      });
       td.addEventListener('input', ()=>{
         rows[ri][ci] = td.textContent;
         td.classList.remove('pat-phone','pat-bizno','pat-amount');
@@ -1268,6 +1284,27 @@ function renderGrid(tableEl, rows, onChange){
       onChange && onChange();
     });
   });
+}
+
+/* 표가 한 칸씩 밀려서 어긋났을 때, 탭해서 선택한 칸부터
+   그 행(및 그 아래 행 전체)을 오른쪽으로 밀거나 왼쪽으로 당겨서 정렬을 바로잡는다 */
+let lastFocusedCell = null;
+function shiftFromFocusedCell(direction){
+  if(!lastFocusedCell){
+    alert('먼저 밀거나 당길 시작 지점의 칸을 탭해서 선택해주세요.');
+    return;
+  }
+  const { tableEl, rows, ri, ci, onChange } = lastFocusedCell;
+  if(direction === 'right'){
+    // 이 칸 앞에 빈 칸을 끼워 넣어, 이 칸부터 오른쪽으로 한 칸씩 민다 (이 행만)
+    rows[ri].splice(ci, 0, '');
+  } else {
+    // 이 칸을 지워서, 이 칸 뒤쪽을 왼쪽으로 한 칸씩 당긴다 (이 행만)
+    if(rows[ri].length > 1) rows[ri].splice(ci, 1);
+  }
+  renderGrid(tableEl, rows, onChange);
+  onChange && onChange();
+  lastFocusedCell = null;
 }
 
 /* ---------------- 촬영 화면 로직 ---------------- */
@@ -1867,6 +1904,9 @@ document.getElementById('addColBtn').addEventListener('click', ()=>{
   renderGrid(gridEl, currentRows);
 });
 
+document.getElementById('shiftLeftBtn').addEventListener('click', ()=>shiftFromFocusedCell('left'));
+document.getElementById('shiftRightBtn').addEventListener('click', ()=>shiftFromFocusedCell('right'));
+
 document.getElementById('retakeBtn').addEventListener('click', resetCapture);
 
 function resetCapture(){
@@ -1907,13 +1947,31 @@ document.getElementById('saveBtn').addEventListener('click', async ()=>{
 const listScroll = document.getElementById('listScroll');
 const searchInput = document.getElementById('searchInput');
 const filterBar = document.getElementById('filterBar');
+const formatFilterBar = document.getElementById('formatFilterBar');
 let allDocs = [];
+let selectedFormatFilter = '전체';
 
 function renderFilterBar(){
   renderFilterChips(filterBar, selectedFilter, (cat)=>{
     selectedFilter = cat;
     renderFilterBar();
     applyListFilters();
+  });
+  renderFormatFilterChips();
+}
+function renderFormatFilterChips(){
+  const opts = ['전체','표 있는 문서','문서형(표 없음)'];
+  formatFilterBar.innerHTML='';
+  opts.forEach(opt=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip'+(opt===selectedFormatFilter ? ' active' : '');
+    chip.textContent = opt;
+    chip.addEventListener('click', ()=>{
+      selectedFormatFilter = opt;
+      renderFormatFilterChips();
+      applyListFilters();
+    });
+    formatFilterBar.appendChild(chip);
   });
 }
 function engineTag(doc){
@@ -1939,6 +1997,11 @@ function applyListFilters(){
   let docs = allDocs;
   if(selectedFilter !== '전체'){
     docs = docs.filter(d=>(d.category||'기타')===selectedFilter);
+  }
+  if(selectedFormatFilter === '표 있는 문서'){
+    docs = docs.filter(d=>d.format !== 'text');
+  } else if(selectedFormatFilter === '문서형(표 없음)'){
+    docs = docs.filter(d=>d.format === 'text');
   }
   if(q){
     docs = docs.filter(doc=>{
@@ -2035,6 +2098,9 @@ document.getElementById('detailAddColBtn').addEventListener('click', ()=>{
   detailRows.forEach(row=>row.push(''));
   renderGrid(detailGrid, detailRows);
 });
+
+document.getElementById('detailShiftLeftBtn').addEventListener('click', ()=>shiftFromFocusedCell('left'));
+document.getElementById('detailShiftRightBtn').addEventListener('click', ()=>shiftFromFocusedCell('right'));
 
 document.getElementById('backBtn').addEventListener('click', ()=> showView('list'));
 
