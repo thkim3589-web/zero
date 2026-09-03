@@ -747,6 +747,7 @@
 
         <div class="field-label" id="delimLabel">표 나누는 기준</div>
         <div class="delim-row" id="delimRow">
+          <div class="chip" data-delim="auto" id="autoDelimChip">자동 감지</div>
           <div class="chip active" data-delim="space2">공백 2칸 이상</div>
           <div class="chip" data-delim="tab">탭</div>
           <div class="chip" data-delim="comma">쉼표(,)</div>
@@ -1140,7 +1141,70 @@ async function callVisionOCR(dataUrl){
   if(res0 && res0.error){
     throw new Error(res0.error.message || 'Vision API 오류');
   }
-  return ((res0 && res0.fullTextAnnotation && res0.fullTextAnnotation.text) || '').trim();
+  const text = ((res0 && res0.fullTextAnnotation && res0.fullTextAnnotation.text) || '').trim();
+  const pages = (res0 && res0.fullTextAnnotation && res0.fullTextAnnotation.pages) || [];
+  let autoRows = [];
+  pages.forEach(p=>{ autoRows = autoRows.concat(reconstructTableRows(wordsFromVisionPage(p))); });
+  return { text, autoRows };
+}
+
+/* Vision 응답의 블록/문단/단어 구조에서 단어별 좌표(픽셀)를 추출 */
+function wordsFromVisionPage(page){
+  const words = [];
+  (page.blocks || []).forEach(block=>{
+    (block.paragraphs || []).forEach(para=>{
+      (para.words || []).forEach(word=>{
+        const text = (word.symbols || []).map(s=>s.text).join('');
+        const verts = (word.boundingBox && (word.boundingBox.vertices || word.boundingBox.normalizedVertices)) || [];
+        if(verts.length < 4 || !text) return;
+        const xs = verts.map(v=>v.x||0);
+        const ys = verts.map(v=>v.y||0);
+        const x0 = Math.min(...xs), x1 = Math.max(...xs);
+        const y0 = Math.min(...ys), y1 = Math.max(...ys);
+        words.push({ text, x0, x1, yc:(y0+y1)/2, h:Math.max(1, y1-y0) });
+      });
+    });
+  });
+  return words;
+}
+
+/* 단어들의 실제 위치(좌표)를 이용해 같은 줄(행)끼리 묶고, 그 안에서 큰 간격을 기준으로 열을 나눠 표를 재구성 */
+function reconstructTableRows(words){
+  if(words.length === 0) return [];
+  const avgH = words.reduce((s,w)=>s+w.h,0) / words.length;
+  const rowThreshold = avgH * 0.6;
+  const sorted = [...words].sort((a,b)=>a.yc-b.yc);
+  const rowGroups = [];
+  sorted.forEach(w=>{
+    let group = rowGroups.find(g=>Math.abs(g.yc - w.yc) < rowThreshold);
+    if(!group){
+      group = { yc: w.yc, words: [] };
+      rowGroups.push(group);
+    }
+    group.words.push(w);
+    group.yc = group.words.reduce((s,x)=>s+x.yc,0) / group.words.length;
+  });
+  rowGroups.sort((a,b)=>a.yc-b.yc);
+
+  const colGapThreshold = avgH * 1.8; // 이 값보다 간격이 크면 다른 칸(열)으로 판단
+  return rowGroups.map(g=>{
+    const ws = [...g.words].sort((a,b)=>a.x0-b.x0);
+    const cells = [];
+    let current = null;
+    ws.forEach(w=>{
+      if(!current){
+        current = { text: w.text, x1: w.x1 };
+      } else if(w.x0 - current.x1 > colGapThreshold){
+        cells.push(current.text);
+        current = { text: w.text, x1: w.x1 };
+      } else {
+        current.text += ' ' + w.text;
+        current.x1 = Math.max(current.x1, w.x1);
+      }
+    });
+    if(current) cells.push(current.text);
+    return cells;
+  });
 }
 
 /* 우선순위: Vision API 키가 있으면 Vision 먼저 시도 → 실패 시 Tesseract로 자동 대체 */
@@ -1149,8 +1213,8 @@ async function recognizeText(dataUrl, onStatus){
   if(apiKey && navigator.onLine){
     onStatus && onStatus('Google Vision으로 인식 중…');
     try{
-      const text = await callVisionOCR(dataUrl);
-      return { text, engine: 'vision' };
+      const { text, autoRows } = await callVisionOCR(dataUrl);
+      return { text, engine: 'vision', autoRows };
     }catch(err){
       console.error('Vision API 실패, 기본 엔진으로 대체', err);
       onStatus && onStatus('Vision 인식 실패 — 기본 엔진으로 재시도 중…');
@@ -1174,6 +1238,7 @@ async function recognizeText(dataUrl, onStatus){
 /* ---------------- 상태 ---------------- */
 let currentImageDataUrl = null;
 let currentRawText = '';
+let currentAutoRows = null;
 let currentEngine = 'tesseract';
 let currentDelim = 'space2';
 let currentFormat = 'table'; // 'table' | 'text'
@@ -1190,7 +1255,7 @@ function fmtDate(ts){
 function splitToRows(text, delim){
   const lines = text.split('\n').map(l=>l.replace(/\s+$/,'')).filter(l=>l.trim().length>0);
   if(delim==='line') return lines.map(l=>[l.trim()]);
-  let re;
+  let re = /\s{2,}|\t/; // 알 수 없는 delim이 들어와도 안전하게 기본값(공백2칸) 사용
   if(delim==='space2') re = /\s{2,}|\t/;
   else if(delim==='tab') re = /\t+/;
   else if(delim==='comma') re = /\s*,\s*/;
@@ -1329,6 +1394,7 @@ const titleInput = document.getElementById('titleInput');
 const gridEl = document.getElementById('grid');
 const rawTextEl = document.getElementById('rawText');
 const delimRow = document.getElementById('delimRow');
+const autoDelimChip = document.getElementById('autoDelimChip');
 
 const galleryInput = document.getElementById('galleryInput');
 const galleryBtn = document.getElementById('galleryBtn');
@@ -1674,8 +1740,8 @@ async function handleBatchFiles(files){
     batchStatusText.textContent = `"${file.name}" 인식 중…`;
     try{
       const dataUrl = await resizeImageToDataUrl(file, 1800, 0.82);
-      const { text: rawText, engine } = await recognizeText(dataUrl, (msg)=>{ batchStatusText.textContent = `"${file.name}" — ${msg}`; });
-      const rows = splitToRows(rawText, 'space2');
+      const { text: rawText, engine, autoRows } = await recognizeText(dataUrl, (msg)=>{ batchStatusText.textContent = `"${file.name}" — ${msg}`; });
+      const rows = (autoRows && autoRows.length) ? autoRows : splitToRows(rawText, 'space2');
       const firstLine = rawText.split('\n').map(l=>l.trim()).find(l=>l.length>0) || file.name;
       await dbPut({
         id: uid(),
@@ -1709,6 +1775,7 @@ async function handleBatchMerge(files){
   batchProgress.style.display='flex';
   batchCountText.textContent = `0 / ${files.length}`;
   const rawParts = [];
+  let mergedAutoRows = [];
   let firstImage = null;
   let usedVision = false;
   let done = 0;
@@ -1717,9 +1784,10 @@ async function handleBatchMerge(files){
     try{
       const dataUrl = await resizeImageToDataUrl(file, 1800, 0.82);
       if(!firstImage) firstImage = dataUrl;
-      const { text, engine } = await recognizeText(dataUrl, (msg)=>{ batchStatusText.textContent = `"${file.name}" — ${msg}`; });
+      const { text, engine, autoRows } = await recognizeText(dataUrl, (msg)=>{ batchStatusText.textContent = `"${file.name}" — ${msg}`; });
       if(engine === 'vision') usedVision = true;
       rawParts.push(text);
+      if(autoRows && autoRows.length) mergedAutoRows = mergedAutoRows.concat(autoRows);
     }catch(err){
       console.error('병합 인식 실패', file.name, err);
     }
@@ -1732,6 +1800,7 @@ async function handleBatchMerge(files){
   currentImageDataUrl = firstImage;
   currentEngine = usedVision ? 'vision' : 'tesseract';
   currentRawText = rawParts.filter(t=>t.trim().length>0).join('\n\n');
+  currentAutoRows = mergedAutoRows.length ? mergedAutoRows : null;
   editorCategory = currentCategory;
   previewImg.src = firstImage || '';
   previewImgHolder.style.display='flex';
@@ -1799,15 +1868,17 @@ function preprocessForOcr(dataUrl){
 async function runOCR(dataUrl){
   ocrStatusText.textContent = '인식 준비 중…';
   try{
-    const { text, engine } = await recognizeText(dataUrl, (msg)=>{ ocrStatusText.textContent = msg; });
+    const { text, engine, autoRows } = await recognizeText(dataUrl, (msg)=>{ ocrStatusText.textContent = msg; });
     currentRawText = text;
     currentEngine = engine;
+    currentAutoRows = (autoRows && autoRows.length) ? autoRows : null;
     ocrStatus.style.display='none';
     openEditor();
   }catch(err){
     console.error(err);
     ocrStatusText.textContent = '인식에 실패했어요. 원문을 직접 입력해주세요.';
     currentRawText = '';
+    currentAutoRows = null;
     setTimeout(()=>{ ocrStatus.style.display='none'; openEditor(); }, 1200);
   }
 }
@@ -1825,10 +1896,17 @@ function openEditor(){
   delimRow.style.display='flex';
   retakeBtn.textContent = '다시 찍기';
   rawTextEl.value = currentRawText;
-  currentDelim = 'space2';
   currentFormat = 'table';
+  const hasAuto = currentAutoRows && currentAutoRows.length > 0;
+  autoDelimChip.style.display = hasAuto ? 'block' : 'none';
+  if(hasAuto){
+    currentDelim = 'auto';
+    currentRows = JSON.parse(JSON.stringify(currentAutoRows));
+  } else {
+    currentDelim = 'space2';
+    currentRows = splitToRows(currentRawText, currentDelim);
+  }
   [...delimRow.children].forEach(c=>c.classList.toggle('active', c.dataset.delim===currentDelim));
-  currentRows = splitToRows(currentRawText, currentDelim);
   renderGrid(gridEl, currentRows);
   applyFormatUI();
   const firstLine = currentRawText.split('\n').map(l=>l.trim()).find(l=>l.length>0) || '';
@@ -1854,6 +1932,19 @@ delimRow.addEventListener('click', (e)=>{
   groupNRow.style.display = 'none';
   if(chip.dataset.delim === 'doc'){
     currentFormat = 'text';
+    applyFormatUI();
+    return;
+  }
+  if(chip.dataset.delim === 'auto'){
+    if(!currentAutoRows || currentAutoRows.length === 0){
+      alert('이 문서는 자동 감지 결과가 없어요 (Vision으로 인식한 경우에만 가능해요).');
+      [...delimRow.children].forEach(c=>c.classList.toggle('active', c.dataset.delim===currentDelim));
+      return;
+    }
+    currentFormat = 'table';
+    currentDelim = 'auto';
+    currentRows = JSON.parse(JSON.stringify(currentAutoRows));
+    renderGrid(gridEl, currentRows);
     applyFormatUI();
     return;
   }
@@ -1891,6 +1982,7 @@ document.getElementById('groupNApplyBtn').addEventListener('click', ()=>{
 rawTextEl.addEventListener('change', ()=>{
   if(currentEngine === 'excel') return; // 엑셀 표는 원문 재분리 대상이 아님
   if(currentFormat === 'text') return; // 문서형은 그대로 문단 텍스트로 저장
+  if(currentDelim === 'auto') return; // 자동 감지 결과는 원문 재분리 대상이 아님(좌표 기반)
   if(currentDelim === 'groupN'){
     currentRows = groupLinesIntoRows(rawTextEl.value, currentGroupN);
     renderGrid(gridEl, currentRows);
@@ -1916,7 +2008,7 @@ document.getElementById('shiftRightBtn').addEventListener('click', ()=>shiftFrom
 document.getElementById('retakeBtn').addEventListener('click', resetCapture);
 
 function resetCapture(){
-  currentImageDataUrl=null; currentRawText=''; currentRows=[];
+  currentImageDataUrl=null; currentRawText=''; currentRows=[]; currentAutoRows=null;
   cropImg=null; cropSel=null;
   excelWorkbook=null; excelFileBaseName=''; excelColRangeStr=''; excelCurrentSheet='';
   currentEngine='tesseract';
