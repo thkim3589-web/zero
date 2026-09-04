@@ -402,6 +402,14 @@
   .btn-secondary{ background:var(--paper-dim); color:var(--ink); }
   .btn-primary{ background:var(--orange); color:#fff; }
   .note-action-items{ margin-top:12px; }
+  .ai-summary-box{
+    margin-top:10px; background:#F0F7F2; border:1px solid #BFE0CB; border-radius:var(--radius-card);
+    padding:11px 12px; font-size:calc(13px * var(--fs-scale)); color:var(--ink); line-height:1.55; white-space:pre-wrap;
+  }
+  .ai-key-link{
+    display:block; margin-top:10px; border:none; background:none; color:var(--ink-soft);
+    font-size:calc(11.5px * var(--fs-scale)); text-decoration:underline; cursor:pointer; padding:0;
+  }
   .note-action-item{ display:flex; align-items:flex-start; gap:8px; background:var(--paper); border:1px solid var(--paper-dim); border-radius:var(--radius-card); padding:9px 10px; margin-bottom:6px; font-size:calc(13px * var(--fs-scale)); }
   .note-action-item span{ flex:1; line-height:1.4; }
   .note-action-item button{ border:none; background:var(--navy); color:#fff; font-size:calc(11px * var(--fs-scale)); font-weight:600; border-radius:var(--radius-pill); padding:5px 10px; cursor:pointer; white-space:nowrap; flex-shrink:0; }
@@ -616,9 +624,14 @@
       <textarea id="mtgTranscript" class="note-textarea" rows="6" placeholder="음성 입력 시작을 누르고 말씀하시면 텍스트로 받아 적습니다 (실제 음성 파일 저장은 아니에요). 직접 타이핑도 가능해요."></textarea>
       <div class="note-actions-row">
         <button id="mtgExtractBtn" class="btn-secondary" type="button">할 일 뽑아내기</button>
-        <button id="mtgSaveBtn" class="btn-primary" type="button">회의록 저장</button>
+        <button id="mtgAiSummarizeBtn" class="btn-secondary" type="button">🤖 AI로 요약</button>
       </div>
+      <div id="mtgAiSummary" class="ai-summary-box" style="display:none;"></div>
       <div id="mtgActionItems" class="note-action-items"></div>
+      <div class="note-actions-row">
+        <button id="mtgSaveBtn" class="btn-primary" type="button" style="flex:1;">회의록 저장</button>
+      </div>
+      <button id="mtgAiKeyManageBtn" class="ai-key-link" type="button">AI 요약용 API 키 설정/변경</button>
     </div>
     <div class="group-label" style="margin-top:24px;">지난 회의록</div>
     <div id="mtgList"></div>
@@ -1874,8 +1887,9 @@
       const actionCount = (m.actionItems||[]).length;
       el.innerHTML = `
         <div class="note-record-title">${escapeHtml(m.title||'제목 없는 회의')}</div>
-        <div class="note-record-meta"><span>${relativeDateLabel(m.dateKey)}</span>${actionCount?`<span>· 할 일 ${actionCount}건</span>`:''}</div>
+        <div class="note-record-meta"><span>${relativeDateLabel(m.dateKey)}</span>${actionCount?`<span>· 할 일 ${actionCount}건</span>`:''}${m.aiSummary?`<span>· 🤖 AI 요약 있음</span>`:''}</div>
         <div class="note-record-body">
+          ${m.aiSummary ? `<div class="ai-summary-box">${escapeHtml(m.aiSummary)}</div>` : ''}
           <div class="note-record-transcript">${escapeHtml(m.transcript||'(내용 없음)')}</div>
           <button class="note-record-del" data-id="${m.id}">이 회의록 삭제</button>
         </div>`;
@@ -1884,6 +1898,39 @@
   }
   function renderMeetingsView(){ $('#meetingDateLabel').textContent = formatBriefDate(new Date()); renderMtgActionItems(); renderMeetingsList(); }
 
+  // ---------- 화면 꺼짐 방지 (장시간 음성 입력 시 화면이 꺼지면 마이크도 같이 멈춰요) ----------
+  let mtgWakeLock = null;
+  async function requestMtgWakeLock(){
+    try{ if('wakeLock' in navigator){ mtgWakeLock = await navigator.wakeLock.request('screen'); } }
+    catch(err){ /* 미지원 기기이거나 실패해도 조용히 무시 (녹음 자체는 계속 진행) */ }
+  }
+  function releaseMtgWakeLock(){
+    if(mtgWakeLock){ mtgWakeLock.release().catch(()=>{}); mtgWakeLock = null; }
+  }
+  document.addEventListener('visibilitychange', ()=>{
+    // 화면을 껐다 켜면 Wake Lock이 자동 해제되므로 녹음 중이면 다시 걸어줍니다.
+    if(document.visibilityState === 'visible' && mtgWantRecording && !mtgWakeLock) requestMtgWakeLock();
+  });
+
+  let mtgRecordStartTime = null;
+  let mtgElapsedInterval = null;
+  function formatElapsed(ms){
+    const totalSec = Math.floor(ms/1000);
+    const h = Math.floor(totalSec/3600), m = Math.floor((totalSec%3600)/60), s = totalSec%60;
+    const p = n => String(n).padStart(2,'0');
+    return h>0 ? `${h}:${p(m)}:${p(s)}` : `${p(m)}:${p(s)}`;
+  }
+  function startElapsedTimer(){
+    if(mtgElapsedInterval) return;
+    mtgElapsedInterval = setInterval(()=>{
+      if(!mtgRecordStartTime) return;
+      $('#mtgRecordStatus').textContent = `듣고 받아쓰는 중이에요... (${formatElapsed(Date.now()-mtgRecordStartTime)}) · 눌러서 중지`;
+    }, 1000);
+  }
+  function stopElapsedTimer(){
+    if(mtgElapsedInterval){ clearInterval(mtgElapsedInterval); mtgElapsedInterval = null; }
+  }
+
   let mtgRecognition = null, mtgRecording = false, mtgWantRecording = false;
   if(SpeechRecognitionAPI){
     mtgRecognition = new SpeechRecognitionAPI();
@@ -1891,15 +1938,18 @@
     let finalBuffer = '';
     mtgRecognition.addEventListener('start', ()=>{
       mtgRecording=true;
-      $('#mtgRecordBtn').classList.add('recording'); $('#mtgRecordLabel').textContent='음성 입력 중지'; $('#mtgRecordStatus').textContent='듣고 받아쓰는 중이에요... (눌러서 중지)';
+      $('#mtgRecordBtn').classList.add('recording'); $('#mtgRecordLabel').textContent='음성 입력 중지';
+      startElapsedTimer();
     });
     mtgRecognition.addEventListener('end', ()=>{
       mtgRecording=false;
       if(mtgWantRecording){
-        // 브라우저/OS가 세션을 임의로 끊은 경우 - 자동으로 이어서 재시작
-        $('#mtgRecordStatus').textContent = '이어서 받아쓰는 중...';
+        // 브라우저/OS가 세션을 임의로 끊은 경우 - 자동으로 이어서 재시작 (경과 시간은 계속 누적)
         setTimeout(()=>{ if(mtgWantRecording){ try{ mtgRecognition.start(); }catch(err){} } }, 300);
       } else {
+        stopElapsedTimer();
+        releaseMtgWakeLock();
+        mtgRecordStartTime = null;
         $('#mtgRecordBtn').classList.remove('recording'); $('#mtgRecordLabel').textContent='음성 입력 시작'; $('#mtgRecordStatus').textContent='눌러서 음성 입력 시작';
       }
     });
@@ -1914,6 +1964,7 @@
     mtgRecognition.addEventListener('error', e=>{
       if(e.error==='not-allowed'||e.error==='permission-denied'){
         mtgWantRecording = false; mtgRecording = false;
+        stopElapsedTimer(); releaseMtgWakeLock(); mtgRecordStartTime = null;
         $('#mtgRecordBtn').classList.remove('recording'); $('#mtgRecordLabel').textContent='음성 입력 시작'; $('#mtgRecordStatus').textContent='눌러서 음성 입력 시작';
         showToast('마이크 권한을 허용해주세요');
       } else if(e.error !== 'no-speech' && e.error !== 'aborted'){
@@ -1921,7 +1972,7 @@
       }
       // no-speech/network/aborted 등은 'end' 핸들러가 이어서 자동 재시작 처리
     });
-    $('#mtgRecordBtn').addEventListener('click', ()=>{
+    $('#mtgRecordBtn').addEventListener('click', async ()=>{
       if(mtgWantRecording){
         mtgWantRecording = false;
         mtgRecognition.stop();
@@ -1929,6 +1980,8 @@
         mtgWantRecording = true;
         finalBuffer = $('#mtgTranscript').value;
         if(finalBuffer && !finalBuffer.endsWith(' ') && !finalBuffer.endsWith('\n')) finalBuffer += ' ';
+        mtgRecordStartTime = Date.now();
+        await requestMtgWakeLock();
         try{ mtgRecognition.start(); }catch(err){}
       }
     });
@@ -1943,6 +1996,79 @@
     renderMtgActionItems();
     showToast(`${items.length}건의 할 일 후보를 찾았어요`);
   });
+
+  // ---------- AI 요약 (본인 Anthropic API 키 사용) ----------
+  const AI_API_KEY_KEY = 'jhb_ai_api_key';
+  function getAiApiKey(){ return localStorage.getItem(AI_API_KEY_KEY) || ''; }
+  function setAiApiKey(key){ if(key) localStorage.setItem(AI_API_KEY_KEY, key); }
+  function clearAiApiKey(){ localStorage.removeItem(AI_API_KEY_KEY); }
+
+  $('#mtgAiKeyManageBtn').addEventListener('click', ()=>{
+    const current = getAiApiKey();
+    const msg = current
+      ? 'API 키를 다시 입력하면 교체됩니다. 지우려면 취소를 누른 뒤 아래에서 확인해주세요.\n(현재 키: ' + current.slice(0,8) + '••••)'
+      : 'Anthropic API 키를 입력해주세요.\n이 키는 이 기기에만 저장되고, "AI로 요약" 사용 시 Anthropic 서버로 직접 전송됩니다.\n사용량만큼 요금이 발생할 수 있어요.';
+    const input = prompt(msg);
+    if(input === null) return;
+    if(input.trim() === ''){
+      if(current && confirm('저장된 API 키를 삭제할까요?')){ clearAiApiKey(); showToast('API 키를 삭제했어요'); }
+      return;
+    }
+    setAiApiKey(input.trim());
+    showToast('API 키를 저장했어요');
+  });
+
+  $('#mtgAiSummarizeBtn').addEventListener('click', async ()=>{
+    const transcript = $('#mtgTranscript').value.trim();
+    if(!transcript){ showToast('먼저 회의 내용을 입력하거나 음성으로 받아쓰세요'); return; }
+    let apiKey = getAiApiKey();
+    if(!apiKey){
+      const input = prompt('Anthropic API 키를 입력해주세요.\n이 키는 이 기기에만 저장되고, 요약할 때 Anthropic 서버로 직접 전송됩니다.\n사용량만큼 요금이 발생할 수 있어요.');
+      if(!input || !input.trim()) return;
+      apiKey = input.trim();
+      setAiApiKey(apiKey);
+    }
+    const btn = $('#mtgAiSummarizeBtn');
+    const originalLabel = btn.textContent;
+    btn.disabled = true; btn.textContent = 'AI가 요약 중...';
+    try{
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 700,
+          messages: [{
+            role: 'user',
+            content: `다음은 건설 현장 회의를 받아쓴 텍스트입니다. 핵심 내용을 3~5문장으로 한국어로 요약하고, 실행해야 할 일들을 목록으로 뽑아주세요.\n반드시 아래 JSON 형식으로만 답변하세요. 다른 설명, 코드블록 표시 없이 순수 JSON만 출력하세요.\n{"summary": "...", "actionItems": ["...", "..."]}\n\n회의 내용:\n${transcript}`
+          }]
+        })
+      });
+      if(!res.ok){
+        if(res.status === 401){ clearAiApiKey(); throw new Error('API 키가 올바르지 않아요. 다시 입력해주세요'); }
+        if(res.status === 429) throw new Error('요청이 많아요. 잠시 후 다시 시도해주세요');
+        throw new Error(`요약 요청에 실패했어요 (오류 ${res.status})`);
+      }
+      const data = await res.json();
+      const text = (data.content || []).map(c=>c.text||'').join('');
+      const cleaned = text.replace(/```json|```/g,'').trim();
+      const parsed = JSON.parse(cleaned);
+      $('#mtgAiSummary').style.display = '';
+      $('#mtgAiSummary').textContent = '🤖 ' + (parsed.summary || '요약 내용이 없어요');
+      mtgCurrentActionItems = (parsed.actionItems || []).map(t => ({ text: t, added:false }));
+      renderMtgActionItems();
+      showToast('AI 요약을 완료했어요');
+    }catch(err){
+      showToast(err.message || 'AI 요약에 실패했어요. 네트워크나 API 키를 확인해주세요');
+    }
+    btn.disabled = false; btn.textContent = originalLabel;
+  });
+
   $('#mtgActionItems').addEventListener('click', e=>{
     const btn = e.target.closest('button'); if(!btn) return;
     const item = mtgCurrentActionItems[parseInt(btn.dataset.idx)];
@@ -1953,9 +2079,11 @@
   $('#mtgSaveBtn').addEventListener('click', ()=>{
     const title = $('#mtgTitle').value.trim(), transcript = $('#mtgTranscript').value.trim();
     if(!title && !transcript){ showToast('제목이나 내용을 입력해주세요'); return; }
-    meetings.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), title: title||'제목 없는 회의', dateKey: todayKey(), transcript, actionItems: mtgCurrentActionItems.slice(), createdAt: Date.now() });
+    const aiSummaryText = $('#mtgAiSummary').style.display !== 'none' ? $('#mtgAiSummary').textContent : null;
+    meetings.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), title: title||'제목 없는 회의', dateKey: todayKey(), transcript, aiSummary: aiSummaryText, actionItems: mtgCurrentActionItems.slice(), createdAt: Date.now() });
     saveMeetings();
     $('#mtgTitle').value=''; $('#mtgTranscript').value=''; mtgCurrentActionItems=[];
+    $('#mtgAiSummary').style.display = 'none'; $('#mtgAiSummary').textContent = '';
     renderMeetingsView(); showToast('회의록을 저장했어요');
   });
   $('#mtgList').addEventListener('click', e=>{
