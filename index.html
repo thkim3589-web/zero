@@ -8,6 +8,7 @@
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icon-192.png">
 <link rel="apple-touch-icon" href="./icon-192.png">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -491,6 +492,11 @@
     body{ background:#0F141B; }
     .app{ margin:24px auto; min-height:calc(100vh - 48px); border-radius:14px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.4); }
   }
+  .gcal-status-row{ display:flex; align-items:center; gap:8px; font-size:calc(13px * var(--fs-scale)); color:var(--ink-soft); margin-bottom:12px; }
+  .gcal-status-dot{ width:8px; height:8px; border-radius:50%; background:#C4432B; flex-shrink:0; }
+  .gcal-status-dot.on{ background:#3F7D5C; }
+  .gcal-help{ font-size:calc(12px * var(--fs-scale)); color:var(--ink-soft); line-height:1.5; margin:4px 0 14px; }
+  .gcal-help a{ color:var(--orange); }
 </style>
 </head>
 <body>
@@ -581,6 +587,9 @@
           <button class="sort-toggle" id="sortToggle">우선순위순 정렬</button>
           <button class="util-icon-btn" id="shareBtn" aria-label="공유">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+          </button>
+          <button class="util-icon-btn" id="gcalOpenBtn" aria-label="구글 캘린더 연동">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </button>
         </div>
       </div>
@@ -746,6 +755,36 @@
     <div class="note-actions-row" style="padding:0 16px 16px;">
       <button id="editCancelBtn" class="btn-secondary" type="button">취소</button>
       <button id="editSaveBtn" class="btn-primary" type="button">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="gcalModal" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>구글 캘린더 연동</h3>
+      <button id="gcalModalClose" class="modal-close" type="button">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="gcal-status-row">
+        <span class="gcal-status-dot" id="gcalStatusDot"></span>
+        <span id="gcalStatusText">연결 안 됨</span>
+      </div>
+      <div class="edit-field" id="gcalClientIdField">
+        <label>Google OAuth 클라이언트 ID</label>
+        <input type="text" id="gcalClientIdInput" class="note-title-input" placeholder="xxxxxxxxxx.apps.googleusercontent.com">
+      </div>
+      <div class="gcal-help">본인 구글 계정으로 Google Cloud Console에서 만든 OAuth 클라이언트 ID가 필요해요. 이 값은 이 기기에만 저장됩니다.</div>
+      <div class="note-actions-row" style="padding:0;">
+        <button id="gcalConnectBtn" class="btn-primary" type="button" style="flex:1;">Google 계정 연결</button>
+      </div>
+      <div class="note-actions-row" style="padding:12px 0 0;">
+        <button id="gcalSyncBtn" class="btn-secondary" type="button" style="flex:1;">오늘 이후 일정 내보내기</button>
+      </div>
+      <div class="note-actions-row" style="padding:8px 0 0;">
+        <button id="gcalImportBtn" class="btn-secondary" type="button" style="flex:1;">구글 캘린더에서 가져오기 (30일)</button>
+      </div>
+      <button id="gcalDisconnectBtn" class="ai-key-link" type="button" style="margin-top:14px;">연결 해제</button>
     </div>
   </div>
 </div>
@@ -2325,6 +2364,226 @@
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
   }
+
+  // ---------- Google 캘린더 연동 ----------
+  const GCAL_CLIENT_ID_KEY = 'jhb_gcal_client_id';
+  const GCAL_WAS_CONNECTED_KEY = 'jhb_gcal_was_connected';
+  const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+  let gcalTokenClient = null;
+  let gcalAccessToken = null;
+  let gcalBusy = false;
+
+  function getGcalClientId(){ return localStorage.getItem(GCAL_CLIENT_ID_KEY) || ''; }
+  function setGcalClientId(id){ if(id) localStorage.setItem(GCAL_CLIENT_ID_KEY, id); }
+
+  function updateGcalUI(){
+    const dot = $('#gcalStatusDot'), text = $('#gcalStatusText');
+    if(!dot || !text) return;
+    if(gcalAccessToken){
+      dot.classList.add('on');
+      text.textContent = '연결됨';
+    } else {
+      dot.classList.remove('on');
+      text.textContent = '연결 안 됨';
+    }
+    const idInput = $('#gcalClientIdInput');
+    if(idInput && !idInput.value) idInput.value = getGcalClientId();
+  }
+
+  function gcalEnsureTokenClient(clientId){
+    if(!window.google || !google.accounts || !google.accounts.oauth2){ return null; }
+    if(gcalTokenClient && gcalTokenClient._clientId === clientId) return gcalTokenClient;
+    gcalTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: GCAL_SCOPE,
+      callback: (resp)=>{
+        if(resp && resp.error){
+          if(resp.error !== 'immediate_failed' && resp.error !== 'popup_closed') showToast('구글 연결 실패: ' + resp.error);
+          return;
+        }
+        gcalAccessToken = resp.access_token;
+        localStorage.setItem(GCAL_WAS_CONNECTED_KEY, '1');
+        updateGcalUI();
+        showToast('구글 캘린더에 연결됐어요');
+      }
+    });
+    gcalTokenClient._clientId = clientId;
+    return gcalTokenClient;
+  }
+
+  function gcalConnect(silent){
+    const clientId = ($('#gcalClientIdInput').value || '').trim();
+    if(!clientId){ if(!silent) showToast('클라이언트 ID를 먼저 입력해주세요'); return; }
+    setGcalClientId(clientId);
+    const client = gcalEnsureTokenClient(clientId);
+    if(!client){
+      if(!silent) showToast('구글 로그인 스크립트를 불러오는 중이에요. 잠시 후 다시 시도해주세요');
+      return;
+    }
+    client.requestAccessToken({ prompt: silent ? '' : 'consent' });
+  }
+
+  function gcalDisconnect(){
+    if(gcalAccessToken && window.google && google.accounts && google.accounts.oauth2){
+      google.accounts.oauth2.revoke(gcalAccessToken, ()=>{});
+    }
+    gcalAccessToken = null;
+    localStorage.removeItem(GCAL_WAS_CONNECTED_KEY);
+    updateGcalUI();
+    showToast('구글 캘린더 연결을 해제했어요');
+  }
+
+  function gcalRecurrenceRule(t){
+    if(!t.recurrence) return undefined;
+    if(t.recurrence.type === 'daily') return ['RRULE:FREQ=DAILY'];
+    if(t.recurrence.type === 'weekly'){
+      const days = ['SU','MO','TU','WE','TH','FR','SA'];
+      const wd = days[t.recurrence.weekday ?? new Date(t.dateKey + 'T00:00:00').getDay()];
+      return ['RRULE:FREQ=WEEKLY;BYDAY=' + wd];
+    }
+    return undefined;
+  }
+
+  function addDaysToKey(key, n){
+    const d = new Date(key + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return dateKey(d);
+  }
+
+  function taskToGcalEvent(t){
+    const desc = [
+      t.category ? '카테고리: ' + t.category : '',
+      t.assignee ? '담당자: ' + t.assignee : '',
+      t.priority ? '우선순위: ' + priorityLabel(t.priority) : ''
+    ].filter(Boolean).join('\n') + '\n\n(현장 비서 앱에서 자동 등록)';
+    const event = { summary: t.title, description: desc };
+    if(t.hour !== null && t.hour !== undefined){
+      const startDT = `${t.dateKey}T${pad(t.hour)}:${pad(t.minute||0)}:00`;
+      const endD = new Date(`${t.endDateKey || t.dateKey}T${pad(t.hour)}:${pad(t.minute||0)}:00`);
+      endD.setHours(endD.getHours() + 1);
+      const endDT = `${dateKey(endD)}T${pad(endD.getHours())}:${pad(endD.getMinutes())}:00`;
+      event.start = { dateTime: startDT, timeZone: 'Asia/Seoul' };
+      event.end = { dateTime: endDT, timeZone: 'Asia/Seoul' };
+    } else {
+      event.start = { date: t.dateKey };
+      event.end = { date: addDaysToKey(t.endDateKey || t.dateKey, 1) };
+    }
+    const rrule = gcalRecurrenceRule(t);
+    if(rrule) event.recurrence = rrule;
+    return event;
+  }
+
+  async function gcalPushTask(t){
+    const event = taskToGcalEvent(t);
+    const method = t.gcalEventId ? 'PATCH' : 'POST';
+    const url = t.gcalEventId
+      ? `https://www.googleapis.com/calendar/v3/calendars/primary/events/${t.gcalEventId}`
+      : 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+    const res = await fetch(url, {
+      method,
+      headers: { 'Authorization': 'Bearer ' + gcalAccessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify(event)
+    });
+    if(!res.ok){
+      if(res.status === 401) gcalAccessToken = null;
+      return false;
+    }
+    const data = await res.json();
+    t.gcalEventId = data.id;
+    return true;
+  }
+
+  async function gcalSyncNow(){
+    if(gcalBusy) return;
+    if(!gcalAccessToken){ showToast('먼저 구글 계정을 연결해주세요'); return; }
+    const todayK = todayKey();
+    const targets = tasks.filter(t => !t.done && !t.id.startsWith('gcal_') && (t.dateKey >= todayK || (t.endDateKey && t.endDateKey >= todayK) || t.recurrence));
+    if(!targets.length){ showToast('내보낼 일정이 없어요'); return; }
+    gcalBusy = true;
+    showToast(`${targets.length}건 동기화 중...`);
+    let ok = 0, fail = 0;
+    for(const t of targets){
+      const success = await gcalPushTask(t).catch(()=>false);
+      if(success) ok++; else fail++;
+      if(!gcalAccessToken){ fail += (targets.length - ok - fail); break; }
+    }
+    saveTasks();
+    gcalBusy = false;
+    updateGcalUI();
+    showToast(fail ? `동기화 완료: ${ok}건 성공, ${fail}건 실패 (재연결이 필요할 수 있어요)` : `동기화 완료: ${ok}건 성공`);
+  }
+
+  async function gcalImportEvents(){
+    if(gcalBusy) return;
+    if(!gcalAccessToken){ showToast('먼저 구글 계정을 연결해주세요'); return; }
+    gcalBusy = true;
+    showToast('구글 캘린더에서 가져오는 중...');
+    try{
+      const timeMin = new Date().toISOString();
+      const timeMax = new Date(Date.now() + 30*24*3600*1000).toISOString();
+      const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=250`;
+      const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + gcalAccessToken } });
+      if(!res.ok){
+        if(res.status === 401) gcalAccessToken = null;
+        showToast('가져오기 실패했어요');
+        return;
+      }
+      const data = await res.json();
+      const existingIds = new Set(tasks.map(t => t.gcalEventId).filter(Boolean));
+      let added = 0;
+      (data.items || []).forEach(ev => {
+        if(!ev.id || existingIds.has(ev.id) || !ev.start) return;
+        const isAllDay = !!ev.start.date;
+        const dk = isAllDay ? ev.start.date : ev.start.dateTime.slice(0,10);
+        let hour = null, minute = 0;
+        if(!isAllDay){
+          const d = new Date(ev.start.dateTime);
+          hour = d.getHours(); minute = d.getMinutes();
+        }
+        tasks.push({
+          id: 'gcal_' + ev.id,
+          title: withSuggestedEmoji(ev.summary || '(제목 없음)'),
+          dateKey: dk, endDateKey: null, hour, minute,
+          category: '구글캘린더', priority: 'mid', assignee: null, recurrence: null,
+          doneDates: [], photo: null, done: false, createdAt: Date.now(),
+          gcalEventId: ev.id
+        });
+        added++;
+      });
+      saveTasks();
+      render();
+      showToast(added ? `${added}건의 일정을 가져왔어요` : '새로 가져올 일정이 없어요');
+    } finally {
+      gcalBusy = false;
+      updateGcalUI();
+    }
+  }
+
+  $('#gcalOpenBtn').addEventListener('click', ()=>{ updateGcalUI(); $('#gcalModal').style.display = 'flex'; });
+  $('#gcalModalClose').addEventListener('click', ()=>{ $('#gcalModal').style.display = 'none'; });
+  $('#gcalModal').addEventListener('click', (e)=>{ if(e.target.id === 'gcalModal') $('#gcalModal').style.display = 'none'; });
+  $('#gcalConnectBtn').addEventListener('click', ()=> gcalConnect(false));
+  $('#gcalSyncBtn').addEventListener('click', gcalSyncNow);
+  $('#gcalImportBtn').addEventListener('click', gcalImportEvents);
+  $('#gcalDisconnectBtn').addEventListener('click', gcalDisconnect);
+
+  // 이전에 연결한 적이 있으면 페이지를 열 때 조용히 재연결 시도
+  if(localStorage.getItem(GCAL_WAS_CONNECTED_KEY) === '1' && getGcalClientId()){
+    window.addEventListener('load', ()=>{
+      let tries = 0;
+      const iv = setInterval(()=>{
+        tries++;
+        if(window.google && google.accounts && google.accounts.oauth2){
+          clearInterval(iv);
+          $('#gcalClientIdInput').value = getGcalClientId();
+          gcalConnect(true);
+        } else if(tries > 20){
+          clearInterval(iv);
+        }
+      }, 250);
+    });
+  }
+  updateGcalUI();
 })();
 </script>
 </body>
