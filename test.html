@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>통신관 심도측정</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1C2541">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy:#1C2541;
+    --navy-deep:#12182c;
+    --amber:#F4A300;
+    --amber-dim:#c98700;
+    --concrete:#EDEDE9;
+    --line:#D8D6CE;
+    --ink:#1A1A1A;
+    --ok:#2E7D4F;
+    --warn:#C0392B;
+    --white:#FFFFFF;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;
+    font-family:'Noto Sans KR',sans-serif; background:var(--concrete); color:var(--ink);
+  }
+  #app{position:fixed; inset:0; display:flex; flex-direction:column;}
+
+  /* ---------- Top bar ---------- */
+  #topbar{
+    background:var(--navy); color:var(--white);
+    padding:14px 16px 12px; display:flex; align-items:center; justify-content:space-between;
+    flex-shrink:0; z-index:20;
+    border-bottom:3px solid var(--amber);
+  }
+  #topbar .title-block{display:flex; flex-direction:column; line-height:1.25;}
+  #topbar .title-block .line-name{font-size:11px; letter-spacing:.5px; color:var(--amber); font-weight:700;}
+  #topbar .title-block h1{font-size:17px; margin:0; font-weight:900;}
+  #topbar .count-pill{
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25);
+    border-radius:20px; padding:6px 12px; font-family:'Roboto Mono',monospace; font-weight:700; font-size:13px;
+    display:flex; align-items:center; gap:6px;
+  }
+  #topbar .count-pill .num{color:var(--amber); font-size:15px;}
+
+  /* ---------- View switch tabs ---------- */
+  #viewtabs{
+    display:flex; flex-shrink:0; background:var(--navy-deep); z-index:20;
+  }
+  #viewtabs button{
+    flex:1; border:none; background:transparent; color:rgba(255,255,255,.55);
+    font-family:'Noto Sans KR',sans-serif; font-weight:700; font-size:13px;
+    padding:10px 0; cursor:pointer; border-bottom:3px solid transparent;
+  }
+  #viewtabs button.active{color:var(--white); border-bottom-color:var(--amber);}
+
+  /* ---------- Map view ---------- */
+  #mapview{position:relative; flex:1; min-height:0; display:none;}
+  #mapview.active{display:block;}
+  #map{width:100%; height:100%;}
+
+  #gpsbadge{
+    position:absolute; top:12px; left:12px; z-index:10;
+    background:rgba(18,24,44,.92); color:var(--white); border-radius:10px;
+    padding:8px 12px; font-family:'Roboto Mono',monospace; font-size:12px;
+    display:flex; flex-direction:column; gap:2px; min-width:130px;
+    border-left:4px solid var(--ok);
+  }
+  #gpsbadge.bad{border-left-color:var(--warn);}
+  #gpsbadge .acc-label{font-size:10px; color:rgba(255,255,255,.6); letter-spacing:.5px;}
+  #gpsbadge .acc-val{font-size:16px; font-weight:700;}
+  #gpsbadge .acc-val.bad{color:#ff8a75;}
+  #gpsbadge .acc-val.good{color:#7CE3A5;}
+
+  #modebar{
+    position:absolute; top:12px; right:12px; z-index:10;
+    background:rgba(18,24,44,.92); border-radius:10px; padding:4px; display:flex; gap:2px;
+  }
+  #modebar button{
+    border:none; background:transparent; color:rgba(255,255,255,.6); font-size:11px; font-weight:700;
+    padding:8px 10px; border-radius:7px; font-family:'Noto Sans KR',sans-serif;
+  }
+  #modebar button.active{background:var(--amber); color:var(--navy-deep);}
+
+  #recenterbtn{
+    position:absolute; bottom:110px; right:14px; z-index:10;
+    width:46px; height:46px; border-radius:50%; border:none;
+    background:var(--white); box-shadow:0 2px 8px rgba(0,0,0,.3);
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+  }
+
+  #recordbtn{
+    position:absolute; left:50%; bottom:24px; transform:translateX(-50%); z-index:10;
+    background:var(--amber); color:var(--navy-deep); border:none;
+    font-family:'Noto Sans KR',sans-serif; font-weight:900; font-size:16px;
+    padding:16px 34px; border-radius:30px; box-shadow:0 4px 14px rgba(0,0,0,.35);
+    display:flex; align-items:center; gap:8px;
+  }
+  #recordbtn:active{transform:translateX(-50%) scale(.96);}
+  #recordbtn .sub{display:block; font-size:10px; font-weight:500; opacity:.75; margin-top:1px;}
+
+  .pin-tooltip{
+    background:var(--navy); color:var(--white); font-family:'Roboto Mono',monospace;
+    font-weight:700; font-size:11px; padding:2px 6px; border-radius:4px;
+  }
+
+  /* ---------- List view ---------- */
+  #listview{flex:1; min-height:0; display:none; flex-direction:column; background:var(--concrete);}
+  #listview.active{display:flex;}
+  #listtoolbar{
+    display:flex; gap:8px; padding:12px 14px; background:var(--white); border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  #listtoolbar .stat{
+    flex:1; background:var(--concrete); border-radius:8px; padding:8px 10px; text-align:center;
+  }
+  #listtoolbar .stat .n{font-family:'Roboto Mono',monospace; font-weight:700; font-size:18px; color:var(--navy);}
+  #listtoolbar .stat .l{font-size:10px; color:#666; margin-top:2px;}
+  #exportbtn{
+    background:var(--navy); color:var(--white); border:none; border-radius:8px;
+    padding:0 18px; font-family:'Noto Sans KR',sans-serif; font-weight:700; font-size:13px;
+    display:flex; align-items:center; gap:6px;
+  }
+
+  #rows{flex:1; overflow-y:auto; padding:10px 14px 90px;}
+  .row-card{
+    background:var(--white); border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px;
+  }
+  .row-card .no{
+    width:34px; height:34px; border-radius:50%; background:var(--navy); color:var(--white);
+    display:flex; align-items:center; justify-content:center; font-family:'Roboto Mono',monospace;
+    font-weight:700; font-size:13px; flex-shrink:0;
+  }
+  .row-card .info{flex:1; min-width:0;}
+  .row-card .coords{font-family:'Roboto Mono',monospace; font-size:11.5px; color:#555;}
+  .row-card .meta{font-size:11px; color:#999; margin-top:2px;}
+  .row-card .depth{
+    font-family:'Roboto Mono',monospace; font-weight:700; font-size:19px; color:var(--navy);
+    display:flex; align-items:baseline; gap:2px;
+  }
+  .row-card .depth .unit{font-size:11px; font-weight:500; color:#888;}
+  .row-card .del{
+    border:none; background:transparent; color:#bbb; font-size:18px; padding:4px 6px; flex-shrink:0;
+  }
+  #empty{
+    text-align:center; color:#999; padding:60px 30px; font-size:14px; line-height:1.6;
+  }
+
+  /* ---------- Modal ---------- */
+  #overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:50; display:none;
+    align-items:flex-end;
+  }
+  #overlay.show{display:flex;}
+  #sheet{
+    background:var(--white); width:100%; border-radius:18px 18px 0 0; padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+    animation:slideup .18s ease-out;
+  }
+  @keyframes slideup{from{transform:translateY(100%);} to{transform:translateY(0);}}
+  #sheet .handle{width:36px; height:4px; background:var(--line); border-radius:2px; margin:0 auto 16px;}
+  #sheet h2{margin:0 0 4px; font-size:16px; font-weight:900;}
+  #sheet .sheet-sub{font-family:'Roboto Mono',monospace; font-size:12px; color:#777; margin-bottom:18px;}
+  #sheet .field-label{font-size:12px; font-weight:700; color:var(--navy); margin-bottom:8px;}
+  #depthinput{
+    width:100%; border:2px solid var(--navy); border-radius:12px; padding:16px;
+    font-family:'Roboto Mono',monospace; font-size:26px; font-weight:700; text-align:center;
+    color:var(--navy); background:var(--concrete);
+  }
+  #depthinput:focus{outline:none; border-color:var(--amber);}
+  #sheet .unit-label{text-align:center; color:#888; font-size:12px; margin-top:6px;}
+  #sheet .sheet-actions{display:flex; gap:10px; margin-top:20px;}
+  #sheet .sheet-actions button{
+    flex:1; border:none; border-radius:12px; padding:15px 0; font-family:'Noto Sans KR',sans-serif;
+    font-weight:700; font-size:15px;
+  }
+  #cancelbtn{background:var(--concrete); color:#666;}
+  #savebtn{background:var(--amber); color:var(--navy-deep);}
+
+  #toast{
+    position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+    background:var(--navy-deep); color:var(--white); padding:10px 20px; border-radius:20px;
+    font-size:13px; z-index:60; opacity:0; pointer-events:none; transition:opacity .2s;
+  }
+  #toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="topbar">
+    <div class="title-block">
+      <span class="line-name">통신관 1호선</span>
+      <h1>심도측정</h1>
+    </div>
+    <div class="count-pill">지점 <span class="num" id="topcount">0</span></div>
+  </div>
+
+  <div id="viewtabs">
+    <button id="tab-map" class="active">지도</button>
+    <button id="tab-list">목록 · 내보내기</button>
+  </div>
+
+  <!-- MAP VIEW -->
+  <div id="mapview" class="active">
+    <div id="map"></div>
+
+    <div id="gpsbadge">
+      <span class="acc-label">GPS 정확도</span>
+      <span class="acc-val" id="accval">측정 중…</span>
+    </div>
+
+    <div id="modebar">
+      <button id="mode-gps" class="active">현재위치</button>
+      <button id="mode-tap">지도 탭</button>
+    </div>
+
+    <button id="recenterbtn">🎯</button>
+
+    <button id="recordbtn">
+      <span>
+        📍 여기 기록
+        <span class="sub" id="recordsub">현재 GPS 위치 저장</span>
+      </span>
+    </button>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="listview">
+    <div id="listtoolbar">
+      <div class="stat"><div class="n" id="statcount">0</div><div class="l">기록 지점</div></div>
+      <div class="stat"><div class="n" id="statavg">-</div><div class="l">평균 깊이(m)</div></div>
+      <button id="exportbtn">⬇ 엑셀 저장</button>
+    </div>
+    <div id="rows"></div>
+  </div>
+
+</div>
+
+<!-- Bottom sheet: depth input -->
+<div id="overlay">
+  <div id="sheet">
+    <div class="handle"></div>
+    <h2 id="sheetTitle">관리번호 1</h2>
+    <div class="sheet-sub" id="sheetCoords">위도 0.000000 · 경도 0.000000</div>
+    <div class="field-label">매설 깊이 입력</div>
+    <input type="number" inputmode="decimal" id="depthinput" placeholder="0.0" step="0.1" min="0">
+    <div class="unit-label">단위: m (미터)</div>
+    <div class="sheet-actions">
+      <button id="cancelbtn">취소</button>
+      <button id="savebtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ===================== 상태 ===================== */
+const STORAGE_KEY = 'simdo_points_line1';
+let points = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let map, liveMarker, accCircle, pendingLatLng = null;
+let currentAccuracy = null;
+let mode = 'gps'; // 'gps' | 'tap'
+let markers = [];
+
+/* ===================== 초기화 ===================== */
+function initMap(){
+  const start = points.length ? {lat:points[points.length-1].lat, lng:points[points.length-1].lng} : {lat:36.5, lng:127.8};
+  map = new google.maps.Map(document.getElementById('map'), {
+    center:start, zoom:19, mapTypeId:'satellite', disableDefaultUI:true,
+    gestureHandling:'greedy', tilt:0
+  });
+
+  map.addListener('click', (e)=>{
+    if(mode !== 'tap') return;
+    openSheet(e.latLng.lat(), e.latLng.lng());
+  });
+
+  redrawMarkers();
+  startWatchingPosition();
+}
+
+function startWatchingPosition(){
+  if(!navigator.geolocation){
+    document.getElementById('accval').textContent = '미지원';
+    return;
+  }
+  navigator.geolocation.watchPosition((pos)=>{
+    const {latitude, longitude, accuracy} = pos.coords;
+    currentAccuracy = accuracy;
+    updateGpsBadge(accuracy);
+    updateLiveMarker(latitude, longitude, accuracy);
+  }, (err)=>{
+    document.getElementById('accval').textContent = '위치 확인 불가';
+  }, {enableHighAccuracy:true, maximumAge:1000, timeout:15000});
+}
+
+function updateGpsBadge(accuracy){
+  const badge = document.getElementById('gpsbadge');
+  const val = document.getElementById('accval');
+  const ok = accuracy <= 1.5;
+  val.textContent = accuracy.toFixed(1) + ' m';
+  val.className = 'acc-val ' + (ok ? 'good' : 'bad');
+  badge.className = ok ? '' : 'bad';
+}
+
+function updateLiveMarker(lat,lng,accuracy){
+  const pos = {lat,lng};
+  if(!liveMarker){
+    liveMarker = new google.maps.Marker({
+      position:pos, map,
+      icon:{path:google.maps.SymbolPath.CIRCLE, scale:8, fillColor:'#4285F4', fillOpacity:1, strokeColor:'#fff', strokeWeight:2}
+    });
+    accCircle = new google.maps.Circle({
+      map, center:pos, radius:accuracy, fillColor:'#4285F4', fillOpacity:.15, strokeColor:'#4285F4', strokeOpacity:.4, strokeWeight:1
+    });
+  } else {
+    liveMarker.setPosition(pos);
+    accCircle.setCenter(pos);
+    accCircle.setRadius(accuracy);
+  }
+}
+
+/* ===================== 모드 전환 ===================== */
+document.getElementById('mode-gps').onclick = ()=> setMode('gps');
+document.getElementById('mode-tap').onclick = ()=> setMode('tap');
+function setMode(m){
+  mode = m;
+  document.getElementById('mode-gps').classList.toggle('active', m==='gps');
+  document.getElementById('mode-tap').classList.toggle('active', m==='tap');
+  const recordbtn = document.getElementById('recordbtn');
+  const sub = document.getElementById('recordsub');
+  if(m === 'gps'){
+    recordbtn.style.display = 'flex';
+    sub.textContent = '현재 GPS 위치 저장';
+  } else {
+    recordbtn.style.display = 'none';
+    sub.textContent = '지도를 탭해 지점 저장';
+  }
+}
+
+/* ===================== 기록 버튼 (GPS 모드) ===================== */
+document.getElementById('recordbtn').onclick = ()=>{
+  navigator.geolocation.getCurrentPosition((pos)=>{
+    const {latitude, longitude, accuracy} = pos.coords;
+    if(accuracy > 3){
+      showToast('정확도 ' + accuracy.toFixed(1) + 'm — 신호가 약해요. 잠시 후 다시 시도해보세요.');
+    }
+    openSheet(latitude, longitude, accuracy);
+  }, ()=>{
+    showToast('위치를 가져올 수 없습니다.');
+  }, {enableHighAccuracy:true, timeout:10000});
+};
+
+document.getElementById('recenterbtn').onclick = ()=>{
+  navigator.geolocation.getCurrentPosition((pos)=>{
+    map.panTo({lat:pos.coords.latitude, lng:pos.coords.longitude});
+    map.setZoom(20);
+  });
+};
+
+/* ===================== 바텀시트 ===================== */
+function openSheet(lat, lng, accuracy){
+  pendingLatLng = {lat, lng, accuracy};
+  const nextNo = points.length + 1;
+  document.getElementById('sheetTitle').textContent = '관리번호 ' + nextNo;
+  document.getElementById('sheetCoords').textContent =
+    '위도 ' + lat.toFixed(6) + ' · 경도 ' + lng.toFixed(6) + (accuracy ? ' · 정확도 ' + accuracy.toFixed(1) + 'm' : '');
+  document.getElementById('depthinput').value = '';
+  document.getElementById('overlay').classList.add('show');
+  setTimeout(()=> document.getElementById('depthinput').focus(), 200);
+}
+function closeSheet(){
+  document.getElementById('overlay').classList.remove('show');
+  pendingLatLng = null;
+}
+document.getElementById('cancelbtn').onclick = closeSheet;
+document.getElementById('overlay').onclick = (e)=>{ if(e.target.id==='overlay') closeSheet(); };
+
+document.getElementById('savebtn').onclick = ()=>{
+  const depth = parseFloat(document.getElementById('depthinput').value);
+  if(isNaN(depth) || depth < 0){
+    showToast('깊이를 입력해주세요.');
+    return;
+  }
+  const p = {
+    no: points.length + 1,
+    lat: pendingLatLng.lat,
+    lng: pendingLatLng.lng,
+    depth: depth,
+    time: new Date().toISOString()
+  };
+  points.push(p);
+  save();
+  redrawMarkers();
+  closeSheet();
+  showToast('관리번호 ' + p.no + ' 저장됨 (깊이 ' + depth + 'm)');
+};
+
+/* ===================== 마커 / 저장 ===================== */
+function redrawMarkers(){
+  markers.forEach(m=>m.setMap(null));
+  markers = [];
+  points.forEach(p=>{
+    const marker = new google.maps.Marker({
+      position:{lat:p.lat, lng:p.lng}, map,
+      label:{text:String(p.no), color:'#fff', fontWeight:'700', fontSize:'11px'},
+      icon:{path:google.maps.SymbolPath.CIRCLE, scale:13, fillColor:'#F4A300', fillOpacity:1, strokeColor:'#1C2541', strokeWeight:2}
+    });
+    marker.addListener('click', ()=>{
+      showToast('관리번호 ' + p.no + ' · 깊이 ' + p.depth + 'm');
+    });
+    markers.push(marker);
+  });
+  document.getElementById('topcount').textContent = points.length;
+}
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(points));
+}
+
+/* ===================== 탭 전환 ===================== */
+document.getElementById('tab-map').onclick = ()=> switchView('map');
+document.getElementById('tab-list').onclick = ()=> switchView('list');
+function switchView(v){
+  document.getElementById('tab-map').classList.toggle('active', v==='map');
+  document.getElementById('tab-list').classList.toggle('active', v==='list');
+  document.getElementById('mapview').classList.toggle('active', v==='map');
+  document.getElementById('listview').classList.toggle('active', v==='list');
+  if(v==='list') renderList();
+  if(v==='map' && map) google.maps.event.trigger(map, 'resize');
+}
+
+/* ===================== 목록 뷰 ===================== */
+function renderList(){
+  const rowsEl = document.getElementById('rows');
+  document.getElementById('statcount').textContent = points.length;
+  const avg = points.length ? (points.reduce((s,p)=>s+p.depth,0)/points.length).toFixed(2) : '-';
+  document.getElementById('statavg').textContent = avg;
+
+  if(points.length === 0){
+    rowsEl.innerHTML = '<div id="empty">아직 기록된 지점이 없습니다.<br>지도 탭에서 현장을 다니며 지점을 기록해보세요.</div>';
+    return;
+  }
+
+  rowsEl.innerHTML = points.map((p, idx)=>{
+    const d = new Date(p.time);
+    const timeStr = d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    return `<div class="row-card">
+      <div class="no">${p.no}</div>
+      <div class="info">
+        <div class="coords">${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}</div>
+        <div class="meta">${timeStr}</div>
+      </div>
+      <div class="depth">${p.depth}<span class="unit">m</span></div>
+      <button class="del" data-idx="${idx}">✕</button>
+    </div>`;
+  }).join('');
+
+  rowsEl.querySelectorAll('.del').forEach(btn=>{
+    btn.onclick = ()=>{
+      if(confirm('이 지점을 삭제할까요?')){
+        points.splice(parseInt(btn.dataset.idx),1);
+        points.forEach((p,i)=> p.no = i+1); // 번호 재정렬
+        save();
+        redrawMarkers();
+        renderList();
+      }
+    };
+  });
+}
+
+/* ===================== 엑셀 내보내기 ===================== */
+document.getElementById('exportbtn').onclick = ()=>{
+  if(points.length === 0){ showToast('내보낼 데이터가 없습니다.'); return; }
+  const data = points.map(p=>{
+    const d = new Date(p.time);
+    const timeStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
+    return {
+      '관리번호': p.no,
+      '위도': p.lat,
+      '경도': p.lng,
+      '깊이(m)': p.depth,
+      '측정일시': timeStr
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws['!cols'] = [{wch:10},{wch:14},{wch:14},{wch:10},{wch:18}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '심도측정');
+  const now = new Date();
+  const fname = '통신관심도측정_' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '.xlsx';
+  XLSX.writeFile(wb, fname);
+  showToast('엑셀 파일이 저장되었습니다.');
+};
+
+/* ===================== 토스트 ===================== */
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* ===================== PWA ===================== */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8E66BX1Y1gMODM6qLthLjlFtTwlr114w&callback=initMap" async defer></script>
+</body>
+</html>
