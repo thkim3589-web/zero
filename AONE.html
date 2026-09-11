@@ -511,6 +511,37 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+
+/* ===================== 지도 오류 화면 표시 (모바일 디버깅용) ===================== */
+function showMapError(title, detail){
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;inset:0;z-index:999;background:#12182c;color:#fff;'
+    +'display:flex;flex-direction:column;align-items:center;justify-content:center;'
+    +'padding:30px;text-align:center;font-family:sans-serif;';
+  box.innerHTML = '<div style="font-size:40px;margin-bottom:12px;">⚠️</div>'
+    + '<div style="font-size:17px;font-weight:700;color:#F4A300;margin-bottom:10px;">'+title+'</div>'
+    + '<div style="font-size:13px;line-height:1.6;color:#ccc;max-width:320px;">'+detail+'</div>';
+  document.body.appendChild(box);
+}
+
+// 구글맵 자체 인증 실패 콜백 (결제 미등록 / 키 제한 / API 미활성화 시 자동 호출됨)
+window.gm_authFailure = function(){
+  showMapError(
+    '구글맵 인증 실패',
+    '아래 3가지 중 하나가 원인입니다.<br><br>'
+    + '① Google Cloud Console에 결제 계정이 연결되지 않음<br>'
+    + '② API 키에 이 사이트 도메인이 허용되어 있지 않음<br>'
+    + '③ "Maps JavaScript API"가 활성화되지 않음<br><br>'
+    + 'console.cloud.google.com 에서 결제 → API 및 서비스 → 사용자 인증정보 순서로 확인해주세요.'
+  );
+};
+
+// 스크립트 자체가 로드 실패한 경우 (네트워크 차단, 키 오타 등)
+window.addEventListener('error', function(e){
+  if(e.target && e.target.tagName === 'SCRIPT' && e.target.src && e.target.src.includes('maps.googleapis.com')){
+    showMapError('구글맵 스크립트 로드 실패', '인터넷 연결을 확인하거나, API 키가 정확한지 확인해주세요.');
+  }
+}, true);
 </script>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8E66BX1Y1gMODM6qLthLjlFtTwlr114w&callback=initMap" async defer></script>
