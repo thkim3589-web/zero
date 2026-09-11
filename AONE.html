@@ -287,6 +287,7 @@ let points = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 let map, liveMarker, accCircle, pendingLatLng = null;
 let currentAccuracy = null;
 let mode = 'gps'; // 'gps' | 'tap'
+let lastCableNo = points.length ? (points[points.length-1].cableNo || '') : '';
 let markers = [];
 
 /* ===================== 초기화 ===================== */
@@ -406,7 +407,7 @@ function openSheet(lat, lng, accuracy){
   document.getElementById('sheetCoords').textContent =
     '위도 ' + lat.toFixed(6) + ' · 경도 ' + lng.toFixed(6) + (accuracy ? ' · 정확도 ' + accuracy.toFixed(1) + 'm' : '');
   document.getElementById('depthinput').value = '';
-  document.getElementById('cablenoinput').value = '';
+  document.getElementById('cablenoinput').value = lastCableNo;
   document.getElementById('sheetAddress').textContent = '📍 주소 확인 중…';
   document.getElementById('overlay').classList.add('show');
   setTimeout(()=> document.getElementById('depthinput').focus(), 200);
@@ -446,6 +447,7 @@ document.getElementById('savebtn').onclick = ()=>{
     return;
   }
   const cableNo = document.getElementById('cablenoinput').value.trim();
+  lastCableNo = cableNo;
   const p = {
     no: points.length + 1,
     lat: pendingLatLng.lat,
@@ -540,6 +542,7 @@ document.getElementById('deleteallbtn').onclick = ()=>{
   if(points.length === 0){ showToast('삭제할 데이터가 없습니다.'); return; }
   if(confirm('전체 ' + points.length + '개 지점을 모두 삭제할까요? 되돌릴 수 없습니다.')){
     points = [];
+    lastCableNo = '';
     save();
     redrawMarkers();
     renderList();
