@@ -261,7 +261,7 @@
 <div id="overlay">
   <div id="sheet">
     <div class="handle"></div>
-    <h2 id="sheetTitle">관리번호 1</h2>
+    <h2 id="sheetTitle">순번 1</h2>
     <div class="sheet-sub" id="sheetCoords">위도 0.000000 · 경도 0.000000</div>
     <div class="sheet-sub" id="sheetAddress">📍 주소 확인 중…</div>
 
@@ -402,7 +402,7 @@ document.getElementById('maptypebtn').onclick = ()=>{
 function openSheet(lat, lng, accuracy){
   pendingLatLng = {lat, lng, accuracy};
   const nextNo = points.length + 1;
-  document.getElementById('sheetTitle').textContent = '관리번호 ' + nextNo;
+  document.getElementById('sheetTitle').textContent = '순번 ' + nextNo;
   document.getElementById('sheetCoords').textContent =
     '위도 ' + lat.toFixed(6) + ' · 경도 ' + lng.toFixed(6) + (accuracy ? ' · 정확도 ' + accuracy.toFixed(1) + 'm' : '');
   document.getElementById('depthinput').value = '';
@@ -459,7 +459,7 @@ document.getElementById('savebtn').onclick = ()=>{
   save();
   redrawMarkers();
   closeSheet();
-  showToast('관리번호 ' + p.no + ' 저장됨 (깊이 ' + depth + 'm)');
+  showToast('순번 ' + p.no + ' 저장됨 (깊이 ' + depth + 'm)');
 };
 
 /* ===================== 마커 / 저장 ===================== */
@@ -473,7 +473,7 @@ function redrawMarkers(){
       icon:{path:google.maps.SymbolPath.CIRCLE, scale:13, fillColor:'#F4A300', fillOpacity:1, strokeColor:'#1C2541', strokeWeight:2}
     });
     marker.addListener('click', ()=>{
-      showToast('관리번호 ' + p.no + ' · 깊이 ' + p.depth + 'm');
+      showToast('순번 ' + p.no + ' · 깊이 ' + p.depth + 'm');
     });
     markers.push(marker);
   });
@@ -554,7 +554,7 @@ document.getElementById('exportbtn').onclick = ()=>{
     const d = new Date(p.time);
     const timeStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
     return {
-      '관리번호': p.no,
+      '순번': p.no,
       '통신관로번호': p.cableNo || '',
       '위도': p.lat,
       '경도': p.lng,
