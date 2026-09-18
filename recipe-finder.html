@@ -772,8 +772,8 @@ async function callClaude(key, transcript){
   return JSON.parse(text);
 }
 
-async function callGemini(key, transcript){
-  const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
+async function callGeminiWithModel(model, key, transcript){
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
     body: JSON.stringify({
@@ -786,6 +786,18 @@ async function callGemini(key, transcript){
   const text = (data.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').trim();
   if(!text) throw new Error('응답이 비어있어요. 자막이 너무 길면 줄여서 다시 시도해보세요.');
   return JSON.parse(text);
+}
+
+async function callGemini(key, transcript){
+  try{
+    // 'latest' 별칭을 먼저 시도 — 구글이 모델을 교체해도 자동으로 최신 버전을 가리켜요.
+    return await callGeminiWithModel('gemini-flash-latest', key, transcript);
+  } catch(err){
+    if(/no longer available|not found|not supported/i.test(err.message)){
+      return await callGeminiWithModel('gemini-3.6-flash', key, transcript);
+    }
+    throw err;
+  }
 }
 
 // 저장된 레시피를 API 재호출 없이 그대로 보여줄 때 사용
