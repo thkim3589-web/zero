@@ -28,7 +28,7 @@
   --warn:#f0a35a; --warn-soft:#3a2614; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans);-webkit-tap-highlight-color:transparent;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans);word-break:keep-all;overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
 [hidden]{display:none!important}
 button,input{font:inherit;color:inherit}
@@ -467,11 +467,12 @@ window.onAndroidBack=()=>{const L=$('layer');if(L.lastElementChild){L.lastElemen
 async function shareLink(){const url=location.href.split('#')[0];
   if(navigator.share&&/^https?:/.test(url)){try{await navigator.share({title:'기계기구 점검사진',text:'유해위험 기계기구 점검사진 정리 앱',url});return}catch(e){if(e&&e.name==='AbortError')return}}
   try{await navigator.clipboard.writeText(url);toast('앱 링크를 복사했어요')}catch(e){sheet(`<h3>앱 링크</h3><p style="user-select:all">${esc(url)}</p><button class="btn ghost" data-a="x">닫기</button>`,(el,c)=>el.addEventListener('click',ev=>ev.target.dataset.a&&c()))}}
-function openMenu(){sheet(`<h3>메뉴</h3><p>${esc(P.fileName)}</p><button class="btn ghost" data-a="who">작성자 변경</button>${window.AndroidBridge?'':'<button class="btn ghost" data-a="link">앱 링크 공유</button>'}<button class="btn ghost" data-a="new">다른 엑셀 불러오기</button><button class="btn ghost" data-a="clr">사진 모두 지우기</button><button class="btn ghost" data-a="x">닫기</button>`,
+function openMenu(){sheet(`<h3>메뉴</h3><p>${esc(P.fileName)}</p><button class="btn ghost" data-a="who">작성자 변경</button>${window.AndroidBridge?'':'<button class="btn ghost" data-a="link">앱 링크 공유</button>'}<button class="btn ghost" data-a="new">다른 엑셀 불러오기</button><button class="btn ghost" data-a="upd">업데이트 확인 (현재 v${APP_VERSION})</button><button class="btn ghost" data-a="clr">사진 모두 지우기</button><button class="btn ghost" data-a="x">닫기</button>`,
   (el,c)=>el.addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;c();
     if(a==='who')pickAuthor();
     else if(a==='link')shareLink();
     else if(a==='new'){$('xlsxIn').value='';$('xlsxIn').click()}
+    else if(a==='upd')checkUpdate(true);
     else if(a==='clr')sheet(`<h3>사진을 모두 지울까요?</h3><p>찍어둔 사진 ${have.size}장이 삭제돼요. 되돌릴 수 없어요.</p><div class="row"><button class="btn ghost" data-a="x">취소</button><button class="btn danger" data-a="ok">모두 지우기</button></div>`,(el2,c2)=>el2.addEventListener('click',async e2=>{const b=e2.target.dataset.a;if(!b)return;c2();if(b==='ok'){await dclear('photos');for(const u of urls.values())URL.revokeObjectURL(u);urls.clear();have.clear();renderAll();toast('사진을 모두 지웠어요')}}))}))}
 
 /* ---------- events ---------- */
@@ -495,7 +496,31 @@ $('list').addEventListener('click',e=>{const card=e.target.closest('.item');if(!
     const n=card.querySelector('.note');n.hidden=st.result!=='불량';if(!n.hidden)n.focus()}});
 $('list').addEventListener('input',e=>{if(!e.target.classList.contains('note'))return;const it=itemByNo(e.target.closest('.item').dataset.no);P.status[it.no].note=e.target.value;saveMeta()});
 
-(async function init(){try{const p=await dget('meta','project'),b=await dget('meta','buf');if(p&&b){P=p;BUF=b;for(const k of await dkeys('photos'))have.add(k)}}catch(e){}renderAll()})();
+
+/* ---------- update check ---------- */
+const APP_VERSION='1.6', APP_CODE=7;
+const UPDATE_URL='https://thkim3589-web.github.io/zero/apk/version.json';
+let updShown=false, lastCheck=0;
+async function checkUpdate(manual){
+  lastCheck=Date.now();
+  let info;
+  try{const r=await fetch(UPDATE_URL+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;info=await r.json()}
+  catch(e){if(manual)toast('업데이트 정보를 확인하지 못했어요. 인터넷 연결을 확인해주세요.');return}
+  if(!(info&&+info.code>APP_CODE)){if(manual)toast(`최신 버전이에요 (v${APP_VERSION})`);return}
+  if(updShown&&!manual)return;updShown=true;
+  const isApp=!!window.AndroidBridge;
+  const notes=(info.notes||[]).map(n=>`<li>${esc(n)}</li>`).join('');
+  sheet(`<h3>새 버전이 나왔어요</h3><p>v${esc(APP_VERSION)} → <b style="color:var(--accent)">v${esc(info.version)}</b></p>
+    ${notes?`<ul style="margin:0;padding-left:20px;color:var(--muted);font-size:14px;display:grid;gap:2px">${notes}</ul>`:''}
+    <p style="font-size:13px">${isApp?'업데이트를 누르면 새 APK를 받아요. 받은 파일을 눌러 설치하면 찍어둔 사진은 그대로 남아요.':'업데이트를 누르면 새 버전으로 다시 열려요. 찍어둔 사진은 그대로 남아요.'}</p>
+    <div class="row"><button class="btn ghost" data-a="x">나중에</button>${isApp?`<a class="btn primary" style="display:grid;place-items:center;text-decoration:none" href="${esc(info.apk)}" data-a="go">업데이트</a>`:'<button class="btn primary" data-a="reload">업데이트</button>'}</div>`,
+    (el,c)=>el.addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;
+      if(a==='reload'){location.replace(location.pathname+'?v='+info.code)}
+      else if(a==='go'){setTimeout(c,300)}
+      else c()}));
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCheck>3*3600e3)checkUpdate(false)});
+(async function init(){try{const p=await dget('meta','project'),b=await dget('meta','buf');if(p&&b){P=p;BUF=b;for(const k of await dkeys('photos'))have.add(k)}}catch(e){}renderAll();setTimeout(()=>checkUpdate(false),1500)})();
 </script>
 </body>
 </html>
