@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>기계기구 점검사진</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#1d5c45">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;600;700&display=swap">
+<style>
+/* Layout: sticky progress header, one-column inspection cards, fixed save bar */
+:root{
+  --bg:#eef2ee; --surface:#ffffff; --fg:#16201b; --muted:#5b6b62; --line:#d6dfd8;
+  --accent:#1d5c45; --accent-soft:#dcebe3; --on-accent:#ffffff;
+  --warn:#b0500c; --warn-soft:#fbe9da;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1411; --surface:#17201b; --fg:#e3ebe6; --muted:#93a39a; --line:#2a362f;
+  --accent:#4dbb88; --accent-soft:#1c3a2d; --on-accent:#08130d;
+  --warn:#f0a35a; --warn-soft:#3a2614; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1411; --surface:#17201b; --fg:#e3ebe6; --muted:#93a39a; --line:#2a362f;
+  --accent:#4dbb88; --accent-soft:#1c3a2d; --on-accent:#08130d;
+  --warn:#f0a35a; --warn-soft:#3a2614; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans);-webkit-tap-highlight-color:transparent;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+[hidden]{display:none!important}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{padding-block:12px 10px;display:grid;gap:8px}
+header.top .wrap>*{min-width:0}
+.brand h1{flex:none}
+.brand .iconbtn{flex:none}
+.brand{display:flex;align-items:center;gap:10px}
+.brand h1{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em}
+.brand .file{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.iconbtn{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 10px;font-size:13px}
+.prog{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.prog b{font-family:var(--mono);color:var(--fg);font-weight:500;font-variant-numeric:tabular-nums}
+
+.controls{display:grid;gap:10px;padding-block:14px 6px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:grid;gap:4px;min-width:0}
+.field label{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.who{display:flex;gap:6px;margin:0}.who input{flex:1;min-width:0}.who .iconbtn{flex:none;background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.field input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;min-height:42px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.chip small{font-family:var(--mono);opacity:.75;margin-left:4px}
+.toggles{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.toggles label{display:flex;align-items:center;gap:6px}
+
+.list{display:grid;gap:12px;padding-block:8px 20px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:10px}
+.item.done{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.item.bad{border-color:var(--warn)}
+.item .hd{display:flex;align-items:center;gap:10px}
+.no{font-family:var(--mono);font-size:13px;min-width:30px;height:30px;display:grid;place-items:center;border-radius:6px;background:var(--bg);color:var(--muted);font-variant-numeric:tabular-nums}
+.item.done .no{background:var(--accent);color:var(--on-accent)}
+.nm{flex:1;min-width:0;display:grid}
+.nm b{font-weight:600;overflow-wrap:anywhere}
+.nm small{color:var(--muted);font-size:12px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.seg button{border:0;background:transparent;padding:6px 10px;font-size:13px}
+.seg button[aria-pressed="true"][data-res="양호"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.seg button[aria-pressed="true"][data-res="불량"]{background:var(--warn-soft);color:var(--warn);font-weight:600}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slot{position:relative;border:1.5px dashed var(--line);background:var(--bg);border-radius:10px;aspect-ratio:1/1;max-width:100%;padding:0;overflow:hidden;display:grid;place-items:center;color:var(--muted);font-size:12px}
+.slot.has{border-style:solid;border-color:transparent}
+.slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;background:#1b211e}
+.slot .lbl{z-index:1}
+.slot .add{display:grid;justify-items:center;gap:2px}
+.slot .add span:first-child{font-size:22px;line-height:1}
+.slot .lbl{position:absolute;left:6px;top:6px;font-size:11px;padding:2px 6px;border-radius:4px;background:color-mix(in srgb,var(--surface) 85%,transparent);color:var(--fg)}
+.note{width:100%;border:1px solid var(--warn);background:var(--warn-soft);border-radius:8px;padding:9px 10px}
+.empty-list{color:var(--muted);text-align:center;padding:40px 0}
+
+.start{padding-block:32px;display:grid;gap:20px}
+.start h2{margin:0;font-size:22px;text-wrap:balance}
+.start p{margin:0;color:var(--muted);max-width:60ch}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:s}
+.steps li{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+.steps li::before{counter-increment:s;content:counter(s);font-family:var(--mono);width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:6px;background:var(--accent-soft);color:var(--accent);font-size:13px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:24px;text-align:center;display:grid;gap:10px;justify-items:center;background:var(--surface)}
+.drop.over{border-color:var(--accent)}
+
+.btn{border:0;border-radius:10px;padding:12px 18px;font-weight:600;min-height:48px}
+.btn.primary{background:var(--accent);color:var(--on-accent)}
+.btn.ghost{background:transparent;border:1px solid var(--line)}
+.btn.danger{background:var(--warn);color:var(--surface)}
+.btn:disabled{opacity:.5}
+
+.savebar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.savebar .wrap{padding-block:10px;display:flex;gap:10px}
+.savebar .btn.primary{flex:2}.savebar .btn.ghost{flex:1}
+
+.sheet-bg{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:520px;border-radius:16px 16px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;gap:10px}
+.sheet h3{margin:0;font-size:16px}
+.sheet p{margin:0;color:var(--muted);font-size:14px;overflow-wrap:anywhere}
+.sheet .row{display:flex;gap:10px}
+.sheet .row .btn{flex:1}
+.viewer{position:fixed;inset:0;z-index:50;background:#000;display:grid;grid-template-rows:1fr auto}
+.viewer img{width:100%;height:100%;object-fit:contain;min-height:0}
+.viewer .row{display:flex;gap:10px;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.viewer .row .btn{flex:1;background:#222;color:#fff}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;z-index:60;max-width:90vw}
+.busy{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.4);display:grid;place-items:center;color:#fff;font-weight:600}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>기계기구 점검사진</h1>
+      <span class="file" id="fileLabel"></span>
+      <button class="iconbtn" id="menuBtn" hidden>메뉴</button>
+    </div>
+    <div class="prog" id="progRow" hidden>
+      <span>완료</span><div class="bar"><i id="barFill"></i></div><b id="progText">0/0</b>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="start" id="start">
+    <div style="display:grid;gap:8px">
+      <h2>점검 엑셀을 불러와서 사진대지를 채워요</h2>
+      <p>"사진대지" 시트의 품목마다 점검사진과 필증사진을 찍으면, 압축해서 엑셀 칸에 맞춰 넣어 저장해요.</p>
+    </div>
+    <ol class="steps">
+      <li>유해위험 기계기구 정기점검 엑셀(.xlsx)을 불러옵니다.</li>
+      <li>사용자 이름을 입력하면 대상 품목만 나옵니다. 품목별로 공도구 점검사진과 필증사진을 찍고, 불량이면 처리내역을 적습니다.</li>
+      <li>엑셀 저장을 누르면 "제목_월_작성자.xlsx"로 저장됩니다.</li>
+    </ol>
+    <div class="drop" id="drop">
+      <button class="btn primary" id="pickBtn">엑셀 불러오기</button>
+      <small style="color:var(--muted)">또는 파일을 여기로 끌어다 놓기</small>
+    </div>
+  </section>
+
+  <section id="work" hidden>
+    <div class="controls">
+      <div class="fields">
+        <div class="field"><label for="dateIn">점검일자</label><input type="date" id="dateIn"></div>
+        <div class="field"><label for="authorIn">작성자</label><form class="who" id="whoForm"><input id="authorIn" placeholder="이름 입력" autocomplete="name" enterkeyhint="search"><button class="iconbtn" type="submit">조회</button></form></div>
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="onlyTodo"> 미완료만 보기</label>
+      </div>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+</main>
+
+<div class="savebar" id="savebar" hidden>
+  <div class="wrap"><button class="btn ghost" id="shareBtn">공유</button><button class="btn primary" id="saveBtn">엑셀 저장</button></div>
+</div>
+
+<input type="file" id="xlsxIn" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+<input type="file" id="camIn" accept="image/*" capture="environment" hidden>
+<input type="file" id="galIn" accept="image/*" hidden>
+<div id="layer"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+"use strict";
+const NS_R='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+const NS_PR='http://schemas.openxmlformats.org/package/2006/relationships';
+const NS_CT='http://schemas.openxmlformats.org/package/2006/content-types';
+const MAX_PX=1024, JPG_Q=0.8;
+const $=id=>document.getElementById(id);
+
+/* ---------- storage ---------- */
+let dbp;
+function db(){if(!dbp)dbp=new Promise((res,rej)=>{const r=indexedDB.open('inspect-photo',1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('meta');d.createObjectStore('photos');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});return dbp;}
+async function idb(store,mode,fn){const d=await db();return new Promise((res,rej)=>{const tx=d.transaction(store,mode);const req=fn(tx.objectStore(store));let out;if(req)req.onsuccess=()=>{out=req.result};tx.oncomplete=()=>res(out);tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error);});}
+const dget=(s,k)=>idb(s,'readonly',o=>o.get(k)).catch(()=>undefined);
+const dput=(s,k,v)=>idb(s,'readwrite',o=>o.put(v,k)).catch(e=>{console.warn(e);toast('저장 공간이 부족해요. 오래된 데이터를 지워주세요.');});
+const ddel=(s,k)=>idb(s,'readwrite',o=>o.delete(k)).catch(()=>{});
+const dclear=s=>idb(s,'readwrite',o=>o.clear()).catch(()=>{});
+const dkeys=s=>idb(s,'readonly',o=>o.getAllKeys()).catch(()=>[]);
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+/* ---------- xml helpers ---------- */
+const parseXml=s=>new DOMParser().parseFromString(s,'application/xml');
+const ser=d=>new XMLSerializer().serializeToString(d);
+const byTag=(el,t)=>Array.from(el.getElementsByTagNameNS('*',t));
+const colNum=c=>{let n=0;for(const ch of c)n=n*26+ch.charCodeAt(0)-64;return n};
+const colName=n=>{let s='';while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
+const splitRef=r=>{const m=/^\$?([A-Z]+)\$?(\d+)$/.exec(r);return m?{col:colNum(m[1]),row:+m[2]}:null};
+const dirOf=p=>p.slice(0,p.lastIndexOf('/')+1);
+const relsPathOf=p=>dirOf(p)+'_rels/'+p.slice(p.lastIndexOf('/')+1)+'.rels';
+function resolvePath(base,t){if(t.startsWith('/'))return t.slice(1);const out=[];for(const p of (base+t).split('/')){if(p==='..')out.pop();else if(p!=='.'&&p!=='')out.push(p)}return out.join('/')}
+async function readRels(zip,p){const f=zip.file(relsPathOf(p));if(!f)return[];const d=parseXml(await f.async('string'));return byTag(d,'Relationship').filter(r=>r.getAttribute('TargetMode')!=='External').map(r=>({id:r.getAttribute('Id'),type:r.getAttribute('Type')||'',path:resolvePath(dirOf(p),r.getAttribute('Target'))}))}
+const norm=v=>String(v||'').replace(/\s/g,'');
+
+async function readWorkbook(zip){
+  const wb=parseXml(await zip.file('xl/workbook.xml').async('string'));
+  const rels=await readRels(zip,'xl/workbook.xml');
+  const sheets=byTag(wb,'sheet').map(s=>{const rid=s.getAttributeNS(NS_R,'id')||s.getAttribute('r:id');const rel=rels.find(r=>r.id===rid);return{name:s.getAttribute('name'),path:rel&&rel.path}}).filter(s=>s.path&&zip.file(s.path));
+  let ss=[];const f=zip.file('xl/sharedStrings.xml');
+  if(f){const d=parseXml(await f.async('string'));ss=byTag(d,'si').map(si=>byTag(si,'t').map(t=>t.textContent).join(''))}
+  return{sheets,ss};
+}
+async function readSheet(zip,path,ss){
+  const doc=parseXml(await zip.file(path).async('string'));const rows=new Map();
+  for(const c of byTag(doc,'c')){const rf=splitRef(c.getAttribute('r')||'');if(!rf)continue;const t=c.getAttribute('t');let v='';const ve=byTag(c,'v')[0];
+    if(t==='s')v=ve?(ss[+ve.textContent]||''):'';else if(t==='inlineStr')v=byTag(c,'t').map(x=>x.textContent).join('');else v=ve?ve.textContent:'';
+    if(!rows.has(rf.row))rows.set(rf.row,new Map());rows.get(rf.row).set(rf.col,String(v).trim())}
+  return{doc,rows};
+}
+const sortedRows=rows=>[...rows].sort((a,b)=>a[0]-b[0]);
+function findHeader(rows,needles){for(const[r,cells]of sortedRows(rows)){const vals=[...cells.values()].map(norm);if(needles.every(n=>vals.some(v=>v.includes(n))))return r}return null}
+function colOf(cells,pred){for(const[c,v]of cells)if(pred(norm(v)))return c;return null}
+function colWidths(doc){const cols=byTag(doc,'col').map(c=>({min:+c.getAttribute('min'),max:+c.getAttribute('max'),w:+c.getAttribute('width')}));const f=byTag(doc,'sheetFormatPr')[0];const def=f&&f.getAttribute('defaultColWidth')?+f.getAttribute('defaultColWidth'):8.43;return c=>{const e=cols.find(x=>c>=x.min&&c<=x.max);return e&&e.w?e.w:def}}
+function rowHeights(doc){const m={};for(const r of byTag(doc,'row')){const h=r.getAttribute('ht');if(h)m[+r.getAttribute('r')]=+h}const f=byTag(doc,'sheetFormatPr')[0];const def=f&&f.getAttribute('defaultRowHeight')?+f.getAttribute('defaultRowHeight'):15;return r=>m[r]||def}
+const colPx=(w,mdw)=>Math.floor((w*256+Math.floor(128/mdw))/256*mdw);
+async function digitWidth(zip){const f=zip.file('xl/styles.xml');if(!f)return 7;const s=await f.async('string');const m=/<font>[\s\S]*?<name val="([^"]+)"/.exec(s);return m&&/맑은|Malgun|굴림|돋움|Gulim|Dotum|나눔|Nanum/.test(m[1])?8:7}
+
+/* ---------- images ---------- */
+async function toBitmap(blob){try{return await createImageBitmap(blob,{imageOrientation:'from-image'})}catch(e){return await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=URL.createObjectURL(blob)})}}
+async function compress(blob,stamp){
+  const bmp=await toBitmap(blob);const w0=bmp.width||bmp.naturalWidth,h0=bmp.height||bmp.naturalHeight;
+  const sc=Math.min(1,MAX_PX/Math.max(w0,h0));const c=document.createElement('canvas');c.width=Math.round(w0*sc);c.height=Math.round(h0*sc);
+  const g=c.getContext('2d');g.drawImage(bmp,0,0,c.width,c.height);if(bmp.close)bmp.close();
+  if(stamp){const fs=Math.max(14,Math.round(c.width*0.034));g.font=`600 ${fs}px "Malgun Gothic","Apple SD Gothic Neo",sans-serif`;const pad=Math.round(fs*0.45);const tw=g.measureText(stamp).width;
+    g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,c.height-fs-pad*2,Math.min(c.width,tw+pad*2),fs+pad*2);g.fillStyle='#fff';g.textBaseline='middle';g.fillText(stamp,pad,c.height-pad-fs/2)}
+  return await new Promise(r=>c.toBlob(r,'image/jpeg',JPG_Q));
+}
+async function imgSize(blob){const b=await toBitmap(blob);const s={w:b.width||b.naturalWidth,h:b.height||b.naturalHeight};if(b.close)b.close();return s}
+
+/* ---------- state ---------- */
+let P=null, BUF=null; const have=new Set(); const urls=new Map();
+let author=ls.get('ip.author',''), onlyTodo=ls.get('ip.todo','0')==='1';
+const users=()=>[...new Set(P.items.map(i=>i.user).filter(Boolean))];
+const mine=()=>P.items.filter(i=>i.user===author);
+const key=(no,s)=>no+'_'+s;
+const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const isDone=it=>have.has(key(it.no,0))&&have.has(key(it.no,1));
+const saveMeta=()=>dput('meta','project',P);
+
+/* ---------- parse uploaded workbook ---------- */
+async function parseProject(buf,fileName){
+  const zip=await JSZip.loadAsync(buf);
+  const{sheets,ss}=await readWorkbook(zip);
+  const photo=sheets.find(s=>/사진/.test(s.name));
+  if(!photo)throw new Error('"사진대지" 시트를 찾지 못했어요. 시트 이름에 "사진"이 들어가야 해요.');
+  const check=sheets.find(s=>s!==photo&&/점검/.test(s.name))||sheets.find(s=>s!==photo);
+  const ps=await readSheet(zip,photo.path,ss);
+  const hr=findHeader(ps.rows,['품목명']);
+  if(!hr)throw new Error('사진대지 시트에서 "품목명" 머리글을 찾지 못했어요.');
+  const h=ps.rows.get(hr);
+  const cNo=colOf(h,v=>v==='구분'||v==='번호'||v==='No')||1;
+  const cName=colOf(h,v=>v.includes('품목명'));
+  const cUser=colOf(h,v=>v.includes('사용자')||v.includes('관리자')||v.includes('담당'));
+  let cols=[...h].filter(([c,v])=>norm(v).includes('사진')).map(([c])=>c).sort((a,b)=>a-b).slice(0,2);
+  let labels=cols.map(c=>h.get(c).split('(')[0].trim());
+  if(cols.length<2){cols=[cName+1,cName+2];labels=['점검사진','필증사진']}
+  const items=[];
+  for(const[r,cells]of sortedRows(ps.rows)){if(r<=hr)continue;const nm=cells.get(cName);if(!nm)continue;items.push({no:cells.get(cNo)||String(items.length+1),name:nm,user:cUser?(cells.get(cUser)||''):'',row:r})}
+  if(!items.length)throw new Error('사진대지 시트에 품목이 없어요.');
+  let checkInfo=null;const status={};
+  if(check){const cs=await readSheet(zip,check.path,ss);const chr=findHeader(cs.rows,['품목명','점검']);
+    if(chr){const ch=cs.rows.get(chr);const cn=colOf(ch,v=>v==='구분'||v==='번호')||1;
+      const cRes=colOf(ch,v=>v.includes('점검여부')||v.includes('양호'));const cNote=colOf(ch,v=>v.includes('처리'));const cDate=colOf(ch,v=>v.includes('점검일'));
+      const rowsByNo={};for(const[r,cells]of cs.rows){if(r<=chr)continue;const n=cells.get(cn);if(n)rowsByNo[n]=r}
+      checkInfo={path:check.path,name:check.name,cRes,cNote,cDate,rowsByNo};
+      for(const it of items){const r=rowsByNo[it.no];const cells=r&&cs.rows.get(r);status[it.no]={result:cells&&cRes&&cells.get(cRes)==='불량'?'불량':'양호',note:(cells&&cNote&&cells.get(cNote))||''}}}}
+  for(const it of items)if(!status[it.no])status[it.no]={result:'양호',note:''};
+  const existing=await readExistingPhotos(zip,photo.path,ps.doc,items,cols);
+  const title=fileName.replace(/\.xlsx$/i,'').replace(/[_\s-]*\d{1,2}월$/,'').trim();
+  return{project:{fileName,title,photo:{path:photo.path,cols,labels},check:checkInfo,items,status,date:today()},existing};
+}
+async function readExistingPhotos(zip,sheetPath,sdoc,items,cols){
+  const out=[];const rels=await readRels(zip,sheetPath);const dr=rels.find(r=>/\/drawing$/.test(r.type));if(!dr||!zip.file(dr.path))return out;
+  const d=parseXml(await zip.file(dr.path).async('string'));const drels=await readRels(zip,dr.path);
+  const byRow={};items.forEach(it=>byRow[it.row]=it);const cw=colWidths(sdoc);const dw=await digitWidth(zip);
+  const startX=c=>{let x=0;for(let i=1;i<c;i++)x+=colPx(cw(i),dw)*9525;return x};
+  const mid=startX(cols[0])+colPx(cw(cols[0]),dw)*9525*0.5;
+  for(const a of[...byTag(d,'twoCellAnchor'),...byTag(d,'oneCellAnchor')]){
+    const from=byTag(a,'from')[0];if(!from)continue;const col=+byTag(from,'col')[0].textContent+1,row=+byTag(from,'row')[0].textContent+1;
+    const it=byRow[row];if(!it)continue;const x=startX(col)+(+byTag(from,'colOff')[0].textContent||0);
+    let slot=x>=mid?1:0;if(out.some(o=>o.k===key(it.no,slot)))slot=1-slot;if(out.some(o=>o.k===key(it.no,slot)))continue;
+    const blip=byTag(a,'blip')[0];if(!blip)continue;const rid=blip.getAttributeNS(NS_R,'embed')||blip.getAttribute('r:embed');const rel=drels.find(r=>r.id===rid);
+    if(!rel||!zip.file(rel.path))continue;out.push({k:key(it.no,slot),ab:await zip.file(rel.path).async('arraybuffer')});
+  }
+  return out;
+}
+
+/* ---------- build xlsx ---------- */
+function setCell(doc,sd,rowNum,col,val){
+  const NS=doc.documentElement.namespaceURI;
+  let row=Array.from(sd.children).find(r=>+r.getAttribute('r')===rowNum);
+  if(!row){row=doc.createElementNS(NS,'row');row.setAttribute('r',rowNum);sd.insertBefore(row,Array.from(sd.children).find(r=>+r.getAttribute('r')>rowNum)||null)}
+  const ref=colName(col)+rowNum;let c=Array.from(row.children).find(x=>x.getAttribute('r')===ref);
+  if(!c){if(val===''||val==null)return;c=doc.createElementNS(NS,'c');c.setAttribute('r',ref);
+    const prev=Array.from(sd.children).find(r=>+r.getAttribute('r')===rowNum-1);const pc=prev&&Array.from(prev.children).find(x=>x.getAttribute('r')===colName(col)+(rowNum-1));if(pc&&pc.getAttribute('s'))c.setAttribute('s',pc.getAttribute('s'));
+    row.insertBefore(c,Array.from(row.children).find(x=>{const r=splitRef(x.getAttribute('r')||'');return r&&r.col>col})||null)}
+  while(c.firstChild)c.removeChild(c.firstChild);c.removeAttribute('t');
+  if(val===''||val==null)return;
+  if(typeof val==='number'){const v=doc.createElementNS(NS,'v');v.textContent=String(val);c.appendChild(v)}
+  else{c.setAttribute('t','inlineStr');const is=doc.createElementNS(NS,'is'),t=doc.createElementNS(NS,'t');t.textContent=val;is.appendChild(t);c.appendChild(is)}
+}
+const dateSerial=s=>{const[y,m,d]=s.split('-').map(Number);return(Date.UTC(y,m-1,d)-Date.UTC(1899,11,30))/864e5};
+
+async function buildXlsx(){
+  const zip=await JSZip.loadAsync(BUF);const sp=P.photo.path;
+  const sdoc=parseXml(await zip.file(sp).async('string'));const cw=colWidths(sdoc),rh=rowHeights(sdoc),dw=await digitWidth(zip);
+  const ct=parseXml(await zip.file('[Content_Types].xml').async('string'));
+  const srp=relsPathOf(sp);const sRels=zip.file(srp)?parseXml(await zip.file(srp).async('string')):parseXml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${NS_PR}"/>`);
+  const dRel=byTag(sRels,'Relationship').find(r=>/\/drawing$/.test(r.getAttribute('Type')||''));
+  let drawPath;
+  if(dRel){drawPath=resolvePath(dirOf(sp),dRel.getAttribute('Target'));for(const r of await readRels(zip,drawPath))if(/\/image$/.test(r.type)&&zip.file(r.path))zip.remove(r.path)}
+  else{let n=1;while(zip.file(`xl/drawings/drawing${n}.xml`))n++;drawPath=`xl/drawings/drawing${n}.xml`;
+    const ids=byTag(sRels,'Relationship').map(r=>r.getAttribute('Id'));let k=1;while(ids.includes('rId'+k))k++;
+    const rel=sRels.createElementNS(NS_PR,'Relationship');rel.setAttribute('Id','rId'+k);rel.setAttribute('Type',NS_R+'/drawing');rel.setAttribute('Target',`../drawings/drawing${n}.xml`);sRels.documentElement.appendChild(rel);zip.file(srp,ser(sRels));
+    const el=sdoc.createElementNS(sdoc.documentElement.namespaceURI,'drawing');el.setAttributeNS(NS_R,'r:id','rId'+k);
+    const after=['legacyDrawing','legacyDrawingHF','drawingHF','picture','oleObjects','controls','webPublishItems','tableParts','extLst'];
+    sdoc.documentElement.insertBefore(el,Array.from(sdoc.documentElement.children).find(ch=>after.includes(ch.localName))||null);zip.file(sp,ser(sdoc));
+    const o=ct.createElementNS(NS_CT,'Override');o.setAttribute('PartName','/'+drawPath);o.setAttribute('ContentType','application/vnd.openxmlformats-officedocument.drawing+xml');ct.documentElement.appendChild(o)}
+  if(!byTag(ct,'Default').some(d=>(d.getAttribute('Extension')||'').toLowerCase()==='jpeg')){const e=ct.createElementNS(NS_CT,'Default');e.setAttribute('Extension','jpeg');e.setAttribute('ContentType','image/jpeg');ct.documentElement.insertBefore(e,ct.documentElement.firstChild)}
+  const anchors=[],rels=[];let id=1;
+  for(const it of mine())for(let s=0;s<2;s++){
+    const blob=await dget('photos',key(it.no,s));if(!blob)continue;const{w,h}=await imgSize(blob);
+    const media=`insp_${String(it.no).replace(/\W/g,'')}_${s}_${id}.jpeg`;zip.file('xl/media/'+media,await blob.arrayBuffer());
+    rels.push(`<Relationship Id="rId${id}" Type="${NS_R}/image" Target="../media/${media}"/>`);
+    const col=P.photo.cols[s];const W=colPx(cw(col),dw),H=Math.floor(rh(it.row)*96/72),pad=1;
+    const sc=Math.min((W-pad*2)/w,(H-pad*2)/h),iw=w*sc,ih=h*sc;
+    const E=v=>Math.max(0,Math.round(v*9525)),cx=E(iw),cy=E(ih),ox=E((W-iw)/2),oy=E((H-ih)/2);
+    anchors.push(`<xdr:oneCellAnchor><xdr:from><xdr:col>${col-1}</xdr:col><xdr:colOff>${ox}</xdr:colOff><xdr:row>${it.row-1}</xdr:row><xdr:rowOff>${oy}</xdr:rowOff></xdr:from><xdr:ext cx="${cx}" cy="${cy}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${id+1}" name="Picture ${id}"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId${id}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>`);
+    id++;
+  }
+  zip.file(drawPath,`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="${NS_R}">${anchors.join('')}</xdr:wsDr>`);
+  zip.file(relsPathOf(drawPath),`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="${NS_PR}">${rels.join('')}</Relationships>`);
+  if(P.check&&zip.file(P.check.path)){const C=P.check;const cd=parseXml(await zip.file(C.path).async('string'));const sd=byTag(cd,'sheetData')[0];
+    for(const it of mine()){const r=C.rowsByNo[it.no];if(!r)continue;const st=P.status[it.no];
+      if(C.cRes)setCell(cd,sd,r,C.cRes,st.result);if(C.cNote)setCell(cd,sd,r,C.cNote,st.result==='불량'?st.note.trim():'');if(C.cDate&&P.date)setCell(cd,sd,r,C.cDate,dateSerial(P.date))}
+    zip.file(C.path,ser(cd))}
+  if(zip.file('xl/calcChain.xml')){zip.remove('xl/calcChain.xml');for(const o of byTag(ct,'Override'))if(/calcChain/.test(o.getAttribute('PartName')))o.parentNode.removeChild(o);
+    const wr=parseXml(await zip.file('xl/_rels/workbook.xml.rels').async('string'));for(const r of byTag(wr,'Relationship'))if(/calcChain/.test(r.getAttribute('Target')))r.parentNode.removeChild(r);zip.file('xl/_rels/workbook.xml.rels',ser(wr))}
+  zip.file('[Content_Types].xml',ser(ct));
+  return zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',compression:'DEFLATE'});
+}
+function outName(){const m=P.date?+P.date.slice(5,7):new Date().getMonth()+1;const a=author.replace(/[\\/:*?"<>|]/g,'');return `${P.title}_${m}월_${a}.xlsx`}
+
+/* ---------- UI ---------- */
+function toast(t){const el=document.createElement('div');el.className='toast';el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),2600)}
+function busy(t){const el=document.createElement('div');el.className='busy';el.textContent=t;document.body.appendChild(el);return()=>el.remove()}
+function sheet(html,bind){const bg=document.createElement('div');bg.className='sheet-bg';bg.innerHTML=`<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;bg.addEventListener('click',e=>{if(e.target===bg)bg.remove()});$('layer').appendChild(bg);bind&&bind(bg.firstChild,()=>bg.remove());return bg}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function urlFor(k){if(urls.has(k))return urls.get(k);const b=await dget('photos',k);if(!b)return null;const u=URL.createObjectURL(b);urls.set(k,u);return u}
+function dropUrl(k){if(urls.has(k)){URL.revokeObjectURL(urls.get(k));urls.delete(k)}}
+
+function renderAll(){
+  const on=!!P;$('start').hidden=on;$('work').hidden=!on;$('savebar').hidden=!on;$('menuBtn').hidden=!on;$('progRow').hidden=!on;
+  if(!on){$('fileLabel').textContent='';return}
+  $('fileLabel').textContent=P.fileName;$('dateIn').value=P.date||'';
+  const us=users();
+  $('authorIn').value=us.includes(author)?author:'';
+  $('onlyTodo').checked=onlyTodo;renderList();renderProgress();
+  if(!us.includes(author))pickAuthor();
+}
+function matchUser(q){q=norm(q);if(!q)return null;const us=users();if(us.includes(q))return q;const hit=us.filter(u=>norm(u).includes(q));return hit.length===1?hit[0]:null}
+function pickAuthor(){
+  sheet(`<h3>사용자 이름을 입력하세요</h3><p>입력한 이름의 대상 품목만 불러와서 사진을 정리해요.</p>
+    <form class="who" id="whoSheet"><input id="whoName" placeholder="예: 김태호" autocomplete="name" enterkeyhint="search" style="border:1px solid var(--line);border-radius:8px;padding:10px;min-height:46px;background:var(--surface)"><button class="btn primary" type="submit">조회</button></form>
+    <p id="whoErr" style="color:var(--warn)" hidden></p>`,
+    (el,c)=>{const inp=el.querySelector('#whoName');inp.value=author||'';setTimeout(()=>inp.focus(),50);
+      el.querySelector('#whoSheet').addEventListener('submit',e=>{e.preventDefault();const u=matchUser(inp.value);
+        if(u){c();setAuthor(u)}else{const er=el.querySelector('#whoErr');er.hidden=false;er.textContent=`"${inp.value.trim()}" 이름의 대상 품목이 없어요. 엑셀의 사용자 이름과 같게 입력해주세요.`}})})}
+function setAuthor(u){author=u;ls.set('ip.author',u);renderAll()}
+function renderProgress(){const its=mine(),d=its.filter(isDone).length,n=its.length;$('progText').textContent=`${d}/${n}`;$('barFill').style.width=(n?d/n*100:0)+'%'}
+function visibleItems(){return mine().filter(i=>!onlyTodo||!isDone(i))}
+function cardHtml(it){const st=P.status[it.no];const bad=st.result==='불량';
+  return`<article class="item${isDone(it)?' done':''}${bad?' bad':''}" data-no="${esc(it.no)}">
+  <div class="hd"><span class="no">${esc(it.no)}</span><div class="nm"><b>${esc(it.name)}</b><small>${esc(it.user)}</small></div>
+  <div class="seg" role="group" aria-label="점검여부"><button data-res="양호" aria-pressed="${!bad}">양호</button><button data-res="불량" aria-pressed="${bad}">불량</button></div></div>
+  <div class="slots">${[0,1].map(s=>`<button class="slot" data-slot="${s}" aria-label="${esc(P.photo.labels[s])}"><span class="add"><span>+</span><span>${esc(P.photo.labels[s])}</span></span></button>`).join('')}</div>
+  <input class="note" id="note-${esc(it.no)}" placeholder="불량 처리내역 (예: 배터리 교체 후 재점검)" value="${esc(st.note)}" ${bad?'':'hidden'}>
+  </article>`}
+async function fillSlots(card,it){for(let s=0;s<2;s++){const b=card.querySelector(`.slot[data-slot="${s}"]`);const k=key(it.no,s);
+  if(have.has(k)){const u=await urlFor(k);b.classList.add('has');b.innerHTML=`<img src="${u}" alt=""><span class="lbl">${esc(P.photo.labels[s])}</span>`}
+  else{b.classList.remove('has');b.innerHTML=`<span class="add"><span>+</span><span>${esc(P.photo.labels[s])}</span></span>`}}}
+function renderList(){const its=visibleItems();const L=$('list');
+  if(!its.length){L.innerHTML=`<div class="empty-list">${!author?'사용자 이름을 입력하면 대상 품목이 나와요.':onlyTodo?'모든 품목의 사진을 찍었어요.':'품목이 없어요.'}</div>`;return}
+  L.innerHTML=its.map(cardHtml).join('');for(const it of its)fillSlots(L.querySelector(`[data-no="${CSS.escape(it.no)}"]`),it)}
+function refreshCard(it){const c=$('list').querySelector(`[data-no="${CSS.escape(it.no)}"]`);if(!c)return;c.classList.toggle('done',isDone(it));fillSlots(c,it);renderProgress()}
+const itemByNo=no=>P.items.find(i=>i.no===no);
+
+/* ---------- actions ---------- */
+let pending=null;
+function openSlot(it,s){const k=key(it.no,s),has=have.has(k);
+  sheet(`<h3>${esc(it.no)}. ${esc(it.name)} · ${esc(P.photo.labels[s])}</h3><p>${esc(it.user)}</p>
+   <div class="row"><button class="btn primary" data-a="cam">카메라 촬영</button><button class="btn ghost" data-a="gal">앨범에서 선택</button></div>
+   ${has?'<div class="row"><button class="btn ghost" data-a="view">크게 보기</button><button class="btn ghost" data-a="del">사진 삭제</button></div>':''}
+   <button class="btn ghost" data-a="x">닫기</button>`,(el,close)=>el.addEventListener('click',async e=>{const a=e.target.dataset.a;if(!a)return;close();
+     if(a==='cam'||a==='gal'){pending={it,s};const inp=$(a==='cam'?'camIn':'galIn');inp.value='';inp.click()}
+     else if(a==='view')viewPhoto(it,s);
+     else if(a==='del'){await ddel('photos',k);have.delete(k);dropUrl(k);refreshCard(it);toast('사진을 삭제했어요')}}));}
+async function onPhoto(e){const f=e.target.files&&e.target.files[0];if(!f||!pending)return;const{it,s}=pending;pending=null;
+  const done=busy('사진 압축 중…');
+  try{const stamp='';
+    const blob=await compress(f,stamp);const k=key(it.no,s);await dput('photos',k,blob);have.add(k);dropUrl(k);refreshCard(it)}
+  catch(err){console.error(err);toast('사진을 읽지 못했어요. 다른 사진으로 다시 시도해주세요.')}finally{done()}}
+async function viewPhoto(it,s){const u=await urlFor(key(it.no,s));if(!u)return;const v=document.createElement('div');v.className='viewer';
+  v.innerHTML=`<img src="${u}" alt="${esc(it.name)}"><div class="row"><button class="btn" data-a="re">다시 찍기</button><button class="btn" data-a="x">닫기</button></div>`;
+  v.addEventListener('click',e=>{const a=e.target.dataset.a;if(a==='x'){v.remove()}else if(a==='re'){v.remove();pending={it,s};$('camIn').value='';$('camIn').click()}});$('layer').appendChild(v)}
+
+async function loadFile(file){
+  if(!/\.xlsx$/i.test(file.name)){toast('.xlsx 파일만 불러올 수 있어요');return}
+  const go=async()=>{const done=busy('엑셀 읽는 중…');
+    try{const buf=await file.arrayBuffer();const{project,existing}=await parseProject(buf,file.name);
+      await dclear('photos');for(const u of urls.values())URL.revokeObjectURL(u);urls.clear();have.clear();
+      for(const ex of existing){try{const b=await compress(new Blob([ex.ab]),'');await dput('photos',ex.k,b);have.add(ex.k)}catch(e){}}
+      P=project;BUF=buf;await dput('meta','buf',buf);await saveMeta();renderAll();
+      if(users().includes(author))toast(`${author} 품목 ${mine().length}건을 불러왔어요`)}
+    catch(err){console.error(err);sheet(`<h3>불러오지 못했어요</h3><p>${esc(err.message||err)}</p><button class="btn ghost" data-a="x">닫기</button>`,(el,c)=>el.addEventListener('click',e=>e.target.dataset.a&&c()))}
+    finally{done()}};
+  if(P&&have.size){sheet(`<h3>새 엑셀을 불러올까요?</h3><p>지금 찍어둔 사진 ${have.size}장이 지워지고 새 파일 기준으로 다시 시작해요. 먼저 엑셀 저장을 했는지 확인해주세요.</p><div class="row"><button class="btn ghost" data-a="x">취소</button><button class="btn danger" data-a="ok">불러오기</button></div>`,(el,c)=>el.addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;c();if(a==='ok')go()}))}
+  else go();
+}
+
+async function save(mode){
+  if(!author){pickAuthor();return}
+  const miss=mine().filter(i=>!isDone(i)).length;
+  const run=async()=>{const done=busy('엑셀 만드는 중…');
+    try{const blob=await buildXlsx();const name=outName();const file=new File([blob],name,{type:blob.type});
+      const mb=blob.size<1048576?Math.max(1,Math.round(blob.size/1024))+'KB':(blob.size/1048576).toFixed(1)+'MB';
+      const NB=window.AndroidBridge;const canShare=!!NB||!!(navigator.canShare&&navigator.canShare({files:[file]}));
+      const shareText=`${P.title} ${(P.date||'').slice(5,7).replace(/^0/,'')}월 점검사진 (${author})`;
+      const shareFirst=mode==='share'&&canShare;
+      const bShare=`<button class="btn ${shareFirst?'primary':'ghost'}" data-a="sh"${canShare?'':' disabled'}>카톡·메일로 공유</button>`,bSave=`<button class="btn ${shareFirst?'ghost':'primary'}" data-a="dl">파일 저장</button>`;
+      sheet(`<h3>엑셀을 만들었어요</h3><p>${esc(name)} · ${mb}</p><div class="row">${shareFirst?bShare+bSave:bSave+bShare}</div>${canShare?'':'<p style="font-size:13px">이 브라우저는 파일 공유를 지원하지 않아요. 파일 저장 후 카카오톡에서 첨부해주세요. (휴대폰 크롬·사파리에서는 공유가 돼요)</p>'}<button class="btn ghost" data-a="x">닫기</button>`,
+        (el,c)=>el.addEventListener('click',async e=>{const a=e.target.dataset.a;if(!a)return;
+          if(a==='dl'&&NB){NB.saveFile(await toB64(blob),name,blob.type)}
+          else if(a==='sh'&&NB){NB.shareFile(await toB64(blob),name,blob.type,shareText);c()}
+          else if(a==='dl'){const u=URL.createObjectURL(blob);const l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast('저장했어요')}
+          else if(a==='sh'){try{await navigator.share({files:[file],title:name,text:shareText});c()}catch(err){if(err&&err.name!=='AbortError')toast('공유하지 못했어요. 파일 저장 후 직접 첨부해주세요.')}}
+          else c()}))}
+    catch(err){console.error(err);toast('엑셀을 만들지 못했어요: '+(err.message||err))}finally{done()}};
+  if(miss){sheet(`<h3>사진이 빠진 품목이 ${miss}개 있어요</h3><p>그대로 저장하면 해당 칸은 비어 있어요.</p><div class="row"><button class="btn ghost" data-a="x">계속 찍기</button><button class="btn primary" data-a="ok">그대로 저장</button></div>`,(el,c)=>el.addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;c();if(a==='ok')run()}))}
+  else run();
+}
+
+const toB64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)});
+window.onNativeSaved=ok=>toast(ok?'저장했어요':'저장하지 못했어요. 다시 시도해주세요.');
+window.onAndroidBack=()=>{const L=$('layer');if(L.lastElementChild){L.lastElementChild.remove();return true}return false};
+async function shareLink(){const url=location.href.split('#')[0];
+  if(navigator.share&&/^https?:/.test(url)){try{await navigator.share({title:'기계기구 점검사진',text:'유해위험 기계기구 점검사진 정리 앱',url});return}catch(e){if(e&&e.name==='AbortError')return}}
+  try{await navigator.clipboard.writeText(url);toast('앱 링크를 복사했어요')}catch(e){sheet(`<h3>앱 링크</h3><p style="user-select:all">${esc(url)}</p><button class="btn ghost" data-a="x">닫기</button>`,(el,c)=>el.addEventListener('click',ev=>ev.target.dataset.a&&c()))}}
+function openMenu(){sheet(`<h3>메뉴</h3><p>${esc(P.fileName)}</p><button class="btn ghost" data-a="who">작성자 변경</button>${window.AndroidBridge?'':'<button class="btn ghost" data-a="link">앱 링크 공유</button>'}<button class="btn ghost" data-a="new">다른 엑셀 불러오기</button><button class="btn ghost" data-a="clr">사진 모두 지우기</button><button class="btn ghost" data-a="x">닫기</button>`,
+  (el,c)=>el.addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;c();
+    if(a==='who')pickAuthor();
+    else if(a==='link')shareLink();
+    else if(a==='new'){$('xlsxIn').value='';$('xlsxIn').click()}
+    else if(a==='clr')sheet(`<h3>사진을 모두 지울까요?</h3><p>찍어둔 사진 ${have.size}장이 삭제돼요. 되돌릴 수 없어요.</p><div class="row"><button class="btn ghost" data-a="x">취소</button><button class="btn danger" data-a="ok">모두 지우기</button></div>`,(el2,c2)=>el2.addEventListener('click',async e2=>{const b=e2.target.dataset.a;if(!b)return;c2();if(b==='ok'){await dclear('photos');for(const u of urls.values())URL.revokeObjectURL(u);urls.clear();have.clear();renderAll();toast('사진을 모두 지웠어요')}}))}))}
+
+/* ---------- events ---------- */
+$('pickBtn').onclick=()=>{$('xlsxIn').value='';$('xlsxIn').click()};
+$('xlsxIn').onchange=e=>{const f=e.target.files[0];if(f)loadFile(f)};
+$('camIn').onchange=onPhoto;$('galIn').onchange=onPhoto;
+$('menuBtn').onclick=openMenu;$('saveBtn').onclick=()=>save('save');$('shareBtn').onclick=()=>save('share');
+const drop=$('drop');['dragover','dragenter'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,()=>drop.classList.remove('over')));
+drop.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f)});
+$('dateIn').onchange=e=>{P.date=e.target.value;saveMeta()};
+$('whoForm').onsubmit=e=>{e.preventDefault();$('authorIn').blur();const v=$('authorIn').value;const u=matchUser(v);if(u){setAuthor(u);toast(`${u} 대상 ${mine().length}건`)}else if(v.trim())toast(`"${v.trim()}" 이름의 대상 품목이 없어요`);else pickAuthor()};
+
+$('onlyTodo').onchange=e=>{onlyTodo=e.target.checked;ls.set('ip.todo',onlyTodo?'1':'0');renderList()};
+$('list').addEventListener('click',e=>{const card=e.target.closest('.item');if(!card)return;const it=itemByNo(card.dataset.no);
+  const slot=e.target.closest('.slot');if(slot){openSlot(it,+slot.dataset.slot);return}
+  const r=e.target.closest('[data-res]');if(r){const st=P.status[it.no];st.result=r.dataset.res;saveMeta();
+    card.classList.toggle('bad',st.result==='불량');card.querySelectorAll('[data-res]').forEach(b=>b.setAttribute('aria-pressed',b===r));
+    const n=card.querySelector('.note');n.hidden=st.result!=='불량';if(!n.hidden)n.focus()}});
+$('list').addEventListener('input',e=>{if(!e.target.classList.contains('note'))return;const it=itemByNo(e.target.closest('.item').dataset.no);P.status[it.no].note=e.target.value;saveMeta()});
+
+(async function init(){try{const p=await dget('meta','project'),b=await dget('meta','buf');if(p&&b){P=p;BUF=b;for(const k of await dkeys('photos'))have.add(k)}}catch(e){}renderAll()})();
+</script>
+</body>
+</html>
