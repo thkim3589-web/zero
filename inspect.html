@@ -161,6 +161,7 @@ header.top .wrap>*{min-width:0}
         <div class="field"><label for="dateIn">점검일자</label><input type="date" id="dateIn"></div>
         <div class="field"><label for="authorIn">작성자</label><form class="who" id="whoForm"><input id="authorIn" placeholder="이름 입력" autocomplete="name" enterkeyhint="search"><button class="iconbtn" type="submit">조회</button></form></div>
       </div>
+      <div class="field"><label for="q">공도구명으로 찾기</label><input type="search" id="q" placeholder="예: 드릴, 가스, ACBM" enterkeyhint="search" autocomplete="off"></div>
       <div class="toggles">
         <label><input type="checkbox" id="onlyTodo"> 미완료만 보기</label>
       </div>
@@ -387,7 +388,8 @@ function pickAuthor(){
         if(u){c();setAuthor(u)}else{const er=el.querySelector('#whoErr');er.hidden=false;er.textContent=`"${inp.value.trim()}" 이름의 대상 품목이 없어요. 엑셀의 사용자 이름과 같게 입력해주세요.`}})})}
 function setAuthor(u){author=u;ls.set('ip.author',u);renderAll()}
 function renderProgress(){const its=mine(),d=its.filter(isDone).length,n=its.length;$('progText').textContent=`${d}/${n}`;$('barFill').style.width=(n?d/n*100:0)+'%'}
-function visibleItems(){return mine().filter(i=>!onlyTodo||!isDone(i))}
+let query='';
+function visibleItems(){const q=norm(query).toLowerCase();return mine().filter(i=>(!onlyTodo||!isDone(i))&&(!q||norm(i.name).toLowerCase().includes(q)))}
 function cardHtml(it){const st=P.status[it.no];const bad=st.result==='불량';
   return`<article class="item${isDone(it)?' done':''}${bad?' bad':''}" data-no="${esc(it.no)}">
   <div class="hd"><span class="no">${esc(it.no)}</span><div class="nm"><b>${esc(it.name)}</b><small>${esc(it.user)}</small></div>
@@ -399,7 +401,7 @@ async function fillSlots(card,it){for(let s=0;s<2;s++){const b=card.querySelecto
   if(have.has(k)){const u=await urlFor(k);b.classList.add('has');b.innerHTML=`<img src="${u}" alt=""><span class="lbl">${esc(P.photo.labels[s])}</span>`}
   else{b.classList.remove('has');b.innerHTML=`<span class="add"><span>+</span><span>${esc(P.photo.labels[s])}</span></span>`}}}
 function renderList(){const its=visibleItems();const L=$('list');
-  if(!its.length){L.innerHTML=`<div class="empty-list">${!author?'사용자 이름을 입력하면 대상 품목이 나와요.':onlyTodo?'모든 품목의 사진을 찍었어요.':'품목이 없어요.'}</div>`;return}
+  if(!its.length){L.innerHTML=`<div class="empty-list">${query.trim()&&author?`"${esc(query.trim())}" 공도구가 없어요.`:!author?'사용자 이름을 입력하면 대상 품목이 나와요.':onlyTodo?'모든 품목의 사진을 찍었어요.':'품목이 없어요.'}</div>`;return}
   L.innerHTML=its.map(cardHtml).join('');for(const it of its)fillSlots(L.querySelector(`[data-no="${CSS.escape(it.no)}"]`),it)}
 function refreshCard(it){const c=$('list').querySelector(`[data-no="${CSS.escape(it.no)}"]`);if(!c)return;c.classList.toggle('done',isDone(it));fillSlots(c,it);renderProgress()}
 const itemByNo=no=>P.items.find(i=>i.no===no);
@@ -483,6 +485,8 @@ drop.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files
 $('dateIn').onchange=e=>{P.date=e.target.value;saveMeta()};
 $('whoForm').onsubmit=e=>{e.preventDefault();$('authorIn').blur();const v=$('authorIn').value;const u=matchUser(v);if(u){setAuthor(u);toast(`${u} 대상 ${mine().length}건`)}else if(v.trim())toast(`"${v.trim()}" 이름의 대상 품목이 없어요`);else pickAuthor()};
 
+$('q').addEventListener('input',e=>{query=e.target.value;renderList()});
+$('q').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur()});
 $('onlyTodo').onchange=e=>{onlyTodo=e.target.checked;ls.set('ip.todo',onlyTodo?'1':'0');renderList()};
 $('list').addEventListener('click',e=>{const card=e.target.closest('.item');if(!card)return;const it=itemByNo(card.dataset.no);
   const slot=e.target.closest('.slot');if(slot){openSlot(it,+slot.dataset.slot);return}
