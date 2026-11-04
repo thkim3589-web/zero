@@ -103,6 +103,16 @@ header.top .wrap>*{min-width:0}
 .steps li{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
 .steps li::before{counter-increment:s;content:counter(s);font-family:var(--mono);width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:6px;background:var(--accent-soft);color:var(--accent);font-size:13px}
 .drop{border:2px dashed var(--line);border-radius:12px;padding:24px;text-align:center;display:grid;gap:10px;justify-items:center;background:var(--surface)}
+.tools{display:grid;gap:14px}
+.tool{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px}
+.tool-hd{display:flex;gap:12px;align-items:flex-start}.tool-ic{font-size:26px;line-height:1;width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:10px;background:var(--accent-soft);color:var(--accent)}
+.tool-t{display:grid;gap:4px;min-width:0}.tool-t h3{margin:0;font-size:17px;text-wrap:balance}.tool-t p{margin:0;font-size:14px}
+.row2{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.row2 .btn{flex:1 1 140px}
+.how summary{cursor:pointer;color:var(--muted);font-size:14px;padding:4px 0}.how .steps{margin-top:8px}
+.tool .drop{padding:16px}
+.resume{background:var(--surface);border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-radius:12px;padding:14px;display:grid;gap:10px}
+.resume small{color:var(--muted)}
+.resume .meta{display:grid;gap:2px;min-width:0}.resume .meta b{overflow-wrap:anywhere}
 .drop.over{border-color:var(--accent)}
 
 .btn{border:0;border-radius:10px;padding:12px 18px;font-weight:600;min-height:48px}
@@ -135,6 +145,7 @@ header.top .wrap>*{min-width:0}
 <header class="top">
   <div class="wrap">
     <div class="brand">
+      <button class="iconbtn" id="homeBtn" hidden aria-label="홈으로">홈</button>
       <h1>기계기구 점검사진</h1>
       <span class="file" id="fileLabel"></span>
       <button class="iconbtn" id="menuBtn" hidden>메뉴</button>
@@ -147,20 +158,33 @@ header.top .wrap>*{min-width:0}
 
 <main class="wrap">
   <section class="start" id="start">
-    <div style="display:grid;gap:8px">
-      <h2>점검 엑셀을 불러와서 사진대지를 채워요</h2>
-      <p>"사진대지" 시트의 품목마다 점검사진과 필증사진을 찍으면, 압축해서 엑셀 칸에 맞춰 넣어 저장해요.</p>
-    </div>
-    <ol class="steps">
-      <li>점검 엑셀(.xlsx)을 불러옵니다. 양식이 다르면 사진 넣을 열을 한 번만 골라주면 돼요.</li>
-      <li>사용자 이름을 입력하면 대상 품목만 나옵니다. 품목별로 공도구 점검사진과 필증사진을 찍고, 불량이면 처리내역을 적습니다.</li>
-      <li>엑셀 저장을 누르면 "제목_월_작성자.xlsx"로 저장됩니다.</li>
-      <li>담당자별 파일을 받으면 "여러 파일 수합하기"로 한 번에 합칠 수 있어요.</li>
-    </ol>
-    <div class="drop" id="drop">
-      <button class="btn primary" id="pickBtn">엑셀 불러오기</button>
-      <button class="btn ghost" id="mergeBtn">여러 파일 수합하기</button>
-      <small style="color:var(--muted)">또는 파일을 여기로 끌어다 놓기</small>
+    <h2>어떤 작업을 할까요?</h2>
+    <div class="tools">
+      <article class="tool" id="toolPhoto">
+        <div class="tool-hd"><span class="tool-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg></span><div class="tool-t"><h3>유해위험 기계기구 점검사진</h3><p>점검 엑셀을 불러와 품목별 점검사진·필증사진을 찍고 사진대지에 넣어요.</p></div></div>
+        <div class="resume" id="resume" hidden></div>
+        <div class="drop" id="drop">
+          <div class="row2"><button class="btn primary" id="pickBtn">엑셀 불러오기</button><button class="btn ghost" id="mergeBtn">사진 파일 수합</button></div>
+          <small style="color:var(--muted)">또는 엑셀 파일을 여기로 끌어다 놓기</small>
+        </div>
+        <details class="how"><summary>사용 방법</summary>
+          <ol class="steps">
+            <li>점검 엑셀(.xlsx)을 불러옵니다. 양식이 다르면 사진 넣을 열을 한 번만 골라주면 돼요.</li>
+            <li>사용자 이름을 입력하면 대상 품목만 나옵니다. 품목별로 사진을 찍고, 불량이면 처리내역을 적습니다.</li>
+            <li>엑셀 저장을 누르면 "제목_월_작성자.xlsx"로 저장됩니다.</li>
+            <li>담당자별 파일을 받으면 "사진 파일 수합"으로 한 번에 합칠 수 있어요.</li>
+          </ol></details>
+      </article>
+      <article class="tool" id="toolMerge">
+        <div class="tool-hd"><span class="tool-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3h9l3 3v11H8z"/><path d="M4 7v14h12"/><path d="M11 9h6M11 12h6M11 15h4"/></svg></span><div class="tool-t"><h3>엑셀 수합</h3><p>담당자별로 작성한 같은 양식의 엑셀 여러 개를 하나의 파일로 합쳐요. 사진도 같이 옮겨요.</p></div></div>
+        <button class="btn primary" id="genMergeBtn">수합할 파일 고르기</button>
+        <details class="how"><summary>어떻게 합쳐지나요?</summary>
+          <ol class="steps">
+            <li><b>칸 채우기</b>: 같은 목록을 받아 각자 자기 칸만 채운 경우, 채운 칸을 모아 한 파일로 만들어요.</li>
+            <li><b>이어 붙이기</b>: 머리글은 같고 각자 자기 목록만 적은 경우, 아래로 이어 붙여요.</li>
+            <li>파일을 보고 방식을 자동으로 고르고, 결과 화면에서 다른 방식으로 바꿀 수 있어요.</li>
+          </ol></details>
+      </article>
     </div>
   </section>
 
@@ -183,6 +207,7 @@ header.top .wrap>*{min-width:0}
   <div class="wrap"><button class="btn ghost" id="shareBtn">공유</button><button class="btn primary" id="saveBtn">엑셀 저장</button></div>
 </div>
 
+<input type="file" id="genIn" multiple accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
 <input type="file" id="mergeIn" multiple accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
 <input type="file" id="xlsxIn" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
 <input type="file" id="camIn" accept="image/*" capture="environment" hidden>
@@ -444,8 +469,15 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 async function urlFor(k){if(urls.has(k))return urls.get(k);const b=await dget('photos',k);if(!b)return null;const u=URL.createObjectURL(b);urls.set(k,u);return u}
 function dropUrl(k){if(urls.has(k)){URL.revokeObjectURL(urls.get(k));urls.delete(k)}}
 
+let view='work';
+function goHome(){view='home';$('layer').innerHTML='';renderAll();window.scrollTo(0,0)}
+function goWork(){view='work';renderAll();window.scrollTo(0,0)}
 function renderAll(){
-  const on=!!P;$('start').hidden=on;$('work').hidden=!on;$('savebar').hidden=!on;$('menuBtn').hidden=!on;$('progRow').hidden=!on;
+  const on=!!P&&view==='work';$('start').hidden=on;$('work').hidden=!on;$('savebar').hidden=!on;$('menuBtn').hidden=!on;$('progRow').hidden=!on;$('homeBtn').hidden=!on;
+  const R=$('resume');R.hidden=!P;
+  if(P&&!on){const its=mine(),d=its.filter(isDone).length;
+    R.innerHTML=`<div class="meta"><small>작업 중</small><b>${esc(P.fileName)}</b><small>${author?esc(author)+' · ':''}사진 완료 ${d}/${its.length}</small></div><button class="btn primary" id="resumeBtn">이어서 하기</button>`;
+    $('resumeBtn').onclick=goWork}
   if(!on){$('fileLabel').textContent='';return}
   $('fileLabel').textContent=P.fileName;$('dateIn').value=P.date||'';
   const us=users(),ok=P.hasUser?us.includes(author):!!author;
@@ -547,7 +579,7 @@ async function openWorkbook(buf,fileName,forceMap){
     const{project,existing}=built;
     await dclear('photos');for(const u of urls.values())URL.revokeObjectURL(u);urls.clear();have.clear();
     for(const ex of existing){try{const b=await compress(new Blob([ex.ab]),'');await dput('photos',ex.k,b);have.add(ex.k)}catch(e){}}
-    P=project;BUF=buf;await dput('meta','buf',buf);await saveMeta();done();done=()=>{};renderAll();
+    P=project;BUF=buf;await dput('meta','buf',buf);await saveMeta();done();done=()=>{};view='work';renderAll();
     const what=`${P.photo.sheet} 시트 · 사진 ${P.photo.cols.length}칸`;
     if(P.hasUser&&users().includes(author))toast(`${author} 품목 ${mine().length}건을 불러왔어요 (${what})`);
     else if(!P.hasUser&&author)toast(`품목 ${P.items.length}건을 불러왔어요 (${what})`);
@@ -626,13 +658,14 @@ async function mergeFiles(files){
 
 const toB64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)});
 window.onNativeSaved=ok=>toast(ok?'저장했어요':'저장하지 못했어요. 다시 시도해주세요.');
-window.onAndroidBack=()=>{const L=$('layer');if(L.lastElementChild){L.lastElementChild.remove();return true}return false};
+window.onAndroidBack=()=>{const L=$('layer');if(L.lastElementChild){L.lastElementChild.remove();return true}if(P&&view==='work'){goHome();return true}return false};
 async function shareLink(){const url=location.href.split('#')[0];
   if(navigator.share&&/^https?:/.test(url)){try{await navigator.share({title:'기계기구 점검사진',text:'유해위험 기계기구 점검사진 정리 앱',url});return}catch(e){if(e&&e.name==='AbortError')return}}
   try{await navigator.clipboard.writeText(url);toast('앱 링크를 복사했어요')}catch(e){sheet(`<h3>앱 링크</h3><p style="user-select:all">${esc(url)}</p><button class="btn ghost" data-a="x">닫기</button>`,(el,c)=>el.addEventListener('click',ev=>ev.target.dataset.a&&c()))}}
-function openMenu(){sheet(`<h3>메뉴</h3><p>${esc(P.fileName)}</p><button class="btn ghost" data-a="who">작성자 변경</button>${window.AndroidBridge?'':'<button class="btn ghost" data-a="link">앱 링크 공유</button>'}<button class="btn ghost" data-a="new">다른 엑셀 불러오기</button><button class="btn ghost" data-a="form">양식 설정 변경</button><button class="btn ghost" data-a="merge">여러 파일 수합하기</button><button class="btn ghost" data-a="upd">업데이트 확인 (현재 v${APP_VERSION})</button><button class="btn ghost" data-a="clr">사진 모두 지우기</button><button class="btn ghost" data-a="x">닫기</button>`,
+function openMenu(){sheet(`<h3>메뉴</h3><p>${esc(P.fileName)}</p><button class="btn ghost" data-a="home">홈 (작업 선택)</button><button class="btn ghost" data-a="who">작성자 변경</button>${window.AndroidBridge?'':'<button class="btn ghost" data-a="link">앱 링크 공유</button>'}<button class="btn ghost" data-a="new">다른 엑셀 불러오기</button><button class="btn ghost" data-a="form">양식 설정 변경</button><button class="btn ghost" data-a="merge">사진 파일 수합</button><button class="btn ghost" data-a="upd">업데이트 확인 (현재 v${APP_VERSION})</button><button class="btn ghost" data-a="clr">사진 모두 지우기</button><button class="btn ghost" data-a="x">닫기</button>`,
   (el,c)=>el.addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;c();
-    if(a==='who')pickAuthor();
+    if(a==='home')goHome();
+    else if(a==='who')pickAuthor();
     else if(a==='link')shareLink();
     else if(a==='new'){$('xlsxIn').value='';$('xlsxIn').click()}
     else if(a==='upd')checkUpdate(true);
@@ -641,12 +674,14 @@ function openMenu(){sheet(`<h3>메뉴</h3><p>${esc(P.fileName)}</p><button class
     else if(a==='clr')sheet(`<h3>사진을 모두 지울까요?</h3><p>찍어둔 사진 ${have.size}장이 삭제돼요. 되돌릴 수 없어요.</p><div class="row"><button class="btn ghost" data-a="x">취소</button><button class="btn danger" data-a="ok">모두 지우기</button></div>`,(el2,c2)=>el2.addEventListener('click',async e2=>{const b=e2.target.dataset.a;if(!b)return;c2();if(b==='ok'){await dclear('photos');for(const u of urls.values())URL.revokeObjectURL(u);urls.clear();have.clear();renderAll();toast('사진을 모두 지웠어요')}}))}))}
 
 /* ---------- events ---------- */
+$('genMergeBtn').onclick=()=>{$('genIn').value='';$('genIn').click()};
+$('genIn').onchange=e=>genericMerge(e.target.files);
 $('mergeBtn').onclick=()=>{$('mergeIn').value='';$('mergeIn').click()};
 $('mergeIn').onchange=e=>mergeFiles(e.target.files);
 $('pickBtn').onclick=()=>{$('xlsxIn').value='';$('xlsxIn').click()};
 $('xlsxIn').onchange=e=>{const f=e.target.files[0];if(f)loadFile(f)};
 $('camIn').onchange=onPhoto;$('galIn').onchange=onPhoto;
-$('menuBtn').onclick=openMenu;$('saveBtn').onclick=()=>save('save');$('shareBtn').onclick=()=>save('share');
+$('menuBtn').onclick=openMenu;$('homeBtn').onclick=goHome;$('saveBtn').onclick=()=>save('save');$('shareBtn').onclick=()=>save('share');
 const drop=$('drop');['dragover','dragenter'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(t=>drop.addEventListener(t,()=>drop.classList.remove('over')));
 drop.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f)});
@@ -663,8 +698,111 @@ $('list').addEventListener('click',e=>{const card=e.target.closest('.item');if(!
     const n=card.querySelector('.note');if(n){n.hidden=st.result!=='불량';if(!n.hidden)n.focus()}}});
 $('list').addEventListener('input',e=>{if(!e.target.classList.contains('note'))return;const it=itemById(e.target.closest('.item').dataset.id);P.status[it.id].note=e.target.value;saveMeta()});
 
+/* ---------- 엑셀 수합 (범용) ---------- */
+const isNum=v=>/^-?\d+(\.\d+)?(E[+-]?\d+)?$/i.test(v);
+const typed=v=>isNum(v)?+v:v;
+const rowKey=c=>[...c].sort((a,b)=>a[0]-b[0]).map(([,v])=>norm(v)).filter(Boolean).slice(0,3).join('|');
+function dataRowsOf(sh){const hr=firstHeaderRow(sh.rows);return{hr,rows:sortedRows(sh.rows).filter(([r,c])=>r>hr&&[...c.values()].some(Boolean))}}
+function decideMode(parts){let hit=0,tot=0;const base=parts[0];
+  for(const pt of parts.slice(1))for(const sh of pt.an.sheets){const bs=base.an.sheets.find(x=>x.name===sh.name);if(!bs)continue;
+    for(const[r,c]of dataRowsOf(sh).rows){tot++;const b=bs.rows.get(r);if(b&&rowKey(b)===rowKey(c))hit++}}
+  return tot&&hit/tot>=0.6?'fill':'append'}
+async function sheetDrawing(zip,sp,sdoc,ct){
+  const srp=relsPathOf(sp);const sRels=parseXml(zip.file(srp)?await zip.file(srp).async('string'):EMPTY_RELS);
+  const dRel=byTag(sRels,'Relationship').find(r=>/\/drawing$/.test(r.getAttribute('Type')||''));
+  if(dRel){const dp=resolvePath(dirOf(sp),dRel.getAttribute('Target'));if(zip.file(dp)){const rp=relsPathOf(dp);
+    return{drawPath:dp,ddoc:parseXml(await zip.file(dp).async('string')),drels:parseXml(zip.file(rp)?await zip.file(rp).async('string'):EMPTY_RELS),created:false}}}
+  if(!ct)return null;
+  let n=1;while(zip.file(`xl/drawings/drawing${n}.xml`))n++;const dp=`xl/drawings/drawing${n}.xml`;
+  const ids=byTag(sRels,'Relationship').map(r=>r.getAttribute('Id'));let k=1;while(ids.includes('rId'+k))k++;
+  const rel=sRels.createElementNS(NS_PR,'Relationship');rel.setAttribute('Id','rId'+k);rel.setAttribute('Type',NS_R+'/drawing');rel.setAttribute('Target',`../drawings/drawing${n}.xml`);sRels.documentElement.appendChild(rel);zip.file(srp,ser(sRels));
+  const el=sdoc.createElementNS(sdoc.documentElement.namespaceURI,'drawing');el.setAttributeNS(NS_R,'r:id','rId'+k);
+  const after=['legacyDrawing','legacyDrawingHF','drawingHF','picture','oleObjects','controls','webPublishItems','tableParts','extLst'];
+  sdoc.documentElement.insertBefore(el,Array.from(sdoc.documentElement.children).find(ch=>after.includes(ch.localName))||null);
+  const o=ct.createElementNS(NS_CT,'Override');o.setAttribute('PartName','/'+dp);o.setAttribute('ContentType','application/vnd.openxmlformats-officedocument.drawing+xml');ct.documentElement.appendChild(o);
+  return{drawPath:dp,ddoc:parseXml(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="${NS_XDR}" xmlns:a="${NS_A}" xmlns:r="${NS_R}"/>`),drels:parseXml(EMPTY_RELS),created:true}}
+async function picAnchors(zip,sp){const sd=await sheetDrawing(zip,sp,null,null);if(!sd)return[];const rels=await readRels(zip,sd.drawPath);const out=[];
+  for(const a of Array.from(sd.ddoc.documentElement.children)){if(!/Anchor$/.test(a.localName))continue;const f=byTag(a,'from')[0],blip=byTag(a,'blip')[0];if(!f||!blip||byTag(a,'graphicFrame').length)continue;
+    const rid=blip.getAttributeNS(NS_R,'embed')||blip.getAttribute('r:embed');const rel=rels.find(r=>r.id===rid);if(!rel||!zip.file(rel.path))continue;
+    out.push({a,col:+byTag(f,'col')[0].textContent,row:+byTag(f,'row')[0].textContent,path:rel.path,ext:(rel.path.split('.').pop()||'png').toLowerCase()})}
+  return out}
+async function mergeGeneric(parts,mode){
+  const base=parts[0],zip=await JSZip.loadAsync(base.buf);
+  const ct=parseXml(await zip.file('[Content_Types].xml').async('string'));
+  const ctype={jpeg:'image/jpeg',jpg:'image/jpeg',png:'image/png',gif:'image/gif',bmp:'image/bmp',emf:'image/x-emf',wmf:'image/x-wmf',tif:'image/tiff',tiff:'image/tiff'};
+  const ensureExt=e=>{if(!byTag(ct,'Default').some(d=>(d.getAttribute('Extension')||'').toLowerCase()===e)){const d=ct.createElementNS(NS_CT,'Default');d.setAttribute('Extension',e);d.setAttribute('ContentType',ctype[e]||'application/octet-stream');ct.documentElement.insertBefore(d,ct.documentElement.firstChild)}};
+  const rep={cells:0,rows:0,pics:0,conflict:0,unmatched:new Set(parts.slice(1).map(p=>p.name))};let mediaN=0;
+  for(const bs of base.an.sheets){
+    const others=parts.slice(1).map(pt=>({pt,sh:pt.an.sheets.find(x=>x.name===bs.name)})).filter(o=>o.sh);if(!others.length)continue;
+    others.forEach(o=>rep.unmatched.delete(o.pt.name));
+    const sdoc=parseXml(await zip.file(bs.path).async('string'));const sd=byTag(sdoc,'sheetData')[0];
+    const fRefs=new Set(byTag(sdoc,'c').filter(c=>byTag(c,'f').length).map(c=>c.getAttribute('r')));
+    let D=null;const getD=async()=>{if(!D)D=await sheetDrawing(zip,bs.path,sdoc,ct);return D};
+    const rids=()=>new Set(byTag(D.drels,'Relationship').map(r=>r.getAttribute('Id')));
+    let pid=0;const addPic=async(pt,an,rowShift)=>{await getD();if(!pid)pid=Math.max(1,...byTag(D.ddoc,'cNvPr').map(e=>+e.getAttribute('id')||0))+1;
+      const used=rids();let k=1;while(used.has('rId'+k))k++;const rid='rId'+k;const media=`merge_${Date.now().toString(36)}_${++mediaN}.${an.ext}`;
+      zip.file('xl/media/'+media,await pt.zip.file(an.path).async('arraybuffer'));ensureExt(an.ext);
+      const rel=D.drels.createElementNS(NS_PR,'Relationship');rel.setAttribute('Id',rid);rel.setAttribute('Type',NS_R+'/image');rel.setAttribute('Target','../media/'+media);D.drels.documentElement.appendChild(rel);
+      const node=D.ddoc.importNode(an.a,true);for(const b of byTag(node,'blip')){b.setAttributeNS(NS_R,'r:embed',rid);for(const at of Array.from(b.attributes))if(at.namespaceURI===NS_R&&at.localName==='link')b.removeAttributeNode(at)}
+      for(const c of byTag(node,'cNvPr'))c.setAttribute('id',pid++);
+      if(rowShift)for(const t of['from','to']){const e=byTag(node,t)[0];if(e){const r=byTag(e,'row')[0];r.textContent=String(+r.textContent+rowShift)}}
+      D.ddoc.documentElement.appendChild(node);rep.pics++};
+    if(mode==='fill'){
+      const all=[{pt:base,sh:bs},...others];const pos=new Set();
+      for(const o of all)for(const[r,c]of o.sh.rows)for(const k of c.keys())pos.add(r+':'+k);
+      for(const ps of pos){const[r,c]=ps.split(':').map(Number);const ref=colName(c)+r;if(fRefs.has(ref))continue;
+        const vals=all.map(o=>{const x=o.sh.rows.get(r);return x&&x.get(c)||''});const bv=vals[0];if(vals.every(v=>v===bv))continue;
+        const cnt={};vals.forEach(v=>cnt[v]=(cnt[v]||0)+1);
+        const maj=all.length>=3?Object.keys(cnt).find(v=>cnt[v]>all.length/2):undefined;const tmpl=maj!==undefined?maj:bv;
+        const cand=all.map((o,i)=>({v:vals[i],t:o.pt.t,i})).filter(x=>x.v!==''&&x.v!==tmpl);if(!cand.length)continue;
+        const distinct=[...new Set(cand.map(x=>x.v))];let pick=cand[0].v;
+        if(distinct.length>1){rep.conflict++;pick=cand.sort((a,b)=>b.t-a.t||b.i-a.i)[0].v}
+        if(pick!==bv){setCell(sdoc,sd,r,c,typed(pick));rep.cells++}}
+      const have=new Set((await picAnchors(zip,bs.path)).map(a=>a.col+':'+a.row));
+      for(const o of others)for(const an of await picAnchors(o.pt.zip,o.sh.path)){const k=an.col+':'+an.row;if(have.has(k))continue;have.add(k);await addPic(o.pt,an,0)}
+    }else{
+      const{hr,rows:bRows}=dataRowsOf(bs);let last=bRows.length?bRows[bRows.length-1][0]:hr;
+      const tplRow=Array.from(sd.children).find(x=>+x.getAttribute('r')===(bRows.length?bRows[0][0]:hr+1));
+      const tplStyle={};if(tplRow)for(const c of Array.from(tplRow.children)){const f=splitRef(c.getAttribute('r')||'');if(f&&c.getAttribute('s'))tplStyle[f.col]=c.getAttribute('s')}
+      for(const o of others){const{rows}=dataRowsOf(o.sh);const pics=await picAnchors(o.pt.zip,o.sh.path);
+        const ohts={};for(const re of byTag(o.sh.doc,'row'))if(re.getAttribute('ht'))ohts[+re.getAttribute('r')]=re.getAttribute('ht');
+        for(const[r,c]of rows){const nr=++last;
+          for(const[col,v]of c){if(v==='')continue;setCell(sdoc,sd,nr,col,typed(v));const ce=byTag(sdoc,'c').find(x=>x.getAttribute('r')===colName(col)+nr);if(ce&&tplStyle[col])ce.setAttribute('s',tplStyle[col])}
+          const re=Array.from(sd.children).find(x=>+x.getAttribute('r')===nr);if(re){re.removeAttribute('spans');if(ohts[r]){re.setAttribute('ht',ohts[r]);re.setAttribute('customHeight','1')}}
+          rep.rows++;for(const an of pics)if(an.row+1===r)await addPic(o.pt,an,nr-r)}}
+      for(const d of byTag(sdoc,'dimension'))d.parentNode.removeChild(d)}
+    zip.file(bs.path,ser(sdoc));if(D){zip.file(D.drawPath,ser(D.ddoc));zip.file(relsPathOf(D.drawPath),ser(D.drels))}}
+  if(zip.file('xl/calcChain.xml')){zip.remove('xl/calcChain.xml');for(const o of byTag(ct,'Override'))if(/calcChain/.test(o.getAttribute('PartName')))o.parentNode.removeChild(o);
+    const wr=parseXml(await zip.file('xl/_rels/workbook.xml.rels').async('string'));for(const r of byTag(wr,'Relationship'))if(/calcChain/.test(r.getAttribute('Target')))r.parentNode.removeChild(r);zip.file('xl/_rels/workbook.xml.rels',ser(wr))}
+  const wb=parseXml(await zip.file('xl/workbook.xml').async('string'));const cp=byTag(wb,'calcPr')[0];if(cp){cp.setAttribute('fullCalcOnLoad','1');zip.file('xl/workbook.xml',ser(wb))}
+  zip.file('[Content_Types].xml',ser(ct));
+  return{blob:await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',compression:'DEFLATE'}),rep}}
+async function genericMerge(files,mode){
+  files=[...files].filter(f=>/\.xlsx$/i.test(f.name));
+  if(files.length<2){toast('수합할 엑셀 파일을 2개 이상 골라주세요');return}
+  let done=busy(`파일 ${files.length}개 수합 중…`);
+  try{const parts=[],bad=[];
+    for(const f of files){try{const buf=await f.arrayBuffer();const an=await analyze(buf);parts.push({name:f.name,t:f.lastModified||0,buf,zip:an.zip,an})}catch(e){console.error(e);bad.push(f.name)}}
+    if(parts.length<2)throw new Error('읽을 수 있는 파일이 2개 이상 있어야 해요.');
+    const auto=decideMode(parts);mode=mode||auto;
+    const{blob,rep}=await mergeGeneric(parts,mode);
+    const st=splitTitle(parts[0].name),name=`${st.title}${st.month?`_${st.month}월`:''}_수합.xlsx`;
+    const ML={fill:'칸 채우기',append:'이어 붙이기'};
+    const extra=`<div style="display:grid;gap:6px;font-size:14px">
+      <p style="margin:0;color:var(--fg)">파일 ${parts.length}개 · <b>${ML[mode]}</b> 방식${mode===auto?' (자동 선택)':''}</p>
+      <p style="margin:0;color:var(--fg)">${mode==='fill'?`채워 넣은 칸 ${rep.cells}개`:`이어 붙인 행 ${rep.rows}개`}${rep.pics?` · 옮긴 사진 ${rep.pics}장`:''}</p>
+      ${rep.conflict?`<p style="margin:0;color:var(--warn)">파일마다 다르게 적힌 칸 ${rep.conflict}곳은 가장 최근 파일 값으로 넣었어요.</p>`:''}
+      ${[...rep.unmatched].map(n=>`<p style="margin:0;color:var(--warn)">${esc(n)}: 시트 이름이 달라 합치지 못했어요</p>`).join('')}
+      ${bad.map(n=>`<p style="margin:0;color:var(--warn)">${esc(n)}: 읽지 못했어요</p>`).join('')}
+      <button class="btn ghost" data-a="other">${ML[mode==='fill'?'append':'fill']} 방식으로 다시 합치기</button></div>`;
+    done();done=()=>{};
+    offerFile(blob,name,`${st.title} 수합본`,'save',extra);
+    const sh=$('layer').lastElementChild;sh&&sh.addEventListener('click',e=>{if(e.target.dataset.a==='other'){sh.remove();genericMerge(files,mode==='fill'?'append':'fill')}})}
+  catch(err){console.error(err);toast('수합하지 못했어요: '+(err.message||err))}
+  finally{done()}}
+
 /* ---------- update check ---------- */
-const APP_VERSION='1.8', APP_CODE=9;
+const APP_VERSION='1.9', APP_CODE=10;
 const UPDATE_URL='https://thkim3589-web.github.io/zero/apk/version.json';
 let updShown=false, lastCheck=0;
 async function checkUpdate(manual){
