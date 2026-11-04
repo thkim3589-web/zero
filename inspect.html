@@ -137,6 +137,7 @@ header.top .wrap>*{min-width:0}
     <div class="brand">
       <h1>기계기구 점검사진</h1>
       <span class="file" id="fileLabel"></span>
+      <button class="iconbtn" id="homeBtn" hidden>홈</button>
       <button class="iconbtn" id="menuBtn" hidden>메뉴</button>
     </div>
     <div class="prog" id="progRow" hidden>
@@ -158,6 +159,7 @@ header.top .wrap>*{min-width:0}
       <li>담당자별 파일을 받으면 "여러 파일 수합하기"로 한 번에 합칠 수 있어요.</li>
     </ol>
     <div class="drop" id="drop">
+      <button class="btn primary" id="resumeBtn" hidden>이어서 작성하기</button>
       <button class="btn primary" id="pickBtn">엑셀 불러오기</button>
       <button class="btn ghost" id="mergeBtn">여러 파일 수합하기</button>
       <small style="color:var(--muted)">또는 파일을 여기로 끌어다 놓기</small>
@@ -258,7 +260,7 @@ async function compress(blob,stamp){
 async function imgSize(blob){const b=await toBitmap(blob);const s={w:b.width||b.naturalWidth,h:b.height||b.naturalHeight};if(b.close)b.close();return s}
 
 /* ---------- state ---------- */
-let P=null, BUF=null; const have=new Set(); const urls=new Map();
+let P=null, BUF=null, atHome=false; const have=new Set(); const urls=new Map();
 let author=ls.get('ip.author',''), onlyTodo=ls.get('ip.todo','0')==='1';
 const users=()=>P&&P.hasUser?[...new Set(P.items.map(i=>i.user).filter(Boolean))]:[];
 const mine=()=>P.hasUser?P.items.filter(i=>i.user===author):P.items;
@@ -445,7 +447,9 @@ async function urlFor(k){if(urls.has(k))return urls.get(k);const b=await dget('p
 function dropUrl(k){if(urls.has(k)){URL.revokeObjectURL(urls.get(k));urls.delete(k)}}
 
 function renderAll(){
-  const on=!!P;$('start').hidden=on;$('work').hidden=!on;$('savebar').hidden=!on;$('menuBtn').hidden=!on;$('progRow').hidden=!on;
+  const on=!!P&&!atHome;$('start').hidden=on;$('work').hidden=!on;$('savebar').hidden=!on;$('menuBtn').hidden=!on;$('homeBtn').hidden=!on;$('progRow').hidden=!on;
+  const rb=$('resumeBtn'),pb=$('pickBtn');rb.hidden=!P;pb.className='btn '+(P?'ghost':'primary');pb.textContent=P?'다른 엑셀 불러오기':'엑셀 불러오기';
+  if(P)rb.textContent=`이어서 작성하기: ${P.fileName}`;
   if(!on){$('fileLabel').textContent='';return}
   $('fileLabel').textContent=P.fileName;$('dateIn').value=P.date||'';
   const us=users(),ok=P.hasUser?us.includes(author):!!author;
@@ -547,7 +551,7 @@ async function openWorkbook(buf,fileName,forceMap){
     const{project,existing}=built;
     await dclear('photos');for(const u of urls.values())URL.revokeObjectURL(u);urls.clear();have.clear();
     for(const ex of existing){try{const b=await compress(new Blob([ex.ab]),'');await dput('photos',ex.k,b);have.add(ex.k)}catch(e){}}
-    P=project;BUF=buf;await dput('meta','buf',buf);await saveMeta();done();done=()=>{};renderAll();
+    P=project;BUF=buf;atHome=false;await dput('meta','buf',buf);await saveMeta();done();done=()=>{};renderAll();
     const what=`${P.photo.sheet} 시트 · 사진 ${P.photo.cols.length}칸`;
     if(P.hasUser&&users().includes(author))toast(`${author} 품목 ${mine().length}건을 불러왔어요 (${what})`);
     else if(!P.hasUser&&author)toast(`품목 ${P.items.length}건을 불러왔어요 (${what})`);
@@ -630,9 +634,10 @@ window.onAndroidBack=()=>{const L=$('layer');if(L.lastElementChild){L.lastElemen
 async function shareLink(){const url=location.href.split('#')[0];
   if(navigator.share&&/^https?:/.test(url)){try{await navigator.share({title:'기계기구 점검사진',text:'유해위험 기계기구 점검사진 정리 앱',url});return}catch(e){if(e&&e.name==='AbortError')return}}
   try{await navigator.clipboard.writeText(url);toast('앱 링크를 복사했어요')}catch(e){sheet(`<h3>앱 링크</h3><p style="user-select:all">${esc(url)}</p><button class="btn ghost" data-a="x">닫기</button>`,(el,c)=>el.addEventListener('click',ev=>ev.target.dataset.a&&c()))}}
-function openMenu(){sheet(`<h3>메뉴</h3><p>${esc(P.fileName)}</p><button class="btn ghost" data-a="who">작성자 변경</button>${window.AndroidBridge?'':'<button class="btn ghost" data-a="link">앱 링크 공유</button>'}<button class="btn ghost" data-a="new">다른 엑셀 불러오기</button><button class="btn ghost" data-a="form">양식 설정 변경</button><button class="btn ghost" data-a="merge">여러 파일 수합하기</button><button class="btn ghost" data-a="upd">업데이트 확인 (현재 v${APP_VERSION})</button><button class="btn ghost" data-a="clr">사진 모두 지우기</button><button class="btn ghost" data-a="x">닫기</button>`,
+function openMenu(){sheet(`<h3>메뉴</h3><p>${esc(P.fileName)}</p><button class="btn ghost" data-a="home">홈으로 가기</button><button class="btn ghost" data-a="who">작성자 변경</button>${window.AndroidBridge?'':'<button class="btn ghost" data-a="link">앱 링크 공유</button>'}<button class="btn ghost" data-a="new">다른 엑셀 불러오기</button><button class="btn ghost" data-a="form">양식 설정 변경</button><button class="btn ghost" data-a="merge">여러 파일 수합하기</button><button class="btn ghost" data-a="upd">업데이트 확인 (현재 v${APP_VERSION})</button><button class="btn ghost" data-a="clr">사진 모두 지우기</button><button class="btn ghost" data-a="x">닫기</button>`,
   (el,c)=>el.addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;c();
-    if(a==='who')pickAuthor();
+    if(a==='home')$('homeBtn').onclick();
+    else if(a==='who')pickAuthor();
     else if(a==='link')shareLink();
     else if(a==='new'){$('xlsxIn').value='';$('xlsxIn').click()}
     else if(a==='upd')checkUpdate(true);
@@ -646,7 +651,10 @@ $('mergeIn').onchange=e=>mergeFiles(e.target.files);
 $('pickBtn').onclick=()=>{$('xlsxIn').value='';$('xlsxIn').click()};
 $('xlsxIn').onchange=e=>{const f=e.target.files[0];if(f)loadFile(f)};
 $('camIn').onchange=onPhoto;$('galIn').onchange=onPhoto;
-$('menuBtn').onclick=openMenu;$('saveBtn').onclick=()=>save('save');$('shareBtn').onclick=()=>save('share');
+$('menuBtn').onclick=openMenu;
+$('homeBtn').onclick=()=>{atHome=true;renderAll();window.scrollTo(0,0)};
+$('resumeBtn').onclick=()=>{atHome=false;renderAll();window.scrollTo(0,0)};
+$('saveBtn').onclick=()=>save('save');$('shareBtn').onclick=()=>save('share');
 const drop=$('drop');['dragover','dragenter'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(t=>drop.addEventListener(t,()=>drop.classList.remove('over')));
 drop.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f)});
@@ -664,7 +672,7 @@ $('list').addEventListener('click',e=>{const card=e.target.closest('.item');if(!
 $('list').addEventListener('input',e=>{if(!e.target.classList.contains('note'))return;const it=itemById(e.target.closest('.item').dataset.id);P.status[it.id].note=e.target.value;saveMeta()});
 
 /* ---------- update check ---------- */
-const APP_VERSION='1.8', APP_CODE=9;
+const APP_VERSION='1.9', APP_CODE=10;
 const UPDATE_URL='https://thkim3589-web.github.io/zero/apk/version.json';
 let updShown=false, lastCheck=0;
 async function checkUpdate(manual){
