@@ -28,7 +28,7 @@
   --warn:#f0a35a; --warn-soft:#3a2614; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans);word-break:keep-all;overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--sans);word-break:keep-all;overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
 [hidden]{display:none!important}
 button,input{font:inherit;color:inherit}
@@ -121,7 +121,25 @@ header.top .wrap>*{min-width:0}
 .btn.danger{background:var(--warn);color:var(--surface)}
 .btn:disabled{opacity:.5}
 
-.savebar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.savebar{position:fixed;left:0;right:0;bottom:calc(60px + env(safe-area-inset-bottom,0px));z-index:20;background:var(--surface);border-top:1px solid var(--line)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar .wrap{display:grid;grid-template-columns:repeat(3,1fr);height:60px}
+.tabbar button{border:0;background:transparent;display:grid;justify-items:center;align-content:center;gap:2px;font-size:12px;color:var(--muted)}
+.tabbar button svg{width:22px;height:22px}
+.tabbar button[aria-current="page"]{color:var(--accent);font-weight:600}
+body.has-save{padding-bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+.tool-link{text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%;text-decoration:none}
+.tool-link:active{background:var(--bg)}
+.chev{margin-left:auto;font-size:26px;line-height:1;color:var(--muted);flex:none;align-self:center}
+.mcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:10px}
+.mhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.flist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.flist li{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:8px;padding:8px 10px;min-width:0}
+.flist .fn{flex:1;min-width:0;display:grid}.flist .fn b{font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.flist .fn small{color:var(--muted);font-size:12px}
+.flist button{border:0;background:transparent;font-size:18px;color:var(--muted);padding:4px 8px}
+.flist .empty{background:transparent;color:var(--muted);justify-content:center;padding:14px}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr)}.seg3 button{padding:10px 6px;font-size:14px}
+.seg3 button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
 .savebar .wrap{padding-block:10px;display:flex;gap:10px}
 .savebar .btn.primary{flex:2}.savebar .btn.ghost{flex:1}
 
@@ -135,7 +153,7 @@ header.top .wrap>*{min-width:0}
 .viewer img{width:100%;height:100%;object-fit:contain;min-height:0}
 .viewer .row{display:flex;gap:10px;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .viewer .row .btn{flex:1;background:#222;color:#fff}
-.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;z-index:60;max-width:90vw}
+.toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;z-index:60;max-width:90vw}
 .busy{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.4);display:grid;place-items:center;color:#fff;font-weight:600}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -145,8 +163,7 @@ header.top .wrap>*{min-width:0}
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <button class="iconbtn" id="homeBtn" hidden aria-label="홈으로">홈</button>
-      <h1>기계기구 점검사진</h1>
+      <h1 id="pageTitle">기계기구 점검사진</h1>
       <span class="file" id="fileLabel"></span>
       <button class="iconbtn" id="menuBtn" hidden>메뉴</button>
     </div>
@@ -160,32 +177,50 @@ header.top .wrap>*{min-width:0}
   <section class="start" id="start">
     <h2>어떤 작업을 할까요?</h2>
     <div class="tools">
-      <article class="tool" id="toolPhoto">
-        <div class="tool-hd"><span class="tool-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg></span><div class="tool-t"><h3>유해위험 기계기구 점검사진</h3><p>점검 엑셀을 불러와 품목별 점검사진·필증사진을 찍고 사진대지에 넣어요.</p></div></div>
+      <a class="tool tool-link" href="#" data-go="photo">
+        <div class="tool-hd"><span class="tool-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg></span><div class="tool-t"><h3>유해위험 기계기구 점검사진</h3><p>점검 엑셀을 불러와 품목별 점검사진·필증사진을 찍고 사진대지에 넣어요.</p></div><span class="chev" aria-hidden="true">›</span></div>
         <div class="resume" id="resume" hidden></div>
-        <div class="drop" id="drop">
-          <div class="row2"><button class="btn primary" id="pickBtn">엑셀 불러오기</button><button class="btn ghost" id="mergeBtn">사진 파일 수합</button></div>
-          <small style="color:var(--muted)">또는 엑셀 파일을 여기로 끌어다 놓기</small>
-        </div>
-        <details class="how"><summary>사용 방법</summary>
-          <ol class="steps">
-            <li>점검 엑셀(.xlsx)을 불러옵니다. 양식이 다르면 사진 넣을 열을 한 번만 골라주면 돼요.</li>
-            <li>사용자 이름을 입력하면 대상 품목만 나옵니다. 품목별로 사진을 찍고, 불량이면 처리내역을 적습니다.</li>
-            <li>엑셀 저장을 누르면 "제목_월_작성자.xlsx"로 저장됩니다.</li>
-            <li>담당자별 파일을 받으면 "사진 파일 수합"으로 한 번에 합칠 수 있어요.</li>
-          </ol></details>
-      </article>
-      <article class="tool" id="toolMerge">
-        <div class="tool-hd"><span class="tool-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3h9l3 3v11H8z"/><path d="M4 7v14h12"/><path d="M11 9h6M11 12h6M11 15h4"/></svg></span><div class="tool-t"><h3>엑셀 수합</h3><p>담당자별로 작성한 같은 양식의 엑셀 여러 개를 하나의 파일로 합쳐요. 사진도 같이 옮겨요.</p></div></div>
-        <button class="btn primary" id="genMergeBtn">수합할 파일 고르기</button>
-        <details class="how"><summary>어떻게 합쳐지나요?</summary>
-          <ol class="steps">
-            <li><b>칸 채우기</b>: 같은 목록을 받아 각자 자기 칸만 채운 경우, 채운 칸을 모아 한 파일로 만들어요.</li>
-            <li><b>이어 붙이기</b>: 머리글은 같고 각자 자기 목록만 적은 경우, 아래로 이어 붙여요.</li>
-            <li>파일을 보고 방식을 자동으로 고르고, 결과 화면에서 다른 방식으로 바꿀 수 있어요.</li>
-          </ol></details>
-      </article>
+      </a>
+      <a class="tool tool-link" href="#" data-go="merge">
+        <div class="tool-hd"><span class="tool-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3h9l3 3v11H8z"/><path d="M4 7v14h12"/><path d="M11 9h6M11 12h6M11 15h4"/></svg></span><div class="tool-t"><h3>엑셀 수합</h3><p>공정표·심도측정 등 같은 양식의 엑셀 여러 개를 하나의 파일로 합쳐요. 사진도 같이 옮겨요.</p></div><span class="chev" aria-hidden="true">›</span></div>
+        <div class="resume" id="genResume" hidden></div>
+      </a>
     </div>
+  </section>
+
+  <section class="start" id="photoIntro" hidden>
+    <div style="display:grid;gap:6px"><h2>유해위험 기계기구 점검사진</h2><p>점검 엑셀을 불러오면 품목마다 사진을 찍어 사진대지 칸에 맞춰 넣어요.</p></div>
+    <div class="drop" id="drop">
+      <div class="row2"><button class="btn primary" id="pickBtn">엑셀 불러오기</button><button class="btn ghost" id="mergeBtn">사진 파일 수합</button></div>
+      <small style="color:var(--muted)">또는 엑셀 파일을 여기로 끌어다 놓기</small>
+    </div>
+    <ol class="steps">
+      <li>점검 엑셀(.xlsx)을 불러옵니다. 양식이 다르면 사진 넣을 열을 한 번만 골라주면 돼요.</li>
+      <li>사용자 이름을 입력하면 대상 품목만 나옵니다. 품목별로 사진을 찍고, 불량이면 처리내역을 적습니다.</li>
+      <li>엑셀 저장을 누르면 "제목_월_작성자.xlsx"로 저장됩니다.</li>
+      <li>담당자별 파일을 받으면 "사진 파일 수합"으로 한 번에 합칠 수 있어요.</li>
+    </ol>
+  </section>
+
+  <section class="start" id="mergePage" hidden>
+    <div style="display:grid;gap:6px"><h2>엑셀 수합</h2><p>같은 양식의 엑셀을 모두 추가한 뒤 수합하기를 누르세요. 공정표, 심도측정 기록 등 어떤 엑셀이든 돼요.</p></div>
+    <div class="mcard">
+      <div class="mhead"><b id="genCount">추가한 파일 0개</b><button class="iconbtn" id="genClear" hidden>모두 빼기</button></div>
+      <ul class="flist" id="genList"></ul>
+      <button class="btn ghost" id="genMergeBtn">+ 파일 추가</button>
+    </div>
+    <div class="field"><label>합치는 방식</label>
+      <div class="seg seg3" id="genMode" role="group" aria-label="합치는 방식">
+        <button data-m="auto" aria-pressed="true">자동</button><button data-m="fill" aria-pressed="false">칸 채우기</button><button data-m="append" aria-pressed="false">이어 붙이기</button>
+      </div>
+      <small id="genModeHelp" style="color:var(--muted)">파일 내용을 보고 알맞은 방식을 골라요.</small>
+    </div>
+    <button class="btn primary" id="genRun" disabled>수합하기</button>
+    <ol class="steps">
+      <li><span><b>칸 채우기</b>: 같은 목록을 받아 각자 자기 칸만 채운 경우 (예: 공정표의 담당 공정 진척률). 채운 칸을 모아 한 파일로 만들어요.</span></li>
+      <li><span><b>이어 붙이기</b>: 머리글은 같고 각자 자기 행만 적은 경우 (예: 사람마다 따로 적은 심도측정 기록). 아래로 이어 붙여요.</span></li>
+      <li><span>엑셀에 들어 있던 사진도 같은 칸·행으로 옮겨요. 시트 이름이 같아야 합쳐져요.</span></li>
+    </ol>
   </section>
 
   <section id="work" hidden>
@@ -203,6 +238,13 @@ header.top .wrap>*{min-width:0}
   </section>
 </main>
 
+<nav class="tabbar" id="tabbar" aria-label="작업 이동">
+  <div class="wrap">
+    <button data-go="home" aria-current="page"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>홈</span></button>
+    <button data-go="photo"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.5"/></svg><span>점검사진</span></button>
+    <button data-go="merge"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3h9l3 3v11H8z"/><path d="M4 7v14h12"/><path d="M11 9h6M11 12h6M11 15h4"/></svg><span>엑셀 수합</span></button>
+  </div>
+</nav>
 <div class="savebar" id="savebar" hidden>
   <div class="wrap"><button class="btn ghost" id="shareBtn">공유</button><button class="btn primary" id="saveBtn">엑셀 저장</button></div>
 </div>
@@ -469,15 +511,20 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 async function urlFor(k){if(urls.has(k))return urls.get(k);const b=await dget('photos',k);if(!b)return null;const u=URL.createObjectURL(b);urls.set(k,u);return u}
 function dropUrl(k){if(urls.has(k)){URL.revokeObjectURL(urls.get(k));urls.delete(k)}}
 
-let view='work';
-function goHome(){view='home';$('layer').innerHTML='';renderAll();window.scrollTo(0,0)}
-function goWork(){view='work';renderAll();window.scrollTo(0,0)}
+let view='home';
+const TITLES={home:'현장 업무 도구',photo:'점검사진',merge:'엑셀 수합'};
+function go(v){view=v;$('layer').innerHTML='';renderAll();window.scrollTo(0,0)}
+const goHome=()=>go('home'),goWork=()=>go('photo');
 function renderAll(){
-  const on=!!P&&view==='work';$('start').hidden=on;$('work').hidden=!on;$('savebar').hidden=!on;$('menuBtn').hidden=!on;$('progRow').hidden=!on;$('homeBtn').hidden=!on;
+  const on=!!P&&view==='photo';
+  $('start').hidden=view!=='home';$('photoIntro').hidden=!(view==='photo'&&!P);$('mergePage').hidden=view!=='merge';
+  $('work').hidden=!on;$('savebar').hidden=!on;$('menuBtn').hidden=!on;$('progRow').hidden=!on;document.body.classList.toggle('has-save',on);
+  $('pageTitle').textContent=TITLES[view];
+  for(const b of $('tabbar').querySelectorAll('[data-go]'))b.toggleAttribute('aria-current',b.dataset.go===view),b.dataset.go===view&&b.setAttribute('aria-current','page');
   const R=$('resume');R.hidden=!P;
-  if(P&&!on){const its=mine(),d=its.filter(isDone).length;
-    R.innerHTML=`<div class="meta"><small>작업 중</small><b>${esc(P.fileName)}</b><small>${author?esc(author)+' · ':''}사진 완료 ${d}/${its.length}</small></div><button class="btn primary" id="resumeBtn">이어서 하기</button>`;
-    $('resumeBtn').onclick=goWork}
+  if(P){const its=mine(),d=its.filter(isDone).length;R.innerHTML=`<div class="meta"><small>작업 중</small><b>${esc(P.fileName)}</b><small>${author?esc(author)+' · ':''}사진 완료 ${d}/${its.length}</small></div>`}
+  const G=$('genResume');G.hidden=!genFiles.length;if(genFiles.length)G.innerHTML=`<div class="meta"><small>추가한 파일 ${genFiles.length}개</small></div>`;
+  renderGen();
   if(!on){$('fileLabel').textContent='';return}
   $('fileLabel').textContent=P.fileName;$('dateIn').value=P.date||'';
   const us=users(),ok=P.hasUser?us.includes(author):!!author;
@@ -579,7 +626,7 @@ async function openWorkbook(buf,fileName,forceMap){
     const{project,existing}=built;
     await dclear('photos');for(const u of urls.values())URL.revokeObjectURL(u);urls.clear();have.clear();
     for(const ex of existing){try{const b=await compress(new Blob([ex.ab]),'');await dput('photos',ex.k,b);have.add(ex.k)}catch(e){}}
-    P=project;BUF=buf;await dput('meta','buf',buf);await saveMeta();done();done=()=>{};view='work';renderAll();
+    P=project;BUF=buf;await dput('meta','buf',buf);await saveMeta();done();done=()=>{};view='photo';renderAll();
     const what=`${P.photo.sheet} 시트 · 사진 ${P.photo.cols.length}칸`;
     if(P.hasUser&&users().includes(author))toast(`${author} 품목 ${mine().length}건을 불러왔어요 (${what})`);
     else if(!P.hasUser&&author)toast(`품목 ${P.items.length}건을 불러왔어요 (${what})`);
@@ -658,11 +705,11 @@ async function mergeFiles(files){
 
 const toB64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob)});
 window.onNativeSaved=ok=>toast(ok?'저장했어요':'저장하지 못했어요. 다시 시도해주세요.');
-window.onAndroidBack=()=>{const L=$('layer');if(L.lastElementChild){L.lastElementChild.remove();return true}if(P&&view==='work'){goHome();return true}return false};
+window.onAndroidBack=()=>{const L=$('layer');if(L.lastElementChild){L.lastElementChild.remove();return true}if(view!=='home'){goHome();return true}return false};
 async function shareLink(){const url=location.href.split('#')[0];
   if(navigator.share&&/^https?:/.test(url)){try{await navigator.share({title:'기계기구 점검사진',text:'유해위험 기계기구 점검사진 정리 앱',url});return}catch(e){if(e&&e.name==='AbortError')return}}
   try{await navigator.clipboard.writeText(url);toast('앱 링크를 복사했어요')}catch(e){sheet(`<h3>앱 링크</h3><p style="user-select:all">${esc(url)}</p><button class="btn ghost" data-a="x">닫기</button>`,(el,c)=>el.addEventListener('click',ev=>ev.target.dataset.a&&c()))}}
-function openMenu(){sheet(`<h3>메뉴</h3><p>${esc(P.fileName)}</p><button class="btn ghost" data-a="home">홈 (작업 선택)</button><button class="btn ghost" data-a="who">작성자 변경</button>${window.AndroidBridge?'':'<button class="btn ghost" data-a="link">앱 링크 공유</button>'}<button class="btn ghost" data-a="new">다른 엑셀 불러오기</button><button class="btn ghost" data-a="form">양식 설정 변경</button><button class="btn ghost" data-a="merge">사진 파일 수합</button><button class="btn ghost" data-a="upd">업데이트 확인 (현재 v${APP_VERSION})</button><button class="btn ghost" data-a="clr">사진 모두 지우기</button><button class="btn ghost" data-a="x">닫기</button>`,
+function openMenu(){sheet(`<h3>메뉴</h3><p>${esc(P.fileName)}</p><button class="btn ghost" data-a="home">홈으로</button><button class="btn ghost" data-a="who">작성자 변경</button>${window.AndroidBridge?'':'<button class="btn ghost" data-a="link">앱 링크 공유</button>'}<button class="btn ghost" data-a="new">다른 엑셀 불러오기</button><button class="btn ghost" data-a="form">양식 설정 변경</button><button class="btn ghost" data-a="merge">사진 파일 수합</button><button class="btn ghost" data-a="upd">업데이트 확인 (현재 v${APP_VERSION})</button><button class="btn ghost" data-a="clr">사진 모두 지우기</button><button class="btn ghost" data-a="x">닫기</button>`,
   (el,c)=>el.addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;c();
     if(a==='home')goHome();
     else if(a==='who')pickAuthor();
@@ -675,13 +722,18 @@ function openMenu(){sheet(`<h3>메뉴</h3><p>${esc(P.fileName)}</p><button class
 
 /* ---------- events ---------- */
 $('genMergeBtn').onclick=()=>{$('genIn').value='';$('genIn').click()};
-$('genIn').onchange=e=>genericMerge(e.target.files);
+$('genIn').onchange=e=>{let n=0;for(const f of e.target.files){if(!/\.xlsx$/i.test(f.name)){toast(`${f.name}: .xlsx 파일만 추가할 수 있어요`);continue}if(!genFiles.some(g=>g.name===f.name&&g.size===f.size)){genFiles.push(f);n++}}if(n)toast(`파일 ${n}개를 추가했어요`);renderAll()};
+$('genList').onclick=e=>{const b=e.target.closest('[data-rm]');if(!b)return;genFiles.splice(+b.dataset.rm,1);renderAll()};
+$('genClear').onclick=()=>{genFiles=[];renderAll()};
+$('genMode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;genMode=b.dataset.m;renderGen()};
+$('genRun').onclick=()=>genericMerge(genFiles,genMode==='auto'?null:genMode);
 $('mergeBtn').onclick=()=>{$('mergeIn').value='';$('mergeIn').click()};
 $('mergeIn').onchange=e=>mergeFiles(e.target.files);
 $('pickBtn').onclick=()=>{$('xlsxIn').value='';$('xlsxIn').click()};
 $('xlsxIn').onchange=e=>{const f=e.target.files[0];if(f)loadFile(f)};
 $('camIn').onchange=onPhoto;$('galIn').onchange=onPhoto;
-$('menuBtn').onclick=openMenu;$('homeBtn').onclick=goHome;$('saveBtn').onclick=()=>save('save');$('shareBtn').onclick=()=>save('share');
+$('menuBtn').onclick=openMenu;
+document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b){e.preventDefault();go(b.dataset.go)}});$('saveBtn').onclick=()=>save('save');$('shareBtn').onclick=()=>save('share');
 const drop=$('drop');['dragover','dragenter'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(t=>drop.addEventListener(t,()=>drop.classList.remove('over')));
 drop.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)loadFile(f)});
@@ -699,6 +751,15 @@ $('list').addEventListener('click',e=>{const card=e.target.closest('.item');if(!
 $('list').addEventListener('input',e=>{if(!e.target.classList.contains('note'))return;const it=itemById(e.target.closest('.item').dataset.id);P.status[it.id].note=e.target.value;saveMeta()});
 
 /* ---------- 엑셀 수합 (범용) ---------- */
+let genFiles=[],genMode='auto';
+const fsize=n=>n<1048576?Math.max(1,Math.round(n/1024))+'KB':(n/1048576).toFixed(1)+'MB';
+const MODE_HELP={auto:'파일 내용을 보고 알맞은 방식을 골라요.',fill:'같은 목록에서 각자 채운 칸을 모아요.',append:'각자 적은 행을 아래로 이어 붙여요.'};
+function renderGen(){const L=$('genList');if(!L)return;
+  L.innerHTML=genFiles.length?genFiles.map((f,i)=>`<li><div class="fn"><b>${esc(f.name)}</b><small>${fsize(f.size)}</small></div><button data-rm="${i}" aria-label="${esc(f.name)} 빼기">✕</button></li>`).join(''):'<li class="empty">수합할 엑셀 파일을 추가하세요.</li>';
+  const tot=genFiles.reduce((a,f)=>a+f.size,0);
+  $('genCount').textContent=`추가한 파일 ${genFiles.length}개${genFiles.length?' · '+fsize(tot):''}`;$('genClear').hidden=!genFiles.length;
+  for(const b of $('genMode').children)b.setAttribute('aria-pressed',b.dataset.m===genMode);$('genModeHelp').textContent=MODE_HELP[genMode];
+  $('genRun').disabled=genFiles.length<2;$('genRun').textContent=genFiles.length<2?'파일을 2개 이상 추가하세요':`${genFiles.length}개 파일 수합하기`}
 const isNum=v=>/^-?\d+(\.\d+)?(E[+-]?\d+)?$/i.test(v);
 const typed=v=>isNum(v)?+v:v;
 const rowKey=c=>[...c].sort((a,b)=>a[0]-b[0]).map(([,v])=>norm(v)).filter(Boolean).slice(0,3).join('|');
@@ -784,12 +845,12 @@ async function genericMerge(files,mode){
   try{const parts=[],bad=[];
     for(const f of files){try{const buf=await f.arrayBuffer();const an=await analyze(buf);parts.push({name:f.name,t:f.lastModified||0,buf,zip:an.zip,an})}catch(e){console.error(e);bad.push(f.name)}}
     if(parts.length<2)throw new Error('읽을 수 있는 파일이 2개 이상 있어야 해요.');
-    const auto=decideMode(parts);mode=mode||auto;
+    const auto=decideMode(parts),forced=!!mode;mode=mode||auto;
     const{blob,rep}=await mergeGeneric(parts,mode);
     const st=splitTitle(parts[0].name),name=`${st.title}${st.month?`_${st.month}월`:''}_수합.xlsx`;
     const ML={fill:'칸 채우기',append:'이어 붙이기'};
     const extra=`<div style="display:grid;gap:6px;font-size:14px">
-      <p style="margin:0;color:var(--fg)">파일 ${parts.length}개 · <b>${ML[mode]}</b> 방식${mode===auto?' (자동 선택)':''}</p>
+      <p style="margin:0;color:var(--fg)">파일 ${parts.length}개 · <b>${ML[mode]}</b> 방식${forced?'':' (자동 선택)'}</p>
       <p style="margin:0;color:var(--fg)">${mode==='fill'?`채워 넣은 칸 ${rep.cells}개`:`이어 붙인 행 ${rep.rows}개`}${rep.pics?` · 옮긴 사진 ${rep.pics}장`:''}</p>
       ${rep.conflict?`<p style="margin:0;color:var(--warn)">파일마다 다르게 적힌 칸 ${rep.conflict}곳은 가장 최근 파일 값으로 넣었어요.</p>`:''}
       ${[...rep.unmatched].map(n=>`<p style="margin:0;color:var(--warn)">${esc(n)}: 시트 이름이 달라 합치지 못했어요</p>`).join('')}
@@ -797,12 +858,12 @@ async function genericMerge(files,mode){
       <button class="btn ghost" data-a="other">${ML[mode==='fill'?'append':'fill']} 방식으로 다시 합치기</button></div>`;
     done();done=()=>{};
     offerFile(blob,name,`${st.title} 수합본`,'save',extra);
-    const sh=$('layer').lastElementChild;sh&&sh.addEventListener('click',e=>{if(e.target.dataset.a==='other'){sh.remove();genericMerge(files,mode==='fill'?'append':'fill')}})}
+    const sh=$('layer').lastElementChild;sh&&sh.addEventListener('click',e=>{if(e.target.dataset.a==='other'){sh.remove();genMode=mode==='fill'?'append':'fill';renderGen();genericMerge(files,genMode)}})}
   catch(err){console.error(err);toast('수합하지 못했어요: '+(err.message||err))}
   finally{done()}}
 
 /* ---------- update check ---------- */
-const APP_VERSION='1.9', APP_CODE=10;
+const APP_VERSION='2.0', APP_CODE=11;
 const UPDATE_URL='https://thkim3589-web.github.io/zero/apk/version.json';
 let updShown=false, lastCheck=0;
 async function checkUpdate(manual){
