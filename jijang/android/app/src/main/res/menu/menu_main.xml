@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menuPriceUpload"
+        android:title="단가표 업로드"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menuTemplateUpload"
+        android:title="엑셀 템플릿 업로드"
+        app:showAsAction="never" />
+</menu>

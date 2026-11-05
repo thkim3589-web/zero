@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="tagWorkType" type="id" />
+    <item name="tagCoreCount" type="id" />
+    <item name="tagLayingMethod" type="id" />
+    <item name="tagSpliceType" type="id" />
+    <item name="tagSafetyMeasure" type="id" />
+    <item name="tagCableType" type="id" />
+</resources>

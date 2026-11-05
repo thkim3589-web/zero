@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">지장이설관리</string>
+    <string name="main_title">현장 목록</string>
+    <string name="add_case">새 현장 추가</string>
+    <string name="empty_case_list">등록된 현장이 없습니다.\n우측 하단 버튼으로 새 현장을 추가하세요.</string>
+    <string name="new_case_name_hint">공사명을 입력하세요</string>
+    <string name="dialog_ok">확인</string>
+    <string name="dialog_cancel">취소</string>
+
+    <string name="delete_row">행 삭제</string>
+    <string name="hint_network_level">망구분 (예: 가입자망/지선망)</string>
+    <string name="hint_length_m">길이(m)</string>
+    <string name="hint_total_core">총코어</string>
+    <string name="hint_used_core">사용코어</string>
+    <string name="hint_cable_id">관리번호 (예: =2345=)</string>
+    <string name="hint_skb_shared">SKB 공동투자</string>
+    <string name="hint_kepco_no">한전전산번호/관리번호</string>
+    <string name="hint_jp_no">JP 번호</string>
+    <string name="hint_connected_core">접속코어</string>
+
+    <string name="hint_photo_type">사진유형 (예: 현장사진#1)</string>
+    <string name="hint_photo_description">사진설명</string>
+    <string name="hint_photo_related_facility">관련 근거(함체번호 등)</string>
+    <string name="add_photo">사진 추가</string>
+    <string name="take_photo">카메라로 촬영</string>
+    <string name="pick_from_gallery">갤러리에서 선택</string>
+    <string name="empty_photo_list">등록된 사진이 없습니다.\n우측 하단 버튼으로 사진을 추가하세요.</string>
+</resources>

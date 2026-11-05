@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/textSeqLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/buttonDelete"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_delete_button_light"
+                android:contentDescription="@string/delete_row"
+                android:padding="7dp"
+                android:src="@android:drawable/ic_menu_delete"
+                app:tint="@color/status_warn" />
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/editPoleName"
+            style="@style/Widget.Jijang.EditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="전주번호/지점명" />
+
+        <EditText
+            android:id="@+id/editSegmentLength"
+            style="@style/Widget.Jijang.EditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="구간거리(m)"
+            android:inputType="numberDecimal" />
+
+        <RadioGroup
+            android:id="@+id/radioStockType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/radioStockNew"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:buttonTint="@color/primary"
+                android:checked="true"
+                android:textColor="@color/text_primary"
+                android:text="신규(자재)" />
+
+            <RadioButton
+                android:id="@+id/radioStockExisting"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:buttonTint="@color/primary"
+                android:textColor="@color/text_primary"
+                android:text="재고(자재)" />
+        </RadioGroup>
+
+        <!-- 작업구분(AF) — 신설/신설(공기압)/이설/이도조정/단순지장이설_케이블/신설(AD구간) 중 선택 -->
+        <TextView
+            android:id="@+id/textWorkTypeLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_input_field"
+            android:drawableEnd="@drawable/ic_chevron_right"
+            android:drawablePadding="8dp"
+            android:gravity="center_vertical"
+            android:text="작업구분: 신설"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textCableType"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/bg_input_field"
+                android:drawableEnd="@drawable/ic_chevron_right"
+                android:drawablePadding="6dp"
+                android:gravity="center_vertical"
+                android:text="케이블종류 선택"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
+
+            <!-- 코어수(AD) — 확인된 값(24/48/72/96/144/288) 중 선택 -->
+            <TextView
+                android:id="@+id/textCoreCount"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_input_field"
+                android:drawableEnd="@drawable/ic_chevron_right"
+                android:drawablePadding="6dp"
+                android:gravity="center_vertical"
+                android:text="코어수 선택"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- 가공/지중(AE) — 가공/지중/입상/점가공 중 선택 -->
+        <TextView
+            android:id="@+id/textLayingMethodLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_input_field"
+            android:drawableEnd="@drawable/ic_chevron_right"
+            android:drawablePadding="8dp"
+            android:gravity="center_vertical"
+            android:text="포설방식: 가공"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonToggleSplice"
+                style="@style/Widget.Jijang.Button.Text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="+ 접속 정보" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonToggleSafety"
+                style="@style/Widget.Jijang.Button.Text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="+ 안전 정보" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/groupSplice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- 접속구분(BF) — 확인된 11개 값 중 선택 -->
+            <TextView
+                android:id="@+id/textSpliceTypeLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_input_field"
+                android:drawableEnd="@drawable/ic_chevron_right"
+                android:drawablePadding="8dp"
+                android:gravity="center_vertical"
+                android:text="접속구분 선택"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
+
+            <RadioGroup
+                android:id="@+id/radioWorkShift"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/radioShiftDay"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/primary"
+                    android:checked="true"
+                    android:textColor="@color/text_primary"
+                    android:text="주간" />
+
+                <RadioButton
+                    android:id="@+id/radioShiftNight"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/primary"
+                    android:textColor="@color/text_primary"
+                    android:text="야간" />
+            </RadioGroup>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/groupSafety"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- 안전조치(BH) — 방호차 등 8개 값 중 선택 -->
+            <TextView
+                android:id="@+id/textSafetyMeasureLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_input_field"
+                android:drawableEnd="@drawable/ic_chevron_right"
+                android:drawablePadding="8dp"
+                android:gravity="center_vertical"
+                android:text="안전조치 선택"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

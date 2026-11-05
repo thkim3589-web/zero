@@ -1,0 +1,1371 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 7,
+    "identityHash": "320fd619a11b7eb73f33d54dee444a2e",
+    "entities": [
+      {
+        "tableName": "site_case",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `caseName` TEXT NOT NULL, `companyName` TEXT NOT NULL, `reviewer` TEXT, `approver` TEXT, `businessType` TEXT NOT NULL, `constructionMethod` TEXT NOT NULL, `requestSubject` TEXT NOT NULL, `extractionType` TEXT NOT NULL, `requestDocNo` TEXT, `siteAddress` TEXT NOT NULL, `effectiveYear` INTEGER NOT NULL, `status` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "caseName",
+            "columnName": "caseName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "companyName",
+            "columnName": "companyName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reviewer",
+            "columnName": "reviewer",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "approver",
+            "columnName": "approver",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "businessType",
+            "columnName": "businessType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "constructionMethod",
+            "columnName": "constructionMethod",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestSubject",
+            "columnName": "requestSubject",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "extractionType",
+            "columnName": "extractionType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestDocNo",
+            "columnName": "requestDocNo",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "siteAddress",
+            "columnName": "siteAddress",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "effectiveYear",
+            "columnName": "effectiveYear",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "checklist_detail",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`siteCaseId` INTEGER NOT NULL, `linkedEngExists` TEXT, `relocationMethod` TEXT, `relocationReason` TEXT, `existingRouteSummary` TEXT, `routeBeforeConfig` TEXT, `routeAfterConfig` TEXT, `coreCountDay` TEXT, `coreCountNight` TEXT, `requestSubjectType` TEXT, `rmRegistrationNo` TEXT, `parallelConstruction` TEXT, `parallelConstructionDetail` TEXT, `causerReportAttached` TEXT, `causerReportReason` TEXT, `gisMismatchDuctPole` TEXT, `gisMismatchDuctPoleDetail` TEXT, `gisMismatchCableEnclosure` TEXT, `gisMismatchCableEnclosureDetail` TEXT, `gisOtherIssue` TEXT, `gisOtherIssueDetail` TEXT, `ownDuctExists` TEXT, `ownDuctExistsDetail` TEXT, `otherCompanyDuctExists` TEXT, `otherCompanyDuctExistsDetail` TEXT, `ownPolePermitPossible` TEXT, `ownPolePermitPossibleDetail` TEXT, `bombOrMultiEnclosure` TEXT, `bombOrMultiEnclosureDetail` TEXT, `useExistingRoute` INTEGER NOT NULL, `useExistingRouteDetail` TEXT, `parallelNewDuctPole` INTEGER NOT NULL, `soleNewDuctPole` INTEGER NOT NULL, `kepcoRelocation` INTEGER NOT NULL, `capacityExpansion` TEXT, `capacityExpansionDetail` TEXT, `multiplexTarget` TEXT, `multiplexTargetDetail` TEXT, `tbJointInvestment` TEXT, `tbJointInvestmentDetail` TEXT, `sixLaneCrossing` TEXT, `sixLaneCrossingDetail` TEXT, `arbitraryCrossingIssue` TEXT, `arbitraryCrossingIssueDetail` TEXT, `distributionContactIssue` TEXT, `distributionContactIssueDetail` TEXT, `coreRingIssue` TEXT, `coreRingIssueDetail` TEXT, `recycledCableUsed` TEXT, `recycledCableUsedDetail` TEXT, `coreConnectionAppropriate` TEXT, `coreConnectionAppropriateDetail` TEXT, `lineDistributionDesignApplied` TEXT, `lineDistributionDesignAppliedDetail` TEXT, `regionalOtherCriteria` TEXT, `regionalOtherCriteriaDetail` TEXT, `specialNote` TEXT, PRIMARY KEY(`siteCaseId`), FOREIGN KEY(`siteCaseId`) REFERENCES `site_case`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "siteCaseId",
+            "columnName": "siteCaseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "linkedEngExists",
+            "columnName": "linkedEngExists",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "relocationMethod",
+            "columnName": "relocationMethod",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "relocationReason",
+            "columnName": "relocationReason",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "existingRouteSummary",
+            "columnName": "existingRouteSummary",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "routeBeforeConfig",
+            "columnName": "routeBeforeConfig",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "routeAfterConfig",
+            "columnName": "routeAfterConfig",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "coreCountDay",
+            "columnName": "coreCountDay",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "coreCountNight",
+            "columnName": "coreCountNight",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "requestSubjectType",
+            "columnName": "requestSubjectType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "rmRegistrationNo",
+            "columnName": "rmRegistrationNo",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "parallelConstruction",
+            "columnName": "parallelConstruction",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "parallelConstructionDetail",
+            "columnName": "parallelConstructionDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "causerReportAttached",
+            "columnName": "causerReportAttached",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "causerReportReason",
+            "columnName": "causerReportReason",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "gisMismatchDuctPole",
+            "columnName": "gisMismatchDuctPole",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "gisMismatchDuctPoleDetail",
+            "columnName": "gisMismatchDuctPoleDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "gisMismatchCableEnclosure",
+            "columnName": "gisMismatchCableEnclosure",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "gisMismatchCableEnclosureDetail",
+            "columnName": "gisMismatchCableEnclosureDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "gisOtherIssue",
+            "columnName": "gisOtherIssue",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "gisOtherIssueDetail",
+            "columnName": "gisOtherIssueDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "ownDuctExists",
+            "columnName": "ownDuctExists",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "ownDuctExistsDetail",
+            "columnName": "ownDuctExistsDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "otherCompanyDuctExists",
+            "columnName": "otherCompanyDuctExists",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "otherCompanyDuctExistsDetail",
+            "columnName": "otherCompanyDuctExistsDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "ownPolePermitPossible",
+            "columnName": "ownPolePermitPossible",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "ownPolePermitPossibleDetail",
+            "columnName": "ownPolePermitPossibleDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "bombOrMultiEnclosure",
+            "columnName": "bombOrMultiEnclosure",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "bombOrMultiEnclosureDetail",
+            "columnName": "bombOrMultiEnclosureDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "useExistingRoute",
+            "columnName": "useExistingRoute",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "useExistingRouteDetail",
+            "columnName": "useExistingRouteDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "parallelNewDuctPole",
+            "columnName": "parallelNewDuctPole",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "soleNewDuctPole",
+            "columnName": "soleNewDuctPole",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kepcoRelocation",
+            "columnName": "kepcoRelocation",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capacityExpansion",
+            "columnName": "capacityExpansion",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "capacityExpansionDetail",
+            "columnName": "capacityExpansionDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "multiplexTarget",
+            "columnName": "multiplexTarget",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "multiplexTargetDetail",
+            "columnName": "multiplexTargetDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "tbJointInvestment",
+            "columnName": "tbJointInvestment",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "tbJointInvestmentDetail",
+            "columnName": "tbJointInvestmentDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "sixLaneCrossing",
+            "columnName": "sixLaneCrossing",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "sixLaneCrossingDetail",
+            "columnName": "sixLaneCrossingDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "arbitraryCrossingIssue",
+            "columnName": "arbitraryCrossingIssue",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "arbitraryCrossingIssueDetail",
+            "columnName": "arbitraryCrossingIssueDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "distributionContactIssue",
+            "columnName": "distributionContactIssue",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "distributionContactIssueDetail",
+            "columnName": "distributionContactIssueDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "coreRingIssue",
+            "columnName": "coreRingIssue",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "coreRingIssueDetail",
+            "columnName": "coreRingIssueDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "recycledCableUsed",
+            "columnName": "recycledCableUsed",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "recycledCableUsedDetail",
+            "columnName": "recycledCableUsedDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "coreConnectionAppropriate",
+            "columnName": "coreConnectionAppropriate",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "coreConnectionAppropriateDetail",
+            "columnName": "coreConnectionAppropriateDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lineDistributionDesignApplied",
+            "columnName": "lineDistributionDesignApplied",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "lineDistributionDesignAppliedDetail",
+            "columnName": "lineDistributionDesignAppliedDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "regionalOtherCriteria",
+            "columnName": "regionalOtherCriteria",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "regionalOtherCriteriaDetail",
+            "columnName": "regionalOtherCriteriaDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "specialNote",
+            "columnName": "specialNote",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "siteCaseId"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "site_case",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "siteCaseId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "cable_item",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `siteCaseId` INTEGER NOT NULL, `phase` TEXT NOT NULL, `seq` INTEGER NOT NULL, `lengthM` REAL NOT NULL, `networkLevel` TEXT NOT NULL, `cableId` TEXT, `totalCore` INTEGER NOT NULL, `usedCore` INTEGER NOT NULL, `skbShared` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteCaseId",
+            "columnName": "siteCaseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "phase",
+            "columnName": "phase",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seq",
+            "columnName": "seq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lengthM",
+            "columnName": "lengthM",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "networkLevel",
+            "columnName": "networkLevel",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cableId",
+            "columnName": "cableId",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "totalCore",
+            "columnName": "totalCore",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usedCore",
+            "columnName": "usedCore",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "skbShared",
+            "columnName": "skbShared",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "enclosure_item",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `siteCaseId` INTEGER NOT NULL, `phase` TEXT NOT NULL, `seq` INTEGER NOT NULL, `kepcoNo` TEXT, `jpNo` TEXT, `connectedCore` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteCaseId",
+            "columnName": "siteCaseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "phase",
+            "columnName": "phase",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seq",
+            "columnName": "seq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kepcoNo",
+            "columnName": "kepcoNo",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "jpNo",
+            "columnName": "jpNo",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "connectedCore",
+            "columnName": "connectedCore",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "pole_info",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `siteCaseId` INTEGER NOT NULL, `kepcoPoleCount` INTEGER NOT NULL, `ownPoleCount` INTEGER NOT NULL, `otherCompanyPoleCount` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteCaseId",
+            "columnName": "siteCaseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kepcoPoleCount",
+            "columnName": "kepcoPoleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownPoleCount",
+            "columnName": "ownPoleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "otherCompanyPoleCount",
+            "columnName": "otherCompanyPoleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "site_photo",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `siteCaseId` INTEGER NOT NULL, `blockIndex` INTEGER NOT NULL, `slotIndex` INTEGER NOT NULL, `photoType` TEXT, `description` TEXT, `relatedFacilityNo` TEXT, `localFilePath` TEXT NOT NULL, `capturedAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteCaseId",
+            "columnName": "siteCaseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "blockIndex",
+            "columnName": "blockIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "slotIndex",
+            "columnName": "slotIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "photoType",
+            "columnName": "photoType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "relatedFacilityNo",
+            "columnName": "relatedFacilityNo",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "localFilePath",
+            "columnName": "localFilePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAt",
+            "columnName": "capturedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "base_map_image",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `siteCaseId` INTEGER NOT NULL, `routeType` TEXT NOT NULL, `localFilePath` TEXT NOT NULL, `importedAt` INTEGER NOT NULL, `legendImagePath` TEXT, FOREIGN KEY(`siteCaseId`) REFERENCES `site_case`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteCaseId",
+            "columnName": "siteCaseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "routeType",
+            "columnName": "routeType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localFilePath",
+            "columnName": "localFilePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "importedAt",
+            "columnName": "importedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "legendImagePath",
+            "columnName": "legendImagePath",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_base_map_image_siteCaseId",
+            "unique": false,
+            "columnNames": [
+              "siteCaseId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_base_map_image_siteCaseId` ON `${TABLE_NAME}` (`siteCaseId`)"
+          },
+          {
+            "name": "index_base_map_image_siteCaseId_routeType",
+            "unique": true,
+            "columnNames": [
+              "siteCaseId",
+              "routeType"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_base_map_image_siteCaseId_routeType` ON `${TABLE_NAME}` (`siteCaseId`, `routeType`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "site_case",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "siteCaseId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "route_line",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `baseMapImageId` INTEGER NOT NULL, `lineIndex` INTEGER NOT NULL, `lineLabel` TEXT, `colorHex` TEXT NOT NULL, `dashed` INTEGER NOT NULL, FOREIGN KEY(`baseMapImageId`) REFERENCES `base_map_image`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseMapImageId",
+            "columnName": "baseMapImageId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lineIndex",
+            "columnName": "lineIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lineLabel",
+            "columnName": "lineLabel",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "colorHex",
+            "columnName": "colorHex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dashed",
+            "columnName": "dashed",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_route_line_baseMapImageId",
+            "unique": false,
+            "columnNames": [
+              "baseMapImageId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_route_line_baseMapImageId` ON `${TABLE_NAME}` (`baseMapImageId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "base_map_image",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "baseMapImageId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "route_point",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `routeLineId` INTEGER NOT NULL, `pointOrder` INTEGER NOT NULL, `relativeX` REAL NOT NULL, `relativeY` REAL NOT NULL, `markerType` TEXT NOT NULL, `label` TEXT, FOREIGN KEY(`routeLineId`) REFERENCES `route_line`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "routeLineId",
+            "columnName": "routeLineId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pointOrder",
+            "columnName": "pointOrder",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "relativeX",
+            "columnName": "relativeX",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "relativeY",
+            "columnName": "relativeY",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "markerType",
+            "columnName": "markerType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "label",
+            "columnName": "label",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_route_point_routeLineId",
+            "unique": false,
+            "columnNames": [
+              "routeLineId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_route_point_routeLineId` ON `${TABLE_NAME}` (`routeLineId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "route_line",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "routeLineId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "work_quantity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `siteCaseId` INTEGER NOT NULL, `masterType` TEXT NOT NULL, `code` TEXT NOT NULL, `quantity` REAL NOT NULL, `category` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteCaseId",
+            "columnName": "siteCaseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "masterType",
+            "columnName": "masterType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantity",
+            "columnName": "quantity",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "labor_price_master",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`processCode` TEXT NOT NULL, `category` TEXT, `workType` TEXT, `itemName` TEXT NOT NULL, `spec` TEXT, `unit` TEXT NOT NULL, `materialUnitPrice` INTEGER NOT NULL, `laborUnitPrice` INTEGER NOT NULL, `equipmentUnitPrice` INTEGER NOT NULL, `effectiveYear` INTEGER NOT NULL, `sourceFile` TEXT, `uploadedAt` INTEGER NOT NULL, PRIMARY KEY(`processCode`, `effectiveYear`))",
+        "fields": [
+          {
+            "fieldPath": "processCode",
+            "columnName": "processCode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "workType",
+            "columnName": "workType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "itemName",
+            "columnName": "itemName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spec",
+            "columnName": "spec",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "unit",
+            "columnName": "unit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "materialUnitPrice",
+            "columnName": "materialUnitPrice",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "laborUnitPrice",
+            "columnName": "laborUnitPrice",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "equipmentUnitPrice",
+            "columnName": "equipmentUnitPrice",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "effectiveYear",
+            "columnName": "effectiveYear",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceFile",
+            "columnName": "sourceFile",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "uploadedAt",
+            "columnName": "uploadedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "processCode",
+            "effectiveYear"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "material_price_master",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`materialCode` TEXT NOT NULL, `category` TEXT, `materialName` TEXT NOT NULL, `spec` TEXT, `specDetail` TEXT, `unit` TEXT NOT NULL, `materialUnitPrice` INTEGER NOT NULL, `effectiveYear` INTEGER NOT NULL, `sourceFile` TEXT, `uploadedAt` INTEGER NOT NULL, PRIMARY KEY(`materialCode`, `effectiveYear`))",
+        "fields": [
+          {
+            "fieldPath": "materialCode",
+            "columnName": "materialCode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "materialName",
+            "columnName": "materialName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spec",
+            "columnName": "spec",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "specDetail",
+            "columnName": "specDetail",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "unit",
+            "columnName": "unit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "materialUnitPrice",
+            "columnName": "materialUnitPrice",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "effectiveYear",
+            "columnName": "effectiveYear",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceFile",
+            "columnName": "sourceFile",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "uploadedAt",
+            "columnName": "uploadedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "materialCode",
+            "effectiveYear"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "cost_rate_master",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`rateKey` TEXT NOT NULL, `rateNameKr` TEXT NOT NULL, `rateValue` REAL NOT NULL, `effectiveYear` INTEGER NOT NULL, `sourceFile` TEXT, `uploadedAt` INTEGER NOT NULL, PRIMARY KEY(`rateKey`, `effectiveYear`))",
+        "fields": [
+          {
+            "fieldPath": "rateKey",
+            "columnName": "rateKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rateNameKr",
+            "columnName": "rateNameKr",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rateValue",
+            "columnName": "rateValue",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "effectiveYear",
+            "columnName": "effectiveYear",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceFile",
+            "columnName": "sourceFile",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "uploadedAt",
+            "columnName": "uploadedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "rateKey",
+            "effectiveYear"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "price_upload_history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `fileName` TEXT NOT NULL, `effectiveYear` INTEGER NOT NULL, `laborRowCount` INTEGER NOT NULL, `materialRowCount` INTEGER NOT NULL, `uploadedAt` INTEGER NOT NULL, `uploadedBy` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileName",
+            "columnName": "fileName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "effectiveYear",
+            "columnName": "effectiveYear",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "laborRowCount",
+            "columnName": "laborRowCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "materialRowCount",
+            "columnName": "materialRowCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uploadedAt",
+            "columnName": "uploadedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uploadedBy",
+            "columnName": "uploadedBy",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "route_segment",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `siteCaseId` INTEGER NOT NULL, `seq` INTEGER NOT NULL, `poleName` TEXT NOT NULL, `segmentLengthM` REAL NOT NULL, `stockType` TEXT NOT NULL, `workType` TEXT NOT NULL, `cableType` TEXT, `coreCount` INTEGER NOT NULL, `layingMethod` TEXT NOT NULL, `spliceType` TEXT, `workShift` TEXT, `safetyMeasure` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteCaseId",
+            "columnName": "siteCaseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seq",
+            "columnName": "seq",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "poleName",
+            "columnName": "poleName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "segmentLengthM",
+            "columnName": "segmentLengthM",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stockType",
+            "columnName": "stockType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "workType",
+            "columnName": "workType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cableType",
+            "columnName": "cableType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "coreCount",
+            "columnName": "coreCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "layingMethod",
+            "columnName": "layingMethod",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spliceType",
+            "columnName": "spliceType",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "workShift",
+            "columnName": "workShift",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "safetyMeasure",
+            "columnName": "safetyMeasure",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '320fd619a11b7eb73f33d54dee444a2e')"
+    ]
+  }
+}

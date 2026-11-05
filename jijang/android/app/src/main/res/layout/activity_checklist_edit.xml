@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/primary"
+        android:title="체크리스트 입력"
+        android:titleTextColor="@color/on_primary" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:id="@+id/rootContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView style="@style/SectionHeaderCollapsible" android:tag="section_header" android:text="기본정보" />
+            <LinearLayout
+                android:id="@+id/containerBasicInfoExtra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView style="@style/SectionHeaderCollapsible" android:tag="section_header" android:text="설계 요약" />
+
+            <EditText android:id="@+id/editRelocationMethod" style="@style/FormField" android:hint="이설 방법" />
+            <EditText android:id="@+id/editRelocationReason" style="@style/FormField" android:hint="절체사유" />
+            <EditText android:id="@+id/editExistingRouteSummary" style="@style/FormField" android:hint="이설루트 요약" />
+            <EditText android:id="@+id/editRouteBeforeConfig" style="@style/FormField" android:hint="이설 전 루트구성" />
+            <EditText android:id="@+id/editRouteAfterConfig" style="@style/FormField" android:hint="이설 후 루트구성" />
+            <LinearLayout
+                android:id="@+id/containerDesignSummaryExtra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView style="@style/SectionHeaderCollapsible" android:tag="section_header" android:text="공사배경 및 목적" />
+            <LinearLayout
+                android:id="@+id/containerBackground"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView style="@style/SectionHeaderCollapsible" android:tag="section_header" android:text="현장실사결과" />
+            <LinearLayout
+                android:id="@+id/containerFieldSurvey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView style="@style/SectionHeaderCollapsible" android:tag="section_header" android:text="기설 정보" />
+
+            <TextView style="@style/SubHeader" android:text="기설 케이블" />
+            <LinearLayout
+                android:id="@+id/containerExistingCables"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonAddExistingCable"
+                style="@style/Widget.Jijang.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="+ 케이블 추가" />
+
+            <TextView style="@style/SubHeader" android:text="기설 함체" />
+            <LinearLayout
+                android:id="@+id/containerExistingEnclosures"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonAddExistingEnclosure"
+                style="@style/Widget.Jijang.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="+ 함체 추가" />
+
+            <TextView style="@style/SubHeader" android:text="전주 정보" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/editKepcoPoleCount"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="한전주"
+                    android:inputType="number" />
+
+                <EditText
+                    android:id="@+id/editOwnPoleCount"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:hint="자가주"
+                    android:inputType="number" />
+
+                <EditText
+                    android:id="@+id/editOtherPoleCount"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:hint="타사주"
+                    android:inputType="number" />
+            </LinearLayout>
+
+            <TextView style="@style/SectionHeaderCollapsible" android:tag="section_header" android:text="설계 이설루트" />
+            <LinearLayout
+                android:id="@+id/containerDesignRoute"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView style="@style/SectionHeaderCollapsible" android:tag="section_header" android:text="신설 정보" />
+
+            <TextView style="@style/SubHeader" android:text="신설 케이블" />
+            <LinearLayout
+                android:id="@+id/containerNewCables"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonAddNewCable"
+                style="@style/Widget.Jijang.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="+ 케이블 추가" />
+
+            <TextView style="@style/SubHeader" android:text="신설 함체" />
+            <LinearLayout
+                android:id="@+id/containerNewEnclosures"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonAddNewEnclosure"
+                style="@style/Widget.Jijang.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="+ 함체 추가" />
+
+            <LinearLayout
+                android:id="@+id/containerNewInfoExtra"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView style="@style/SectionHeaderCollapsible" android:tag="section_header" android:text="이설 후 RM여부" />
+            <LinearLayout
+                android:id="@+id/containerRmStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView style="@style/SectionHeaderCollapsible" android:tag="section_header" android:text="지역 별 추가기준" />
+            <LinearLayout
+                android:id="@+id/containerRegionalCriteria"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <TextView style="@style/SectionHeaderCollapsible" android:tag="section_header" android:text="특이사항" />
+            <EditText
+                android:id="@+id/editSpecialNote"
+                style="@style/FormField"
+                android:hint="특이사항"
+                android:inputType="textMultiLine"
+                android:minLines="2" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:tag="section_end" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonSave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="24dp"
+                android:text="저장" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
+
