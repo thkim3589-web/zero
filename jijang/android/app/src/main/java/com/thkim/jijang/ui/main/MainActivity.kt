@@ -21,6 +21,7 @@ import com.thkim.jijang.databinding.DialogTemplateManageBinding
 import com.thkim.jijang.databinding.PopupMainMenuBinding
 import com.thkim.jijang.ui.casedetail.CaseDetailActivity
 import com.thkim.jijang.ui.priceupload.PriceUploadActivity
+import com.thkim.jijang.util.UpdateManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -56,6 +57,9 @@ class MainActivity : AppCompatActivity() {
 
         binding.buttonMenu.setOnClickListener { showMenu(it) }
 
+        // 시작할 때 조용히 새 버전 확인 (인터넷이 없거나 실패하면 아무 안내 없이 넘어감)
+        if (savedInstanceState == null) UpdateManager.check(this, manual = false)
+
         lifecycleScope.launch {
             viewModel.cases.collectLatest { cases ->
                 adapter.submitList(cases)
@@ -90,6 +94,10 @@ class MainActivity : AppCompatActivity() {
         popupBinding.rowTemplateUpload.setOnClickListener {
             popupWindow.dismiss()
             showTemplateDialog()
+        }
+        popupBinding.rowUpdate.setOnClickListener {
+            popupWindow.dismiss()
+            UpdateManager.check(this, manual = true)
         }
 
         popupWindow.showAsDropDown(anchor)
