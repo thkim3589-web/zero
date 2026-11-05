@@ -114,7 +114,7 @@
                     android:contentDescription="함체"
                     android:gravity="center"
                     android:text="P"
-                    android:textColor="#0D47A1"
+                    android:textColor="@color/badge_blue"
                     android:textStyle="bold" />
 
                 <TextView
@@ -126,7 +126,7 @@
                     android:contentDescription="전주"
                     android:gravity="center"
                     android:text="C"
-                    android:textColor="#2E7D32"
+                    android:textColor="@color/status_ok"
                     android:textStyle="bold" />
 
                 <ImageButton
