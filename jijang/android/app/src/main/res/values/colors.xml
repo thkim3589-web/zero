@@ -1,35 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 14단계 디자인 개편 — 참고 웹앱(남색+주황 배색)을 기준으로 새로 잡음.
-         primary(남색) = 화면 상단/구조용, accent(주황) = 저장/추가 등 핵심 동작 버튼 -->
-    <color name="primary">#0F2A4A</color>
-    <color name="primary_light">#1B3F68</color>
-    <color name="primary_dark">#081A30</color>
+        <color name="primary">#1F403A</color>
+        <color name="primary_light">#315E55</color>
+        <color name="primary_dark">#102C27</color>
     <color name="on_primary">#FFFFFF</color>
+        <color name="on_primary_muted">#C5D4CE</color>
 
-    <color name="accent">#E8871E</color>
-    <color name="accent_dark">#C96F0F</color>
+        <color name="accent">#D86532</color>
+        <color name="accent_dark">#B94925</color>
     <color name="on_accent">#FFFFFF</color>
 
-    <color name="background">#F2F4F7</color>
+        <color name="background">#F2F5F3</color>
     <color name="surface">#FFFFFF</color>
-    <color name="line">#DDE3EA</color>
+        <color name="line">#D9E2DE</color>
 
-    <color name="text_primary">#1B2430</color>
-    <color name="text_secondary">#6B7684</color>
+        <color name="text_primary">#1D2B27</color>
+        <color name="text_secondary">#66746F</color>
 
-    <color name="status_ok">#1E8E5A</color>
-    <color name="status_warn">#C0392B</color>
+        <color name="status_ok">#227A59</color>
+        <color name="status_warn">#B4423A</color>
 
     <!-- 현장 상세 메뉴 카드 아이콘 배지 색상 -->
-    <color name="badge_teal">#0E7C86</color>
-    <color name="badge_purple">#6C5CE7</color>
-    <color name="badge_blue">#2F6FDB</color>
+    <color name="badge_teal">#087F8C</color>
+    <color name="badge_purple">#7656A6</color>
+    <color name="badge_blue">#326CB0</color>
 
-    <color name="status_draft_bg">#EEF1F4</color>
-    <color name="status_draft_text">#6B7684</color>
-    <color name="status_submitted_bg">#FFF1DC</color>
-    <color name="status_submitted_text">#C96F0F</color>
-    <color name="status_exported_bg">#E3F5EC</color>
-    <color name="status_exported_text">#1E8E5A</color>
+    <color name="status_draft_bg">#E9EFEC</color>
+    <color name="status_draft_text">#56645F</color>
+    <color name="status_submitted_bg">#FFF0E1</color>
+    <color name="status_submitted_text">#A94E17</color>
+    <color name="status_exported_bg">#E4F3EA</color>
+    <color name="status_exported_text">#246D4D</color>
+
+    <!-- 드로어블/레이아웃에 직접 쓰던 HEX를 공통 리소스로 이전 -->
+    <color name="accent_soft">#FFF1DC</color>
+    <color name="surface_muted">#F5F7F6</color>
+    <color name="danger_soft">#FBEAE7</color>
+    <color name="icon_muted">#A9B7B1</color>
+    <color name="scrim">#B3000000</color>
+    <color name="select_bg">#F7FAF8</color>
 </resources>

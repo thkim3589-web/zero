@@ -4,7 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.thkim.jijang.data.db.AppDatabase
 import com.thkim.jijang.data.model.SitePhoto
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+import java.io.File
 
 class PhotoViewModel(
     private val db: AppDatabase,
@@ -33,7 +36,17 @@ class PhotoViewModel(
 
     suspend fun update(photo: SitePhoto) = db.sitePhotoDao().update(photo)
 
-    suspend fun delete(photo: SitePhoto) = db.sitePhotoDao().delete(photo)
+    /** DB 행과 함께 앱 내부 저장소에 복사해둔 이미지 파일도 지운다 (안 지우면 저장공간이 계속 쌓임).
+     * [appFilesDir] 안의 파일만 지워서, 혹시 외부 경로가 들어와도 원본 사진은 건드리지 않는다. */
+    suspend fun delete(photo: SitePhoto, appFilesDir: File) {
+        db.sitePhotoDao().delete(photo)
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val file = File(photo.localFilePath).canonicalFile
+                if (file.path.startsWith(appFilesDir.canonicalPath + File.separator)) file.delete()
+            }
+        }
+    }
 
     class Factory(
         private val db: AppDatabase,

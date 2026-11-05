@@ -54,7 +54,7 @@
                         android:layout_height="15dp"
                         android:contentDescription="@null"
                         android:src="@drawable/ic_location_pin"
-                        app:tint="#B9C7D6" />
+                        app:tint="@color/on_primary_muted" />
 
                     <TextView
                         android:id="@+id/textSiteAddress"
@@ -62,7 +62,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
                         android:layout_weight="1"
-                        android:textColor="#B9C7D6"
+                        android:textColor="@color/on_primary_muted"
                         android:textSize="13sp" />
                 </LinearLayout>
 
@@ -95,8 +95,8 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
-                    app:cardCornerRadius="14dp"
-                    app:cardElevation="1dp">
+                    app:cardCornerRadius="@dimen/card_radius"
+                    app:cardElevation="@dimen/card_elevation">
 
                     <include layout="@layout/item_menu_row"
                         android:id="@+id/rowChecklist" />
@@ -110,8 +110,8 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
-                    app:cardCornerRadius="14dp"
-                    app:cardElevation="1dp">
+                    app:cardCornerRadius="@dimen/card_radius"
+                    app:cardElevation="@dimen/card_elevation">
 
                     <include layout="@layout/item_menu_row"
                         android:id="@+id/rowPhotos" />
@@ -125,8 +125,8 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
-                    app:cardCornerRadius="14dp"
-                    app:cardElevation="1dp">
+                    app:cardCornerRadius="@dimen/card_radius"
+                    app:cardElevation="@dimen/card_elevation">
 
                     <include layout="@layout/item_menu_row"
                         android:id="@+id/rowWorkQuantity" />
@@ -140,8 +140,8 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
-                    app:cardCornerRadius="14dp"
-                    app:cardElevation="1dp">
+                    app:cardCornerRadius="@dimen/card_radius"
+                    app:cardElevation="@dimen/card_elevation">
 
                     <include layout="@layout/item_menu_row"
                         android:id="@+id/rowRouteSegments" />
@@ -157,8 +157,8 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
-                    app:cardCornerRadius="14dp"
-                    app:cardElevation="1dp">
+                    app:cardCornerRadius="@dimen/card_radius"
+                    app:cardElevation="@dimen/card_elevation">
 
                     <include layout="@layout/item_menu_row"
                         android:id="@+id/rowDiagramBefore" />
@@ -172,8 +172,8 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
-                    app:cardCornerRadius="14dp"
-                    app:cardElevation="1dp">
+                    app:cardCornerRadius="@dimen/card_radius"
+                    app:cardElevation="@dimen/card_elevation">
 
                     <include layout="@layout/item_menu_row"
                         android:id="@+id/rowDiagramAfter" />
@@ -189,7 +189,7 @@
                     android:focusable="true"
                     android:foreground="?attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/status_ok"
-                    app:cardCornerRadius="14dp"
+                    app:cardCornerRadius="@dimen/card_radius"
                     app:cardElevation="2dp">
 
                     <include layout="@layout/item_menu_row"

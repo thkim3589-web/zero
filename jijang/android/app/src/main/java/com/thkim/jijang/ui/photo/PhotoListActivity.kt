@@ -29,7 +29,7 @@ class PhotoListActivity : AppCompatActivity() {
 
     private val adapter = SitePhotoAdapter(
         onFieldChanged = { photo -> lifecycleScope.launch { viewModel.update(photo) } },
-        onDelete = { photo -> lifecycleScope.launch { viewModel.delete(photo) } }
+        onDelete = { photo -> lifecycleScope.launch { viewModel.delete(photo, filesDir) } }
     )
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->

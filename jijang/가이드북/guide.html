@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>지장이설관리 사용 가이드북</title>
+<style>
+@page{size:A4;margin:0}
+:root{--p:#1F403A;--pl:#315E55;--pd:#102C27;--ac:#D86532;--bg:#F2F5F3;--line:#D9E2DE;--tx:#1D2B27;--tx2:#66746F;--ok:#227A59;--teal:#087F8C;--pur:#7656A6;--blue:#326CB0}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Malgun Gothic","맑은 고딕",sans-serif;color:var(--tx);font-size:12.5px;line-height:1.6;background:#fff}
+.page{width:210mm;height:297mm;padding:16mm 16mm 14mm;position:relative;page-break-after:always;overflow:hidden}
+.page:last-child{page-break-after:auto}
+.foot{position:absolute;left:16mm;right:16mm;bottom:8mm;display:flex;justify-content:space-between;color:var(--tx2);font-size:10px;border-top:1px solid var(--line);padding-top:4px}
+h1{font-size:25px;margin:0 0 4px;color:var(--p)}
+h2{font-size:15px;margin:14px 0 6px;color:var(--pl)}
+.chap{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.chap .n{background:var(--ac);color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex:none}
+.sub{color:var(--tx2);margin:0 0 12px}
+.cols{display:flex;gap:16px;align-items:flex-start}
+.txt{flex:1;min-width:0}
+ol.st{list-style:none;padding:0;margin:0}
+ol.st li{display:flex;gap:8px;margin:0 0 9px}
+.b{flex:none;width:19px;height:19px;border-radius:50%;background:var(--ac);color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-top:1px}
+.tip{background:#FFF0E1;border-left:4px solid var(--ac);padding:7px 10px;border-radius:4px;margin:10px 0;font-size:11.5px}
+.note{background:#E4F3EA;border-left:4px solid var(--ok);padding:7px 10px;border-radius:4px;margin:10px 0;font-size:11.5px}
+/* phone */
+.phone{width:200px;flex:none;border:6px solid #222;border-radius:24px;background:var(--bg);overflow:hidden;position:relative;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.phone .tb{background:var(--p);color:#fff;padding:9px 10px;font-weight:700;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.phone .bd{padding:8px;font-size:10px;line-height:1.4}
+.cap{text-align:center;font-size:9.5px;color:var(--tx2);margin-top:5px;width:200px}
+.card{background:#fff;border-radius:8px;padding:7px 8px;margin-bottom:6px;border:1px solid var(--line);position:relative}
+.card b{font-size:10.5px}
+.sm{color:var(--tx2);font-size:9px}
+.chip{display:inline-block;border-radius:9px;padding:0 6px;font-size:8.5px}
+.draft{background:#E9EFEC;color:#56645F}.sub2{background:#FFF0E1;color:#A94E17}.exp{background:#E4F3EA;color:#246D4D}
+.fab{position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:50%;background:var(--ac);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
+.row{display:flex;align-items:center;gap:7px}
+.ic{width:24px;height:24px;border-radius:7px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+.inp{background:#fff;border:1px solid var(--line);border-radius:5px;padding:3px 6px;margin:3px 0;color:var(--tx2);font-size:9px}
+.btn{background:var(--ac);color:#fff;border-radius:6px;text-align:center;padding:5px;font-weight:700;font-size:10px;margin-top:5px}
+.btn.o{background:#fff;color:var(--p);border:1px solid var(--p)}
+.sec{background:var(--p);color:#fff;border-radius:6px;padding:4px 7px;margin:5px 0 3px;font-size:10px;display:flex;gap:6px;align-items:center}
+.sec i{background:var(--ac);border-radius:50%;width:14px;height:14px;font-style:normal;font-size:8px;display:inline-flex;align-items:center;justify-content:center}
+.pin{position:absolute;z-index:3;width:17px;height:17px;border-radius:50%;background:#d11;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff}
+.map{background:#dfe8e2;height:150px;border-radius:6px;position:relative;overflow:hidden;border:1px solid var(--line)}
+.map svg{position:absolute;inset:0}
+table{border-collapse:collapse;width:100%;font-size:11px}
+th,td{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top}
+th{background:var(--p);color:#fff}
+.flow{display:flex;gap:6px;align-items:stretch;margin:12px 0}
+.flow div{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 6px;text-align:center;font-size:11px}
+.flow div b{display:block;color:var(--ac);font-size:16px}
+.flow span.ar{flex:none;align-self:center;color:var(--tx2)}
+.toc td{border:0;border-bottom:1px dotted var(--line);padding:6px 2px;font-size:13px}
+</style></head><body>
+
+<!-- 표지 -->
+<section class="page" style="background:linear-gradient(160deg,var(--pd),var(--p) 60%,var(--pl));color:#fff;padding:0">
+  <div style="padding:60mm 22mm 0">
+    <div style="font-size:13px;letter-spacing:3px;color:#C5D4CE">FIELD MANAGEMENT APP</div>
+    <div style="font-size:44px;font-weight:800;margin:10px 0 6px">지장이설관리</div>
+    <div style="font-size:22px;color:#F3C9B3">사용 가이드북</div>
+    <div style="width:70px;height:4px;background:var(--ac);margin:22px 0"></div>
+    <div style="font-size:14px;line-height:1.9;color:#E3ECE8">현장에서 입력하면<br>정산 엑셀이 자동으로 만들어집니다.<br>체크리스트 · 사진 · 개황도 · 원가계산 · 엑셀 내보내기</div>
+  </div>
+  <div style="position:absolute;right:22mm;bottom:40mm;transform:rotate(-6deg)">
+    <div class="phone" style="width:170px;color:var(--tx)"><div class="tb">현장 목록</div><div class="bd">
+      <div class="card"><b>월배간102 불량함체</b><br><span class="sm">달서구 · JP13464</span> <span class="chip sub2">제출</span></div>
+      <div class="card"><b>성서 지중화 이설</b><br><span class="sm">달서구 · JP13501</span> <span class="chip draft">작성중</span></div>
+      <div class="card"><b>대곡 함체 교체</b><br><span class="sm">달서구</span> <span class="chip exp">내보냄</span></div><div style="height:30px"></div></div><div class="fab">+</div></div>
+  </div>
+  <div style="position:absolute;left:22mm;bottom:18mm;font-size:11px;color:#C5D4CE">버전 0.1.0 · 2026년 11월 · 화면 그림은 설명을 위한 예시입니다</div>
+</section>
+
+<!-- 목차 -->
+<section class="page">
+  <h1>목차</h1><p class="sub">처음 쓰시는 분도 순서대로 따라 하면 됩니다.</p>
+  <table class="toc">
+    <tr><td>1. 앱 소개 – 무엇을 하는 앱인가요?</td><td style="text-align:right">3</td></tr>
+    <tr><td>2. 처음 한 번만 – 엑셀 양식과 단가표 등록</td><td style="text-align:right">4</td></tr>
+    <tr><td>3. 현장 목록 – 새 현장 만들기</td><td style="text-align:right">5</td></tr>
+    <tr><td>4. 현장 상세 – 작업 메뉴 한눈에 보기</td><td style="text-align:right">6</td></tr>
+    <tr><td>5. 체크리스트 입력</td><td style="text-align:right">7</td></tr>
+    <tr><td>6. 현장 사진 관리</td><td style="text-align:right">8</td></tr>
+    <tr><td>7. 원가계산 수량 입력</td><td style="text-align:right">9</td></tr>
+    <tr><td>8. 구간별 상세 입력</td><td style="text-align:right">10</td></tr>
+    <tr><td>9. 개황도(전/후) 편집 – 지도 위에 선 그리기</td><td style="text-align:right">11</td></tr>
+    <tr><td>10. 엑셀 내보내기와 공유</td><td style="text-align:right">13</td></tr>
+    <tr><td>11. 자주 묻는 질문 · 주의사항</td><td style="text-align:right">14</td></tr>
+    <tr><td>부록. 용어 정리 · 현재 한계와 예정 기능</td><td style="text-align:right">15</td></tr>
+  </table>
+  <div class="tip" style="margin-top:20px"><b>이 책 보는 법</b><br>화면 그림 위의 <span class="b">1</span> 같은 번호는 오른쪽(또는 아래) 설명의 번호와 짝입니다. 그림은 실제 앱 화면의 색상·문구를 따라 그린 <b>예시 그림</b>이라, 기기에 따라 크기나 배치가 조금 다를 수 있습니다.</div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>2</span></div>
+</section>
+
+<!-- 1 소개 -->
+<section class="page">
+  <div class="chap"><div class="n">1</div><h1>앱 소개</h1></div>
+  <p class="sub">무엇을 하는 앱인가요?</p>
+  <p>지장이설(불량함체 개선 등) 현장 결과는 SKT 표준 정산 엑셀(시트 35개)에 손으로 채워 넣어야 했습니다. <b>지장이설관리</b>는 현장에서 휴대폰으로 입력하면 그 엑셀을 <b>자동으로 만들어 주는 앱</b>입니다.</p>
+  <h2>이런 점이 편해집니다</h2>
+  <table>
+    <tr><th style="width:28%">예전 방식</th><th>이 앱으로는</th></tr>
+    <tr><td>PC 엑셀에 체크리스트를 일일이 입력</td><td>현장에서 폰으로 입력하면 ENG시트가 자동으로 채워짐</td></tr>
+    <tr><td>GIS 화면을 캡처해 붙이고 선을 그림 – 캡처마다 축척이 달라 선이 어긋남</td><td>캡처 이미지 위에 선을 그리고 <b>언제든 점을 옮기고 고칠 수 있음</b></td></tr>
+    <tr><td>단가가 바뀔 때마다 파일마다 수작업 수정</td><td>단가표를 한 번 올려 두면 수량×단가 자동 계산</td></tr>
+  </table>
+  <h2>전체 작업 흐름</h2>
+  <div class="flow">
+    <div><b>①</b>현장<br>만들기</div><span class="ar">▶</span>
+    <div><b>②</b>체크리스트<br>사진 입력</div><span class="ar">▶</span>
+    <div><b>③</b>구간 · 수량<br>입력</div><span class="ar">▶</span>
+    <div><b>④</b>개황도<br>(전/후) 그리기</div><span class="ar">▶</span>
+    <div><b>⑤</b>엑셀<br>내보내기</div>
+  </div>
+  <div class="note"><b>인터넷 없이도 됩니다.</b> 모든 데이터는 내 휴대폰 안에만 저장됩니다. 서버나 로그인이 없으며, 완성된 엑셀을 카카오톡·이메일 등으로 공유할 때만 외부로 나갑니다.</div>
+  <h2>준비물</h2>
+  <ul><li>안드로이드 휴대폰 (안드로이드 8.0 이상)</li><li>SKT 표준 정산 양식 엑셀(xlsx) 1개</li><li>SKT 단가 파일 엑셀(xlsx) – <i>내역서_일반, 자재내역서_일반</i> 시트 포함</li><li>개황도 배경으로 쓸 GIS 캡처 이미지(전/후)</li></ul>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>3</span></div>
+</section>
+
+<!-- 2 처음 한번 -->
+<section class="page">
+  <div class="chap"><div class="n">2</div><h1>처음 한 번만 – 양식과 단가표 등록</h1></div>
+  <p class="sub">앱을 설치한 뒤 맨 처음 한 번만 하면 됩니다. 단가가 개정되면 다시 올립니다.</p>
+  <div class="cols">
+    <div>
+      <div class="phone"><div class="tb">현장 목록 <span>⋮</span></div><div class="bd" style="height:250px">
+        <div class="pin" style="right:6px;top:30px">1</div>
+        <div style="position:absolute;right:10px;top:36px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.3);padding:3px 0;width:120px;font-size:10px;z-index:2">
+          <div style="padding:6px 10px">단가표 업로드</div><div style="padding:6px 10px;border-top:1px solid var(--line)">엑셀 템플릿 업로드</div></div>
+        <div class="pin" style="left:6px;top:66px;display:none"></div>
+        <div style="color:var(--tx2);text-align:center;margin-top:90px;font-size:10px">등록된 현장이 없습니다.<br>우측 하단 버튼으로<br>새 현장을 추가하세요.</div></div><div class="fab">+</div></div>
+      <div class="cap">현장 목록의 ⋮ 메뉴</div>
+    </div>
+    <div class="txt">
+      <h2 style="margin-top:0">① 엑셀 템플릿 등록</h2>
+      <ol class="st">
+        <li><span class="b">1</span><div>첫 화면 오른쪽 위 <b>⋮ 메뉴</b>를 누릅니다.</div></li>
+        <li><span class="b">2</span><div><b>엑셀 템플릿 업로드</b>를 눌러 SKT 표준 양식(xlsx) 파일을 선택합니다.</div></li>
+        <li><span class="b">3</span><div>“템플릿이 저장되었습니다” 문구가 뜨면 끝. 이후 내보내는 모든 엑셀이 이 양식을 바탕으로 만들어집니다.</div></li>
+      </ol>
+      <h2>② 단가표 등록</h2>
+      <ol class="st">
+        <li><span class="b">1</span><div>⋮ 메뉴 → <b>단가표 업로드</b>를 누릅니다.</div></li>
+        <li><span class="b">2</span><div><b>적용 연도</b>(예: 2026)를 확인하고 <b>파일 선택</b>으로 단가 엑셀을 고릅니다.</div></li>
+        <li><span class="b">3</span><div><b>업로드</b>를 누르면 “노무단가 ○건, 자재단가 ○건 저장되었습니다”가 표시됩니다.</div></li>
+      </ol>
+    </div>
+  </div>
+  <div style="display:flex;gap:16px;margin-top:14px;align-items:flex-start">
+    <div><div class="phone"><div class="tb">‹ 단가표 업로드</div><div class="bd">
+      <div class="sm">적용 연도</div><div class="inp">2026</div>
+      <div class="sm">단가 파일 (내역서_일반 / 자재내역서_일반 시트 포함 xlsx)</div>
+      <div class="btn o">파일 선택</div><div class="sm" style="margin:3px 0">선택된 파일 없음</div>
+      <div class="btn">업로드</div>
+      <div class="sm" style="margin-top:8px"><b>업로드 이력</b></div>
+      <div class="card"><b>[2026년] 단가_2026.xlsx</b><br><span class="sm">노무 128건 · 자재 214건 · 2026.01.05</span></div></div></div><div class="cap">단가표 업로드 화면</div></div>
+    <div class="txt">
+      <div class="tip"><b>단가가 개정되면?</b> 새 단가 파일을 같은 방법으로 다시 올리면 됩니다. 업로드 이력에 연도별로 쌓이니, 어느 파일이 적용됐는지 언제든 확인할 수 있습니다.</div>
+      <div class="note"><b>파일이 안 올라가면</b> 시트 이름이 <i>내역서_일반</i>, <i>자재내역서_일반</i>인지 확인하세요. 이 시트가 없으면 “단가표 자체가 없다”는 안내가 나옵니다.</div>
+      <div class="tip"><b>순서가 바뀌어도 괜찮아요.</b> 엑셀 내보내기 때 템플릿이 없으면 “엑셀 템플릿 필요” 창이 떠서 바로 선택하도록 안내해 줍니다.</div>
+    </div>
+  </div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>4</span></div>
+</section>
+
+<!-- 3 현장목록 -->
+<section class="page">
+  <div class="chap"><div class="n">3</div><h1>현장 목록</h1></div>
+  <p class="sub">공사(현장) 한 건이 목록의 카드 한 장입니다.</p>
+  <div class="cols">
+    <div><div class="phone"><div class="tb">현장 목록 <span>⋮</span></div><div class="bd" style="height:300px">
+      <div class="card"><div class="pin" style="right:-4px;top:-6px">2</div><b>월배간102 불량함체</b><br><span class="sm">대구 달서구 월배로 · JP13464</span><br><span class="chip sub2">제출</span></div>
+      <div class="card"><b>성서 지중화 이설</b><br><span class="sm">대구 달서구 성서로 · JP13501</span><br><span class="chip draft">작성중</span></div>
+      <div class="card"><b>대곡 함체 교체</b><br><span class="sm">주소 미입력</span><br><span class="chip exp">내보냄</span></div>
+      <div class="pin" style="right:44px;bottom:12px">1</div></div><div class="fab">+</div></div><div class="cap">현장 목록 화면</div></div>
+    <div class="txt">
+      <ol class="st">
+        <li><span class="b">1</span><div><b>＋ 버튼 (새 현장 추가)</b><br>누르면 공사명 입력창이 뜹니다. 공사명(예: 불량함체_월배간102)을 쓰고 <b>확인</b>을 누르면 카드가 생깁니다.</div></li>
+        <li><span class="b">2</span><div><b>현장 카드</b><br>공사명, 주소, 상태 표시가 보입니다. 카드를 누르면 <b>현장 상세</b>로 들어갑니다.</div></li>
+      </ol>
+      <h2>상태 표시의 뜻</h2>
+      <table><tr><td><span class="chip draft">작성중</span></td><td>입력 중인 현장</td></tr>
+      <tr><td><span class="chip sub2">제출</span></td><td>제출 단계로 표시된 현장</td></tr>
+      <tr><td><span class="chip exp">내보냄</span></td><td>정산 엑셀을 이미 만든 현장</td></tr></table>
+      <div class="tip">현장은 휴대폰 안에 쌓입니다. 현장이 없으면 “등록된 현장이 없습니다” 안내가 보입니다.</div>
+    </div>
+  </div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>5</span></div>
+</section>
+
+<!-- 4 현장상세 -->
+<section class="page">
+  <div class="chap"><div class="n">4</div><h1>현장 상세</h1></div>
+  <p class="sub">한 현장에서 할 수 있는 모든 작업이 여기에 모여 있습니다.</p>
+  <div class="cols">
+    <div><div class="phone"><div class="tb">‹ 현장 상세</div><div class="bd">
+      <div class="card" style="background:var(--p);color:#fff"><b>월배간102 불량함체</b><br><span style="font-size:9px;color:#C5D4CE">대구 달서구 · JP13464</span></div>
+      <div class="sm" style="margin:4px 2px"><b>입력</b></div>
+      <div class="card row"><div class="ic" style="background:var(--p)">✓</div><div><b>체크리스트 입력</b><br><span class="sm">ENG시트 전체 항목 입력</span></div></div>
+      <div class="card row"><div class="ic" style="background:var(--teal)">◉</div><div><b>현장 사진 관리</b><br><span class="sm">촬영 · 첨부 · 캡션 입력</span></div></div>
+      <div class="card row"><div class="ic" style="background:var(--ac)">▦</div><div><b>원가계산 수량 입력</b><br><span class="sm">단가 마스터에서 골라 담기</span></div></div>
+      <div class="card row"><div class="ic" style="background:var(--pur)">⌁</div><div><b>구간별 상세 입력</b><br><span class="sm">전주 구간 · 접속 · 안전조치</span></div></div>
+      <div class="sm" style="margin:4px 2px"><b>도면</b></div>
+      <div class="card row"><div class="ic" style="background:var(--blue)">⌖</div><div><b>개황도(전) 편집</b><br><span class="sm">이설 전 경로 그리기</span></div></div>
+      <div class="card row"><div class="ic" style="background:var(--blue)">⌖</div><div><b>개황도(후) 편집</b><br><span class="sm">이설 후 경로 그리기</span></div></div>
+      <div class="sm" style="margin:4px 2px"><b>완료</b></div>
+      <div class="card row"><div class="ic" style="background:var(--ok)">⇪</div><div><b>엑셀 내보내기</b><br><span class="sm">정산 엑셀 생성 · 공유</span></div></div>
+    </div></div><div class="cap">현장 상세 화면</div></div>
+    <div class="txt">
+      <p>메뉴가 <b>입력 → 도면 → 완료</b> 세 묶음으로 나뉘어 있어, 위에서 아래로 차례대로 하면 됩니다.</p>
+      <table>
+        <tr><th>메뉴</th><th>하는 일</th></tr>
+        <tr><td>체크리스트 입력</td><td>ENG시트의 기본정보·실사결과·케이블·함체·전주 등 약 50개 항목을 입력</td></tr>
+        <tr><td>현장 사진 관리</td><td>현장 사진을 찍거나 불러오고 설명을 적음</td></tr>
+        <tr><td>원가계산 수량 입력</td><td>노무·장비·자재 수량을 입력 (단가는 자동)</td></tr>
+        <tr><td>구간별 상세 입력</td><td>전주 구간별 작업구분·케이블·접속·안전조치 입력 (기별 시트)</td></tr>
+        <tr><td>개황도(전/후) 편집</td><td>이설 전·후 경로를 GIS 이미지 위에 그림</td></tr>
+        <tr><td>엑셀 내보내기</td><td>입력한 모든 내용으로 정산 엑셀을 만들고 공유</td></tr>
+      </table>
+      <div class="tip">순서는 정해져 있지 않습니다. 현장에서 가능한 것부터 입력하고, 나머지는 나중에 채워도 됩니다. 입력한 내용은 저장하면 다음에 열어도 그대로 있습니다.</div>
+    </div>
+  </div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>6</span></div>
+</section>
+
+<!-- 5 체크리스트 -->
+<section class="page">
+  <div class="chap"><div class="n">5</div><h1>체크리스트 입력</h1></div>
+  <p class="sub">ENG시트(체크리스트)에 들어갈 약 50개 항목을 입력합니다.</p>
+  <div class="cols">
+    <div><div class="phone"><div class="tb">‹ 체크리스트 입력</div><div class="bd" style="height:330px">
+      <div class="sec"><i>1</i>기본정보 <span style="margin-left:auto">▾</span></div>
+      <div class="inp">공사명</div><div class="inp">JP 번호</div>
+      <div class="sec" style="background:var(--pl)"><i>2</i>설계 요약 <span style="margin-left:auto">▸</span></div>
+      <div class="sec" style="background:var(--pl)"><i>3</i>현장실사결과 <span style="margin-left:auto">▸</span></div>
+      <div class="sec" style="background:var(--pl)"><i>4</i>기설 정보 <span style="margin-left:auto">▸</span></div>
+      <div class="sec" style="background:var(--pl)"><i>5</i>전주 정보 <span style="margin-left:auto">▸</span></div>
+      <div class="sec" style="background:var(--pl)"><i>6</i>신설 정보 <span style="margin-left:auto">▸</span></div>
+      <div class="sec" style="background:var(--pl)"><i>7</i>특이사항 <span style="margin-left:auto">▸</span></div>
+      <div class="btn">저장</div>
+      <div class="pin" style="left:4px;top:20px">1</div><div class="pin" style="right:6px;top:105px">2</div><div class="pin" style="left:80px;bottom:10px">3</div></div></div><div class="cap">접었다 펴는 섹션 방식</div></div>
+    <div class="txt">
+      <ol class="st">
+        <li><span class="b">1</span><div><b>섹션 제목</b>을 누르면 펼쳐지고 다시 누르면 접힙니다. 처음엔 <b>기본정보</b>만 펼쳐져 있어 화면이 길지 않습니다.</div></li>
+        <li><span class="b">2</span><div>▸ 표시가 있는 섹션을 눌러 해당 항목을 입력합니다. 번호 배지의 색은 섹션마다 다릅니다.</div></li>
+        <li><span class="b">3</span><div>다 쓰면 맨 아래 <b>저장</b>을 누르세요. “저장되었습니다”가 보이면 완료입니다.</div></li>
+      </ol>
+      <h2>섹션별로 입력하는 내용</h2>
+      <table>
+        <tr><td><b>기본정보</b></td><td>공사명, JP번호 등</td></tr>
+        <tr><td><b>설계 요약</b></td><td>공사배경 및 목적, 이설 방법, 절체사유, 이설루트 요약, 이설 전·후 루트구성</td></tr>
+        <tr><td><b>현장실사결과</b></td><td>현장 확인 결과</td></tr>
+        <tr><td><b>기설 정보</b></td><td>기설 케이블·함체 (＋ 버튼으로 여러 개 추가, “행 삭제”로 제거)</td></tr>
+        <tr><td><b>전주 정보</b></td><td>한전주 / 자가주 / 타사주</td></tr>
+        <tr><td><b>신설 정보</b></td><td>신설 케이블·함체, 이설 후 RM여부</td></tr>
+        <tr><td><b>특이사항</b></td><td>지역별 추가기준, 기타 특이사항</td></tr>
+      </table>
+      <h2>케이블 한 줄에 입력하는 것</h2>
+      <p>망구분(가입자망/지선망) · 길이(m) · 총코어 · 사용코어 · 관리번호(예: =2345=) · SKB 공동투자 · 한전전산번호 · 접속코어</p>
+      <div class="tip">케이블이나 함체가 여러 개면 <b>＋ 케이블 추가 / ＋ 함체 추가</b>를 눌러 줄을 늘립니다. 잘못 만든 줄은 줄 끝의 삭제 버튼으로 지웁니다.</div>
+    </div>
+  </div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>7</span></div>
+</section>
+
+<!-- 6 사진 -->
+<section class="page">
+  <div class="chap"><div class="n">6</div><h1>현장 사진 관리</h1></div>
+  <p class="sub">엑셀의 “공문 및 사진” 시트에 들어갈 사진을 모읍니다.</p>
+  <div class="cols">
+    <div><div class="phone"><div class="tb">‹ 현장 사진 관리</div><div class="bd" style="height:300px">
+      <div class="card"><div style="display:flex;gap:6px"><div style="width:52px;height:52px;background:linear-gradient(135deg,#9bb5a8,#5e7f72);border-radius:5px;flex:none"></div><div style="flex:1"><span class="sm">블록1 · 슬롯1</span><div class="inp">현장사진#1</div><div class="inp">사진설명</div></div></div><div class="inp">관련 근거(함체번호 등)</div><div class="pin" style="right:-4px;top:-6px">2</div></div>
+      <div class="card"><div style="display:flex;gap:6px"><div style="width:52px;height:52px;background:linear-gradient(135deg,#b6b09a,#7d775f);border-radius:5px;flex:none"></div><div style="flex:1"><span class="sm">블록1 · 슬롯2</span><div class="inp">현장사진#2</div><div class="inp">사진설명</div></div></div></div>
+      <div class="pin" style="right:44px;bottom:12px">1</div></div><div class="fab">+</div></div><div class="cap">현장 사진 관리 화면</div></div>
+    <div class="txt">
+      <ol class="st">
+        <li><span class="b">1</span><div><b>＋ 사진 추가</b>를 누르면 <b>카메라로 촬영</b> / <b>갤러리에서 선택</b> 중 고를 수 있습니다.</div></li>
+        <li><span class="b">2</span><div>사진마다 <b>사진유형</b>(예: 현장사진#1), <b>사진설명</b>, <b>관련 근거</b>(함체번호 등)를 적습니다. 엑셀 사진 밑에 그대로 들어갑니다.</div></li>
+        <li><span class="b">3</span><div>잘못 넣은 사진은 삭제 버튼으로 지웁니다. 삭제하면 앱에 복사해 둔 사진 파일도 함께 지워져 저장 공간이 낭비되지 않습니다. (갤러리 원본은 그대로 남습니다.)</div></li>
+      </ol>
+      <h2>“블록 · 슬롯”이 뭔가요?</h2>
+      <p>엑셀 사진 시트는 <b>한 묶음(블록)에 사진 3장(슬롯 1~3)</b>이 들어가는 구조입니다. 앱이 사진을 추가한 순서대로 빈 칸에 자동 배치하므로 직접 신경 쓰지 않아도 됩니다. 중간 사진을 지우고 새로 넣어도 다른 사진과 칸이 겹치지 않습니다.</p>
+      <div class="tip">사진 3장이 한 줄에 나란히 들어가니, <b>설명은 짧게</b> 쓰는 것이 보기 좋습니다.</div>
+    </div>
+  </div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>8</span></div>
+</section>
+
+<!-- 7 수량 -->
+<section class="page">
+  <div class="chap"><div class="n">7</div><h1>원가계산 수량 입력</h1></div>
+  <p class="sub">쓴 노무·장비·자재의 수량만 넣으면 금액은 자동 계산됩니다.</p>
+  <div class="cols">
+    <div><div class="phone"><div class="tb">‹ 원가계산 수량 입력</div><div class="bd" style="height:320px">
+      <div class="sm"><b>노무/장비 수량</b></div>
+      <div class="card"><b>통신외선공</b><br><span class="sm">코드 L-0123</span><div class="inp" style="width:70px;float:right;margin-top:-22px">수량 2</div></div>
+      <div class="card"><b>고소작업차</b><br><span class="sm">코드 E-0045</span><div class="inp" style="width:70px;float:right;margin-top:-22px">수량 1</div></div>
+      <div class="btn o">+ 노무/장비 항목 추가</div>
+      <div class="sm" style="margin-top:8px"><b>자재 수량</b></div>
+      <div class="card"><b>광케이블 48C</b><br><span class="sm">코드 M-0801</span><div class="inp" style="width:70px;float:right;margin-top:-22px">수량 120</div></div>
+      <div class="btn o">+ 자재 항목 추가</div><div class="btn">저장</div>
+      <div class="pin" style="left:6px;top:88px">1</div><div class="pin" style="right:4px;top:62px">2</div></div></div><div class="cap">수량 입력 화면</div></div>
+    <div class="txt">
+      <ol class="st">
+        <li><span class="b">1</span><div><b>＋ 노무/장비 항목 추가</b> 또는 <b>＋ 자재 항목 추가</b>를 누르면 단가표에서 항목을 고르는 창이 열립니다.</div></li>
+        <li><span class="b">2</span><div>항목 옆 <b>수량</b> 칸에 숫자를 입력합니다. 단가는 앱에 올려 둔 단가표에서 자동으로 가져옵니다.</div></li>
+        <li><span class="b">3</span><div>다 입력하면 <b>저장</b>을 누릅니다.</div></li>
+      </ol>
+      <h2>항목 고르는 창 사용법</h2>
+      <p>창 위쪽 <b>항목 검색</b>에 이름이나 코드 일부를 입력하면 목록이 줄어듭니다. 원하는 항목을 눌러 담으세요. 검색 결과가 없으면 “검색 결과 없음”이라고 표시됩니다.</p>
+      <div class="tip"><b>“아직 단가표가 업로드되지 않았습니다”</b>가 뜨면 4쪽의 단가표 업로드를 먼저 해야 항목을 고를 수 있습니다.</div>
+      <div class="note">단가가 없는 항목이 있으면 목록에 “(단가 없음: 코드)”로 표시됩니다. 단가표 연도가 맞는지 확인해 보세요.</div>
+    </div>
+  </div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>9</span></div>
+</section>
+
+<!-- 8 구간 -->
+<section class="page">
+  <div class="chap"><div class="n">8</div><h1>구간별 상세 입력</h1></div>
+  <p class="sub">전주와 전주 사이 구간마다 작업 내용을 입력합니다. (엑셀 “기별” 시트)</p>
+  <div class="cols">
+    <div><div class="phone"><div class="tb">‹ 구간별 상세 입력</div><div class="bd" style="height:345px">
+      <div class="card"><b>구간 #1</b><div class="inp">전주번호/지점명</div><div class="inp">구간거리(m)</div>
+        <div><span class="chip draft">신규(자재)</span> <span class="chip draft">재고(자재)</span></div>
+        <div class="inp">작업구분: 신설</div><div class="inp">케이블종류 선택</div><div class="inp">코어수 선택</div><div class="inp">포설방식: 가공</div>
+        <div class="sm" style="margin-top:3px">+ 접속 정보 &nbsp; + 안전 정보</div>
+        <div style="margin-top:3px"><span class="chip exp">주간</span> <span class="chip draft">야간</span></div></div>
+      <div class="btn o">+ 구간 추가</div><div class="btn">저장</div>
+      <div class="pin" style="left:6px;top:26px">1</div><div class="pin" style="right:4px;top:128px">2</div><div class="pin" style="left:6px;bottom:50px">3</div></div></div><div class="cap">구간 입력 화면</div></div>
+    <div class="txt">
+      <ol class="st">
+        <li><span class="b">1</span><div><b>전주번호/지점명</b>과 <b>구간거리(m)</b>를 씁니다. 자재가 신규인지 재고인지도 고릅니다.</div></li>
+        <li><span class="b">2</span><div><b>선택 칸</b>을 누르면 실제 엑셀과 같은 목록이 나옵니다. 작업구분 · 케이블종류 · 코어수 · 포설방식을 차례로 고르세요.</div></li>
+        <li><span class="b">3</span><div>구간이 더 있으면 <b>＋ 구간 추가</b>를 눌러 같은 방식으로 입력합니다.</div></li>
+      </ol>
+      <h2>고를 수 있는 값</h2>
+      <table>
+        <tr><td><b>작업구분</b></td><td>신설 · 신설(공기압) · 이설 · 이도조정 · 단순지장이설_케이블 · 신설(AD구간)</td></tr>
+        <tr><td><b>포설방식</b></td><td>가공 · 지중 · 입상 · 점가공</td></tr>
+        <tr><td><b>코어수</b></td><td>24C · 48C · 72C · 96C · 144C · 288C 중 선택</td></tr>
+        <tr><td><b>접속구분 · 안전조치</b></td><td><b>+ 접속 정보 / + 안전 정보</b>를 눌러 펼친 뒤 선택. 안전조치는 방호차·주간작업·이면도로·도로외부작업·인도내작업·능로·차량진입불가·공사장 중 선택, 주간/야간도 고름</td></tr>
+      </table>
+      <div class="tip">케이블종류는 목록에 없으면 <b>직접입력</b>으로 쓸 수 있습니다. 쓰지 않는 접속·안전 정보는 “− 접속 정보”를 눌러 접어 두세요.</div>
+    </div>
+  </div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>10</span></div>
+</section>
+
+<!-- 9 개황도 1 -->
+<section class="page">
+  <div class="chap"><div class="n">9</div><h1>개황도(전/후) 편집</h1></div>
+  <p class="sub">GIS 캡처 이미지 위에 케이블 경로를 그립니다. 이설 <b>전</b>과 <b>후</b>를 따로 그립니다.</p>
+  <div class="cols">
+    <div><div class="phone"><div class="tb">‹ 개황도(전) 편집</div><div class="bd" style="height:330px">
+      <div class="map"><svg viewBox="0 0 190 150"><rect width="190" height="150" fill="#e6ece5"/><path d="M0 100 L70 80 L120 85 L190 40" stroke="#c9d3c8" stroke-width="10" fill="none"/><path d="M20 120 L60 90 L110 95 L165 60" stroke="#1d6fdc" stroke-width="3" fill="none"/><path d="M30 40 L80 55 L150 30" stroke="#444" stroke-width="2.5" stroke-dasharray="6 4" fill="none"/>
+        <circle cx="20" cy="120" r="4" fill="#1d6fdc"/><circle cx="110" cy="95" r="4" fill="#1d6fdc"/><rect x="56" y="85" width="12" height="12" fill="#fff" stroke="#1d6fdc"/><text x="62" y="95" font-size="9" text-anchor="middle" fill="#1d6fdc" font-weight="700">P</text><circle cx="165" cy="60" r="7" fill="#fff" stroke="#1d6fdc"/><text x="165" y="63" font-size="9" text-anchor="middle" fill="#1d6fdc" font-weight="700">C</text></svg>
+        <div class="pin" style="left:44px;top:60px">1</div><div class="pin" style="right:8px;top:30px">2</div></div>
+      <div class="sm" style="margin:5px 0 2px">편집할 선</div>
+      <div><span class="chip exp">선 1 신설</span> <span class="chip draft">선 2 철거</span> <span class="chip draft">+ 선 추가</span></div>
+      <div class="pin" style="right:6px;top:196px">3</div>
+      <div class="row" style="margin:6px 0"><div class="ic" style="background:#fff;color:var(--tx);border:1px solid var(--line)">·</div><div class="ic" style="background:#fff;color:var(--tx);border:1px solid var(--line)">▢</div><div class="ic" style="background:#fff;color:var(--tx);border:1px solid var(--line)">P</div><div class="ic" style="background:#fff;color:var(--tx);border:1px solid var(--line)">C</div><div class="ic" style="background:#1d6fdc"></div><div class="ic" style="background:#fff;color:var(--tx);border:1px solid var(--line)">━</div></div>
+      <div class="pin" style="right:6px;top:228px">4</div>
+      <div class="row"><div class="btn o" style="flex:1;margin:0;font-size:8px">확대 초기화</div><div class="btn o" style="flex:1;margin:0;font-size:8px">다른 선 숨기기</div></div>
+      <div class="row" style="margin-top:4px"><div class="btn o" style="flex:1;margin:0;font-size:8px">이미지 불러오기</div><div class="btn" style="flex:1;margin:0;font-size:8px">저장</div></div>
+    </div></div><div class="cap">개황도 편집 화면</div></div>
+    <div class="txt">
+      <h2 style="margin-top:0">그리기 순서</h2>
+      <ol class="st">
+        <li><span class="b">0</span><div>먼저 <b>이미지 불러오기</b>로 GIS 캡처 사진을 가져옵니다. (엑셀 안에 들어 있는 이미지는 <b>엑셀에서 가져오기</b>로 꺼낼 수 있습니다.)</div></li>
+        <li><span class="b">1</span><div>화면을 <b>톡 누르면 점이 찍히고</b> 점들이 선으로 이어집니다. 점을 길게 끌면 위치를 옮길 수 있습니다.</div></li>
+        <li><span class="b">2</span><div>점 종류는 아래 도구로 고릅니다: <b>일반 경로점 · 함체(P) · 전주(C) · 접속점</b>. 고른 뒤 빈 곳을 누르면 바로 그 종류가 찍힙니다.</div></li>
+        <li><span class="b">3</span><div><b>편집할 선</b> 칩으로 어떤 선을 그릴지 고릅니다. 신설/철거 외에도 <b>＋ 선 추가</b>로 원하는 만큼 늘릴 수 있습니다.</div></li>
+        <li><span class="b">4</span><div>색상과 선 종류(실선/점선)를 바꾸고, 다 그렸으면 <b>저장</b>을 누릅니다.</div></li>
+      </ol>
+      <div class="note"><b>이 방식의 장점:</b> 선은 사진 위에 “그려 붙인” 것이 아니라 <b>이미지 기준 좌표로 저장</b>됩니다. 화면 크기·확대 정도와 상관없이 항상 같은 위치에 맞고, 언제든 점을 옮기거나 지울 수 있습니다.</div>
+    </div>
+  </div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>11</span></div>
+</section>
+
+<!-- 9 개황도 2 -->
+<section class="page">
+  <div class="chap"><div class="n">9</div><h1>개황도 – 편집 도구 자세히</h1></div>
+  <p class="sub">점을 탭하면 바로 옆에 메뉴가 나타납니다.</p>
+  <div class="cols">
+    <div><div class="phone"><div class="tb">개황도(후) 편집</div><div class="bd" style="height:210px">
+      <div class="map" style="height:195px"><svg viewBox="0 0 190 195"><rect width="190" height="195" fill="#e6ece5"/><path d="M15 150 L70 100 L130 110 L175 50" stroke="#1d6fdc" stroke-width="3" fill="none"/><circle cx="70" cy="100" r="6" fill="#fff" stroke="#d11" stroke-width="2"/></svg>
+        <div style="position:absolute;left:84px;top:62px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.35);width:96px;font-size:9.5px"><div style="padding:5px 8px">종류/이름 변경</div><div style="padding:5px 8px;border-top:1px solid var(--line);color:var(--ac)">이 점 삭제</div></div></div>
+    </div></div><div class="cap">점을 탭했을 때</div></div>
+    <div class="txt">
+      <table>
+        <tr><th style="width:24%">기능</th><th>사용법</th></tr>
+        <tr><td><b>점 추가</b></td><td>도구에서 종류를 고른 뒤 빈 곳을 톡 누름</td></tr>
+        <tr><td><b>점 이동</b></td><td>점을 누른 채로 끌기</td></tr>
+        <tr><td><b>점 편집</b></td><td>점을 한 번 탭 → <b>종류/이름 변경</b> 또는 <b>이 점 삭제</b></td></tr>
+        <tr><td><b>확대 · 축소</b></td><td>두 손가락으로 벌리거나 모음 (1~6배). 한 손가락으로 끌면 화면 이동</td></tr>
+        <tr><td><b>확대 초기화</b></td><td>원래 크기로 되돌림</td></tr>
+        <tr><td><b>선 추가·이름변경·삭제</b></td><td>＋ 선 추가로 새 선, 칩을 길게 누르면 “이름 변경/삭제” (선이 1개 남으면 삭제 불가)</td></tr>
+        <tr><td><b>선 색상 · 종류</b></td><td>도구줄의 색상 · 선 종류 버튼 (빨강·파랑·노랑·초록·주황 등, 실선/점선)</td></tr>
+        <tr><td><b>다른 선 숨기기</b></td><td>지금 그리는 선만 보이게 해서 겹친 곳을 쉽게 편집</td></tr>
+        <tr><td><b>선 초기화</b></td><td>선과 그 위 모든 점을 삭제(확인 창 뒤에 실행)</td></tr>
+        <tr><td><b>범례 이미지 첨부</b></td><td>범례 그림을 따로 붙여 엑셀에 함께 넣음</td></tr>
+      </table>
+    </div>
+  </div>
+  <h2>함체와 전주 표시 규칙</h2>
+  <div style="display:flex;gap:14px;align-items:center">
+    <svg width="230" height="60" viewBox="0 0 230 60"><rect x="8" y="14" width="30" height="30" fill="#fff" stroke="#1d6fdc" stroke-width="2"/><text x="23" y="35" text-anchor="middle" font-weight="700" fill="#1d6fdc">P</text>
+      <circle cx="85" cy="29" r="15" fill="#fff" stroke="#1d6fdc" stroke-width="2"/><text x="85" y="35" text-anchor="middle" font-weight="700" fill="#1d6fdc">C</text>
+      <rect x="132" y="14" width="30" height="30" fill="#fff" stroke="#e0b400" stroke-width="2"/><text x="147" y="35" text-anchor="middle" font-weight="700" fill="#b08a00">P</text>
+      <rect x="180" y="14" width="30" height="30" fill="#fff" stroke="#111" stroke-width="2"/><text x="195" y="35" text-anchor="middle" font-weight="700">P</text></svg>
+    <div>문자 기호로 종류를 구분합니다: <b>P = 함체, C = 전주</b>.<br>색으로 상태를 구분합니다: <b style="color:#1d6fdc">신설=파랑</b> · <b style="color:#b08a00">기설=노랑</b> · <b>철거=검정</b>.</div>
+  </div>
+  <div class="tip"><b>실수로 다른 이미지를 불러왔다면?</b> 다시 불러와도 이미 그린 선과 점은 사라지지 않습니다. 배경 이미지만 교체됩니다.</div>
+  <div class="tip">점을 찍은 뒤 이름 정하기: 함체·전주·접속점을 지정하면 체크리스트에 입력한 목록에서 고를 수 있고, 목록에 없으면 “직접입력”을 선택해 이름을 쓰면 됩니다. 입력 전이라도 개황도는 먼저 그릴 수 있습니다.</div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>12</span></div>
+</section>
+
+<!-- 10 내보내기 -->
+<section class="page">
+  <div class="chap"><div class="n">10</div><h1>엑셀 내보내기와 공유</h1></div>
+  <p class="sub">입력한 내용을 SKT 표준 정산 엑셀로 한 번에 만듭니다.</p>
+  <div class="cols">
+    <div><div class="phone"><div class="tb">‹ 현장 상세</div><div class="bd" style="height:250px">
+      <div class="card row" style="margin-top:100px"><div class="ic" style="background:var(--ok)">⇪</div><div><b>엑셀 내보내기</b><br><span class="sm">정산 엑셀 생성 · 공유</span></div><div class="pin" style="right:-4px;top:-6px">1</div></div>
+      <div style="position:absolute;left:12px;right:12px;bottom:14px;background:#fff;border-radius:10px;box-shadow:0 3px 12px rgba(0,0,0,.35);padding:8px;font-size:9.5px"><b>엑셀 공유</b><br>정산 엑셀이 만들어졌습니다.<div class="btn" style="margin-top:5px">공유하기</div><div class="pin" style="right:-4px;top:-6px">2</div></div>
+    </div></div><div class="cap">내보내기 → 공유</div></div>
+    <div class="txt">
+      <ol class="st">
+        <li><span class="b">1</span><div>현장 상세에서 <b>엑셀 내보내기</b>를 누릅니다. 템플릿이 아직 없으면 “엑셀 템플릿 필요” 창이 떠서 바로 선택할 수 있습니다.</div></li>
+        <li><span class="b">2</span><div>잠시 기다리면 엑셀이 만들어지고 <b>엑셀 공유</b> 창이 열립니다. 카카오톡·이메일·드라이브 등을 골라 보내세요.</div></li>
+      </ol>
+      <h2>엑셀에 자동으로 채워지는 시트</h2>
+      <table>
+        <tr><td><b>ENG시트</b></td><td>체크리스트 입력 내용</td></tr>
+        <tr><td><b>공문 및 사진</b></td><td>현장 사진 + 유형·설명·근거</td></tr>
+        <tr><td><b>기별</b></td><td>구간별 상세 입력 내용</td></tr>
+        <tr><td><b>개황도(전/후)</b></td><td>배경 이미지 위에 선·마커를 합성한 그림</td></tr>
+        <tr><td><b>내역서 · 자재내역서 · 원가계산서</b></td><td>수량 × 단가 자동 계산</td></tr>
+      </table>
+      <div class="tip"><b>보내기 전에 꼭 확인하세요.</b> 처음 쓰는 현장은 만든 엑셀을 PC나 휴대폰 엑셀 앱에서 열어 개황도 위치, 사진, 원가계산서 합계를 한 번 눈으로 확인한 뒤 제출하세요.</div>
+      <div class="note">입력을 고친 뒤에는 다시 내보내기를 눌러 새 엑셀을 만들면 됩니다. 몇 번이든 다시 만들 수 있습니다.</div>
+      <div class="tip">“엑셀 생성 실패” 메시지가 뜨면 메시지에 적힌 원인(템플릿 형식 등)을 확인해 주세요. 템플릿을 다시 업로드하면 해결되는 경우가 많습니다.</div>
+    </div>
+  </div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>13</span></div>
+</section>
+
+<!-- 11 FAQ -->
+<section class="page">
+  <div class="chap"><div class="n">11</div><h1>자주 묻는 질문 · 주의사항</h1></div>
+  <p class="sub">막혔을 때 먼저 확인해 보세요.</p>
+  <table>
+    <tr><th style="width:34%">질문</th><th>답변</th></tr>
+    <tr><td>입력한 내용이 사라지진 않나요?</td><td>저장 버튼을 누른 내용은 휴대폰 안에 보관되어 앱을 껐다 켜도 남습니다. 각 화면에서 작업 후 <b>저장</b>을 꼭 누르세요.</td></tr>
+    <tr><td>휴대폰을 바꾸면 데이터는?</td><td>데이터가 휴대폰에만 있으므로 자동 이동되지 않습니다. 중요한 현장은 <b>엑셀로 내보내 보관</b>해 두세요.</td></tr>
+    <tr><td>앱을 삭제하면?</td><td>저장된 현장·사진·템플릿·단가표가 모두 지워집니다. 삭제 전에 엑셀을 반드시 백업하세요.</td></tr>
+    <tr><td>단가가 개정되었어요.</td><td>⋮ 메뉴 → 단가표 업로드에서 새 파일을 올리면 됩니다. 업로드 이력에 연도별로 남습니다.</td></tr>
+    <tr><td>개황도 선이 이미지와 안 맞아요.</td><td>선은 처음 불러온 이미지 기준 좌표로 저장됩니다. 다른 크기의 이미지로 바꾸면 위치가 달라 보일 수 있으니, 같은 영역을 캡처해 쓰세요.</td></tr>
+    <tr><td>점을 실수로 찍었어요.</td><td>점을 탭 → “이 점 삭제”. 전체를 지우려면 “선 초기화”를 사용합니다.</td></tr>
+    <tr><td>사진을 지웠는데 갤러리 사진도 사라지나요?</td><td>아니요. 앱 안에 복사해 둔 파일만 지워지고 갤러리 원본은 그대로입니다.</td></tr>
+    <tr><td>인터넷이 필요한가요?</td><td>작업 중에는 필요 없습니다. 공유할 때만 사용하는 앱(카톡 등)의 연결이 필요합니다.</td></tr>
+  </table>
+  <h2>사용 시 주의사항</h2>
+  <ul>
+    <li>SKT 표준 양식과 단가 파일은 <b>형식이 바뀌면</b> 자동 채우기가 맞지 않을 수 있습니다. 양식이 바뀌면 담당자에게 알려 주세요.</li>
+    <li>현장 사진·도면에는 업무 정보가 들어 있으니, 공유할 때 받는 사람을 꼭 확인하세요.</li>
+    <li>개황도 배경 이미지는 사내 GIS 화면 캡처이므로 외부 유출에 유의하세요.</li>
+  </ul>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>14</span></div>
+</section>
+
+<!-- 부록 -->
+<section class="page">
+  <div class="chap"><div class="n" style="background:var(--p)">+</div><h1>부록</h1></div>
+  <h2>용어 정리</h2>
+  <table>
+    <tr><td style="width:24%"><b>지장이설</b></td><td>도로·건설 공사 등으로 방해되는 통신시설(전주·케이블·함체)의 위치를 옮기는 일</td></tr>
+    <tr><td><b>함체</b></td><td>케이블 접속부를 보호하는 통(接續函). 개황도에 <b>P</b>로 표시</td></tr>
+    <tr><td><b>전주</b></td><td>케이블이 걸리는 전봇대. 개황도에 <b>C</b>로 표시</td></tr>
+    <tr><td><b>ENG시트</b></td><td>설계·실사 내용을 적는 체크리스트 시트</td></tr>
+    <tr><td><b>기별</b></td><td>전주 구간별 작업 내용을 적는 시트</td></tr>
+    <tr><td><b>개황도</b></td><td>공사 구간의 케이블 경로를 지도 위에 그린 도면. 이설 전/후 두 장</td></tr>
+    <tr><td><b>GIS 캡처</b></td><td>사내 지도 시스템 화면을 찍은 이미지 (개황도 배경)</td></tr>
+    <tr><td><b>기설 / 신설 / 철거</b></td><td>이미 있는 시설 / 새로 설치 / 걷어내는 시설</td></tr>
+    <tr><td><b>단가표</b></td><td>노무·장비·자재의 단가 목록 (SKT가 해마다 개정)</td></tr>
+  </table>
+  <h2>현재 한계와 앞으로 예정된 기능</h2>
+  <table>
+    <tr><th style="width:50%">지금은 이렇습니다</th><th>예정</th></tr>
+    <tr><td>실제 GIS 지도 연동은 없고, 캡처 이미지를 불러와 사용</td><td>GIS 연동은 장기 과제로 검토</td></tr>
+    <tr><td>데이터는 휴대폰 1대에만 저장 (여러 명 공유·동기화 없음)</td><td>필요 시 서버 방식으로 전환 검토</td></tr>
+    <tr><td>직선도(전/후) 자동 생성 없음</td><td>별도 단계로 추진 예정</td></tr>
+    <tr><td>범례 아이콘 약 70종은 자동 배치하지 않음</td><td>자동 배치 기능 검토</td></tr>
+    <tr><td>일부 항목(여장, 시설물 구분, 안전관리비 할증)은 입력 칸 없음</td><td>현장 확인 후 필요 시 추가</td></tr>
+    <tr><td>TANGO 시스템 업로드는 수동</td><td>자동 연동 장기 검토</td></tr>
+  </table>
+  <div class="tip"><b>사용 중 불편한 점이나 바라는 기능</b>이 있으면 담당자에게 알려 주세요. 현장 의견을 반영해 계속 개선합니다.</div>
+  <div class="foot"><span>지장이설관리 가이드북</span><span>15</span></div>
+</section>
+</body></html>
