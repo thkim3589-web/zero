@@ -56,7 +56,9 @@ data class RouteLine(
     val colorHex: String = "#FF0000",
     // 실제 개황도 범례는 "신설=점선, 기설=실선"을 쓰므로, 색상과 별도로 선 모양도
     // 사용자가 직접 고를 수 있게 한다 (16단계 — 카문다 모델러의 색상/선종류 변경 참고).
-    val dashed: Boolean = false
+    val dashed: Boolean = false,
+    // 범례 선 종류 id (LegendCatalog.lines). null이면 위의 colorHex/dashed를 그대로 쓴다 (기존 데이터 호환).
+    val styleId: String? = null
 )
 
 /**
@@ -84,7 +86,9 @@ data class RoutePoint(
     val label: String? = null, // 함체/전주로 지정한 경우 표시할 이름 (지정 시점 스냅샷)
     // 실제 개황도 범례는 "모양(P/C 등)=시설물 종류, 색상=신설/기설/철거" 2축 체계를 쓴다
     // (13단계 문서 참고). ENCLOSURE/POLE에서만 의미 있고, PLAIN/CONNECTION은 null로 둔다.
-    val status: MarkerStatus? = null
+    val status: MarkerStatus? = null,
+    // 범례 도형 심볼 id (LegendCatalog.symbols). null이면 markerType/status로 예전 방식 그대로 그린다.
+    val symbolId: String? = null
 )
 
 enum class MarkerType { PLAIN, ENCLOSURE, POLE, CONNECTION }   // 일반 경로점 / 함체 위치 / 전주 위치 / 접속점

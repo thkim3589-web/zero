@@ -50,11 +50,22 @@ class DiagramViewModel(
     suspend fun getLines(baseMapImageId: Long): List<RouteLine> =
         db.diagramDao().getLines(baseMapImageId)
 
-    suspend fun addLine(baseMapImageId: Long, label: String, colorHex: String): RouteLine {
+    suspend fun addLine(baseMapImageId: Long, label: String, colorHex: String, style: com.thkim.jijang.legend.LineStyleDef? = null): RouteLine {
         val nextIndex = (db.diagramDao().getLines(baseMapImageId).maxOfOrNull { it.lineIndex } ?: -1) + 1
-        val line = RouteLine(baseMapImageId = baseMapImageId, lineIndex = nextIndex, lineLabel = label, colorHex = colorHex)
+        val line = RouteLine(
+            baseMapImageId = baseMapImageId, lineIndex = nextIndex, lineLabel = label, colorHex = colorHex,
+            dashed = style != null && style.pattern != com.thkim.jijang.legend.LinePattern.SOLID,
+            styleId = style?.id
+        )
         val id = db.diagramDao().insertLine(line)
         return line.copy(id = id)
+    }
+
+    /** 범례에서 고른 선 종류로 색/패턴/이름을 한 번에 바꾼다. */
+    suspend fun setLineLegendStyle(lineId: Long, def: com.thkim.jijang.legend.LineStyleDef) {
+        db.diagramDao().updateLineLegendStyle(
+            lineId, def.id, def.colorHex, def.pattern != com.thkim.jijang.legend.LinePattern.SOLID, def.label
+        )
     }
 
     suspend fun deleteLine(line: RouteLine) {
@@ -67,7 +78,7 @@ class DiagramViewModel(
 
     suspend fun loadPoints(routeLineId: Long): List<EditablePoint> =
         db.diagramDao().getPoints(routeLineId).map {
-            EditablePoint(it.relativeX.toFloat(), it.relativeY.toFloat(), it.markerType, it.label, it.status)
+            EditablePoint(it.relativeX.toFloat(), it.relativeY.toFloat(), it.markerType, it.label, it.status, it.symbolId)
         }
 
     suspend fun savePoints(routeLineId: Long, points: List<EditablePoint>) {
@@ -79,7 +90,8 @@ class DiagramViewModel(
                 relativeY = it.y.toDouble(),
                 markerType = it.markerType,
                 label = it.label,
-                status = it.status
+                status = it.status,
+                symbolId = it.symbolId
             )
         }
         db.diagramDao().replacePoints(routeLineId, entities)

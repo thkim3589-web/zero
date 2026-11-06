@@ -10,11 +10,14 @@ import android.graphics.RectF
 import android.graphics.DashPathEffect
 import com.thkim.jijang.data.model.MarkerType
 import com.thkim.jijang.data.model.RoutePoint
+import com.thkim.jijang.legend.LegendCatalog
+import com.thkim.jijang.legend.LegendDraw
+import com.thkim.jijang.legend.LinePattern
 
 private fun parseColorSafe(hex: String, fallback: Int): Int = try { Color.parseColor(hex) } catch (e: IllegalArgumentException) { fallback }
 
 /** 내보내기용 선 하나 — 점 목록 + 색상 + 점선 여부(실제 개황도 범례의 신설=점선/기설=실선 구분). */
-data class LineRender(val points: List<RoutePoint>, val colorHex: String, val dashed: Boolean = false)
+data class LineRender(val points: List<RoutePoint>, val colorHex: String, val dashed: Boolean = false, val styleId: String? = null)
 
 /**
  * GIS 캡처 배경 이미지 위에 저장된 경로(신설/철거 최대 두 줄, 함체/전주 마커 포함)를
@@ -98,22 +101,38 @@ object DiagramCompositor {
         lines.forEach { line ->
             val points = line.points
             if (points.isEmpty()) return@forEach
-            val color = try { Color.parseColor(line.colorHex) } catch (e: IllegalArgumentException) { Color.RED }
+            val styleDef = LegendCatalog.line(line.styleId)
+            val color = styleDef?.let { parseColorSafe(it.colorHex, Color.RED) }
+                ?: try { Color.parseColor(line.colorHex) } catch (e: IllegalArgumentException) { Color.RED }
 
             if (points.size >= 2) {
                 linePaint.color = color
-                linePaint.pathEffect = if (line.dashed) dashEffect else null
+                linePaint.pathEffect = if (styleDef != null) LegendDraw.pathEffect(styleDef.pattern, strokeWidth) else if (line.dashed) dashEffect else null
                 val path = Path()
                 path.moveTo((points[0].relativeX * w).toFloat(), (points[0].relativeY * h).toFloat())
                 for (i in 1 until points.size) {
                     path.lineTo((points[i].relativeX * w).toFloat(), (points[i].relativeY * h).toFloat())
                 }
                 canvas.drawPath(path, linePaint)
+                if (styleDef?.pattern == LinePattern.ARROW) {
+                    val a = points[points.size - 2]
+                    val b = points.last()
+                    LegendDraw.drawArrowHead(
+                        canvas, (a.relativeX * w).toFloat(), (a.relativeY * h).toFloat(),
+                        (b.relativeX * w).toFloat(), (b.relativeY * h).toFloat(), linePaint, strokeWidth * 4.5f
+                    )
+                }
             }
 
             points.forEach { p ->
                 val cx = (p.relativeX * w).toFloat()
                 val cy = (p.relativeY * h).toFloat()
+                val symbol = LegendCatalog.symbol(p.symbolId)
+                if (symbol != null) {
+                    LegendDraw.drawSymbol(canvas, cx, cy, radius * 1.5f, symbol, strokeWidth * 0.5f)
+                    if (p.label != null) drawLabel(canvas, p.label, cx, cy, radius, labelPaint, labelBgPaint)
+                    return@forEach
+                }
                 when (p.markerType) {
                     MarkerType.PLAIN -> {
                         canvas.drawCircle(cx, cy, radius, fillPaint)

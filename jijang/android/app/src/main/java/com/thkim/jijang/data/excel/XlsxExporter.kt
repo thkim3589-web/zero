@@ -167,7 +167,7 @@ object XlsxExporter {
         val baseMapImage = diagramDao.getBaseMapImage(siteCaseId, routeType) ?: return null
         val bitmap = ImageUtil.decodeSampledBitmap(baseMapImage.localFilePath) ?: return null
         val lines = diagramDao.getLines(baseMapImage.id).map { line ->
-            LineRender(diagramDao.getPoints(line.id), line.colorHex, line.dashed)
+            LineRender(diagramDao.getPoints(line.id), line.colorHex, line.dashed, line.styleId)
         }
         val legendBitmap = baseMapImage.legendImagePath?.let { ImageUtil.decodeSampledBitmap(it) }
         val composited = DiagramCompositor.composite(bitmap, lines, legendBitmap)

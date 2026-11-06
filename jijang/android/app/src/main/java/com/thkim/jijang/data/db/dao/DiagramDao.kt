@@ -30,8 +30,11 @@ interface DiagramDao {
     @Query("UPDATE base_map_image SET legendImagePath = :path WHERE id = :id")
     suspend fun updateLegendImage(id: Long, path: String?)
 
-    @Query("UPDATE route_line SET colorHex = :colorHex, dashed = :dashed WHERE id = :id")
+    @Query("UPDATE route_line SET colorHex = :colorHex, dashed = :dashed, styleId = NULL WHERE id = :id")
     suspend fun updateLineStyle(id: Long, colorHex: String, dashed: Boolean)
+
+    @Query("UPDATE route_line SET styleId = :styleId, colorHex = :colorHex, dashed = :dashed, lineLabel = :label WHERE id = :id")
+    suspend fun updateLineLegendStyle(id: Long, styleId: String?, colorHex: String, dashed: Boolean, label: String)
 
     @Query("UPDATE route_line SET lineLabel = :label WHERE id = :id")
     suspend fun updateLineLabel(id: Long, label: String)

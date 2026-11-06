@@ -83,6 +83,40 @@
                 android:orientation="horizontal" />
         </HorizontalScrollView>
 
+        <!-- 범례 선 종류 / 범례 도형 심볼 선택 (SKT 개황도 범례 그대로) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonLegendLine"
+                style="@style/Widget.Jijang.Button"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:minHeight="0dp"
+                android:paddingVertical="0dp"
+                android:text="선 종류 ▾" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonLegendSymbol"
+                style="@style/Widget.Jijang.Button"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:minHeight="0dp"
+                android:paddingVertical="0dp"
+                android:text="도형 심볼 ▾" />
+        </LinearLayout>
+
         <!-- 실행 취소 / 다시 실행 / 조준(드래그 시 점을 손가락 위로 띄움) -->
         <LinearLayout
             android:layout_width="match_parent"

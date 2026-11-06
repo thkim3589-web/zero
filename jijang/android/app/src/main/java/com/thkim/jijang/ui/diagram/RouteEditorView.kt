@@ -16,6 +16,11 @@ import android.view.View
 import android.view.ViewConfiguration
 import com.thkim.jijang.data.model.MarkerStatus
 import com.thkim.jijang.data.model.MarkerType
+import com.thkim.jijang.legend.LegendCatalog
+import com.thkim.jijang.legend.LegendDraw
+import com.thkim.jijang.legend.LinePattern
+import com.thkim.jijang.legend.LineStyleDef
+import com.thkim.jijang.legend.SymbolDef
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
@@ -26,7 +31,9 @@ data class EditablePoint(
     val y: Float,
     val markerType: MarkerType = MarkerType.PLAIN,
     val label: String? = null,
-    val status: MarkerStatus? = null
+    val status: MarkerStatus? = null,
+    /** 범례 심볼 id — null이면 markerType/status로 예전 방식대로 그린다. */
+    val symbolId: String? = null
 )
 
 /**
@@ -63,7 +70,7 @@ class RouteEditorView @JvmOverloads constructor(
 ) : View(context, attrs) {
 
     /** 참고용으로 같이 보여줄 다른 선 하나 — 점 목록 + 색상 + 점선 여부. */
-    data class ReferenceLine(val points: List<EditablePoint>, val colorHex: String, val dashed: Boolean = false)
+    data class ReferenceLine(val points: List<EditablePoint>, val colorHex: String, val dashed: Boolean = false, val styleId: String? = null)
 
     private var bitmap: Bitmap? = null
     private val points = mutableListOf<EditablePoint>()
@@ -245,7 +252,7 @@ class RouteEditorView @JvmOverloads constructor(
     fun updatePointMarker(index: Int, markerType: MarkerType, label: String?, status: MarkerStatus?) {
         if (index !in points.indices) return
         pushHistory()
-        points[index] = points[index].copy(markerType = markerType, label = label, status = status)
+        points[index] = points[index].copy(markerType = markerType, label = label, status = status, symbolId = null)
         onPointsChanged?.invoke(points.toList())
         invalidate()
     }
@@ -260,9 +267,51 @@ class RouteEditorView @JvmOverloads constructor(
         invalidate()
     }
 
+    /** 범례 선 종류 — 지정하면 색/패턴(점선·일점쇄선·화살표)을 그 정의대로 그린다. */
+    private var lineStyleDef: LineStyleDef? = null
+    fun setLineStyleDef(def: LineStyleDef?) {
+        lineStyleDef = def
+        invalidate()
+    }
+
+    /** 범례에서 고른 도형 심볼 — 지정하면 빈 곳을 탭하는 즉시 그 심볼이 찍힌다. */
+    private var quickPlaceSymbol: SymbolDef? = null
+    private val symbolCounters = mutableMapOf<String, Int>()
+    fun setQuickPlaceSymbol(def: SymbolDef?) {
+        quickPlaceSymbol = def
+        if (def != null) quickPlaceType = null
+    }
+
+    private fun autoLabelForSymbol(def: SymbolDef): String? {
+        val prefix = when {
+            def.id.startsWith("M_") -> "Master"
+            def.id.startsWith("S_") -> "Slave"
+            def.markerType == MarkerType.ENCLOSURE -> "함체"
+            def.markerType == MarkerType.POLE -> "전주"
+            else -> return null
+        }
+        val next = (symbolCounters[prefix] ?: 0) + 1
+        symbolCounters[prefix] = next
+        return "$prefix-$next(임시)"
+    }
+
+    /** 범례 심볼을 그 자리에 찍는다 (함체/전주류는 임시 이름 자동 부여). */
+    fun addSymbolPoint(point: PointF, def: SymbolDef) =
+        addPoint(point, def.markerType, autoLabelForSymbol(def), def.status, def.id)
+
+    /** 이미 찍힌 점의 심볼만 바꾼다 (이름은 유지). */
+    fun updatePointSymbol(index: Int, def: SymbolDef) {
+        if (index !in points.indices) return
+        pushHistory()
+        points[index] = points[index].copy(markerType = def.markerType, status = def.status, symbolId = def.id)
+        onPointsChanged?.invoke(points.toList())
+        invalidate()
+    }
+
     /** 도형 툴바에서 선택한 종류 — null이면 기존처럼 탭할 때마다 다이얼로그로 고른다. */
     fun setQuickPlaceType(type: MarkerType?) {
         quickPlaceType = type
+        if (type != null) quickPlaceSymbol = null
     }
 
     private fun autoLabelFor(type: MarkerType): String? {
@@ -300,10 +349,10 @@ class RouteEditorView @JvmOverloads constructor(
     fun getPoints(): List<EditablePoint> = points.toList()
 
     /** [onEmptyTap]에서 넘겨준 좌표로 실제 점을 확정해서 추가한다. */
-    fun addPoint(point: PointF, markerType: MarkerType = MarkerType.PLAIN, label: String? = null, status: MarkerStatus? = null) {
+    fun addPoint(point: PointF, markerType: MarkerType = MarkerType.PLAIN, label: String? = null, status: MarkerStatus? = null, symbolId: String? = null) {
         pushHistory()
         val adjusted = avoidOverlap(point)
-        points.add(EditablePoint(adjusted.x, adjusted.y, markerType, label, status))
+        points.add(EditablePoint(adjusted.x, adjusted.y, markerType, label, status, symbolId))
         onPointsChanged?.invoke(points.toList())
         invalidate()
     }
@@ -376,7 +425,7 @@ class RouteEditorView @JvmOverloads constructor(
         secondaryLinePaint.strokeWidth = 2f * density * inv
         pointStrokePaint.strokeWidth = 1.8f * density * inv
         glyphBorderPaint.strokeWidth = 1.2f * density * inv
-        labelPaint.textSize = 10f * density * inv
+        labelPaint.textSize = 8f * density * inv
         dashPathEffect = DashPathEffect(floatArrayOf(10f * density * inv, 6f * density * inv), 0f)
 
         canvas.save()
@@ -385,9 +434,9 @@ class RouteEditorView @JvmOverloads constructor(
 
         referenceLines.forEach { ref ->
             val refColor = try { Color.parseColor(ref.colorHex) } catch (e: IllegalArgumentException) { Color.GRAY }
-            drawLine(canvas, ref.points, refColor, secondaryLinePaint, drawMarkers = false, dashed = ref.dashed)
+            drawLine(canvas, ref.points, refColor, secondaryLinePaint, drawMarkers = false, dashed = ref.dashed, styleDef = LegendCatalog.line(ref.styleId))
         }
-        drawLine(canvas, points, lineColor, linePaint, drawMarkers = true, dashed = lineDashed)
+        drawLine(canvas, points, lineColor, linePaint, drawMarkers = true, dashed = lineDashed, styleDef = lineStyleDef)
         canvas.restore()
 
         // 점을 끄는 동안: 손가락 → 점 안내선 + 십자 조준선 (화면 좌표로 그린다)
@@ -406,10 +455,12 @@ class RouteEditorView @JvmOverloads constructor(
         }
     }
 
-    private fun drawLine(canvas: Canvas, pts: List<EditablePoint>, color: Int, paint: Paint, drawMarkers: Boolean, dashed: Boolean = false) {
+    private fun drawLine(canvas: Canvas, pts: List<EditablePoint>, baseColor: Int, paint: Paint, drawMarkers: Boolean, dashed: Boolean = false, styleDef: LineStyleDef? = null) {
+        // 범례 선 종류가 지정돼 있으면 그 색/패턴을 쓰고, 없으면 예전처럼 색상+점선 여부를 쓴다
+        val color = styleDef?.let { parseColorSafe(it.colorHex) } ?: baseColor
         if (pts.size >= 2) {
             paint.color = color
-            paint.pathEffect = if (dashed) dashPathEffect else null
+            paint.pathEffect = if (styleDef != null) LegendDraw.pathEffect(styleDef.pattern, paint.strokeWidth) else if (dashed) dashPathEffect else null
             val path = android.graphics.Path()
             val first = relativeToView(pts[0].x, pts[0].y)
             path.moveTo(first.x, first.y)
@@ -418,9 +469,20 @@ class RouteEditorView @JvmOverloads constructor(
                 path.lineTo(p.x, p.y)
             }
             canvas.drawPath(path, paint)
+            if (styleDef?.pattern == LinePattern.ARROW) {
+                val a = relativeToView(pts[pts.size - 2].x, pts[pts.size - 2].y)
+                val b = relativeToView(pts.last().x, pts.last().y)
+                LegendDraw.drawArrowHead(canvas, a.x, a.y, b.x, b.y, paint, paint.strokeWidth * 4.5f)
+            }
         }
         pts.forEach { pt ->
             val v = relativeToView(pt.x, pt.y)
+            val symbol = LegendCatalog.symbol(pt.symbolId)
+            if (symbol != null) {
+                LegendDraw.drawSymbol(canvas, v.x, v.y, pointRadiusPx * 1.5f, symbol, glyphBorderPaint.strokeWidth)
+                if (drawMarkers && pt.label != null) drawLabel(canvas, pt.label, v)
+                return@forEach
+            }
             when (pt.markerType) {
                 MarkerType.PLAIN -> {
                     canvas.drawCircle(v.x, v.y, pointRadiusPx, pointFillPaint)
@@ -554,8 +616,11 @@ class RouteEditorView @JvmOverloads constructor(
                     } else if (activeIndex in points.indices && !moved) {
                         onPointTap?.invoke(activeIndex, PointF(rawX, rawY))
                     } else if (activeIndex == -1 && !moved) {
+                        val quickSym = quickPlaceSymbol
                         val quick = quickPlaceType
-                        if (quick != null) {
+                        if (quickSym != null) {
+                            addPoint(viewToRelative(x, y), quickSym.markerType, autoLabelForSymbol(quickSym), quickSym.status, quickSym.id)
+                        } else if (quick != null) {
                             val defaultStatus = if (quick == MarkerType.ENCLOSURE || quick == MarkerType.POLE) MarkerStatus.NEW else null
                             addPoint(viewToRelative(x, y), quick, autoLabelFor(quick), defaultStatus)
                         } else {

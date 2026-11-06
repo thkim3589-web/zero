@@ -20,6 +20,10 @@ import com.thkim.jijang.R
 import com.thkim.jijang.data.excel.XlsxReader
 import com.thkim.jijang.data.model.MarkerStatus
 import com.thkim.jijang.data.model.MarkerType
+import com.thkim.jijang.legend.LegendCatalog
+import com.thkim.jijang.legend.LineStyleDef
+import com.thkim.jijang.legend.LinePattern
+import com.thkim.jijang.legend.SymbolDef
 import com.thkim.jijang.data.model.RouteLine
 import com.thkim.jijang.data.model.RouteType
 import com.thkim.jijang.databinding.ActivityDiagramEditBinding
@@ -297,9 +301,11 @@ class DiagramEditActivity : AppCompatActivity() {
         val activeLine = lines.find { it.id == activeLineId } ?: return
         binding.routeEditorView.setLineColor(activeLine.colorHex)
         binding.routeEditorView.setLineDashed(activeLine.dashed)
+        binding.routeEditorView.setLineStyleDef(LegendCatalog.line(activeLine.styleId))
+        binding.buttonLegendLine.text = LegendCatalog.line(activeLine.styleId)?.let { "선: ${it.label} ▾" } ?: "선 종류 ▾"
         binding.routeEditorView.setPoints(pointsByLineId[activeLineId].orEmpty())
         val refs = if (hideOtherLines) emptyList() else lines.filter { it.id != activeLineId }.map { line ->
-            RouteEditorView.ReferenceLine(pointsByLineId[line.id].orEmpty(), line.colorHex, line.dashed)
+            RouteEditorView.ReferenceLine(pointsByLineId[line.id].orEmpty(), line.colorHex, line.dashed, line.styleId)
         }
         binding.routeEditorView.setReferenceLines(refs)
         updateColorSwatch(activeLine.colorHex)
@@ -409,6 +415,40 @@ class DiagramEditActivity : AppCompatActivity() {
     }
 
     private fun showAddLineDialog() {
+        LegendPickerDialog.showLineStyles(
+            this,
+            title = "새 선 추가 — 선 종류 선택",
+            extraTop = listOf("＋ 범례에 없는 선 (이름 직접 입력)" to { showCustomAddLineDialog() })
+        ) { def -> addLineWithStyle(def) }
+    }
+
+    private fun addLineWithStyle(def: LineStyleDef) {
+        if (currentBaseMapImageId < 0) return
+        lifecycleScope.launch {
+            pointsByLineId[activeLineId] = binding.routeEditorView.getPoints().toMutableList()
+            val newLine = viewModel.addLine(currentBaseMapImageId, def.label, def.colorHex, def)
+            lines.add(newLine)
+            pointsByLineId[newLine.id] = mutableListOf()
+            activeLineId = newLine.id
+            rebuildLineChips()
+            applyActiveLineToView()
+        }
+    }
+
+    /** 지금 편집 중인 선의 종류를 범례에서 골라 색/패턴/이름을 한 번에 바꾼다. */
+    private fun applyLegendLineStyle(def: LineStyleDef) {
+        val idx = lines.indexOfFirst { it.id == activeLineId }
+        if (idx < 0) return
+        val updated = lines[idx].copy(
+            styleId = def.id, colorHex = def.colorHex, dashed = def.pattern != LinePattern.SOLID, lineLabel = def.label
+        )
+        lines[idx] = updated
+        lifecycleScope.launch { viewModel.setLineLegendStyle(updated.id, def) }
+        rebuildLineChips()
+        applyActiveLineToView()
+    }
+
+    private fun showCustomAddLineDialog() {
         val input = android.widget.EditText(this).apply { hint = "선 이름 (예: 지중신설)" }
         AlertDialog.Builder(this)
             .setTitle("새 선 추가")
@@ -453,10 +493,18 @@ class DiagramEditActivity : AppCompatActivity() {
                     shapeButtons.forEach { (b, _) -> b.isSelected = false }
                     button.isSelected = true
                     binding.routeEditorView.setQuickPlaceType(type)
+                    binding.buttonLegendSymbol.text = "도형 심볼 ▾"
                 }
             }
         }
 
+        binding.buttonLegendLine.setOnClickListener { LegendPickerDialog.showLineStyles(this) { applyLegendLineStyle(it) } }
+        binding.buttonLegendSymbol.setOnClickListener {
+            LegendPickerDialog.showSymbols(
+                this,
+                extraTop = listOf("선택 해제 (아래 일반 도형 버튼 사용)" to { clearSymbolSelection() })
+            ) { selectQuickSymbol(it) }
+        }
         binding.buttonLineColor.setOnClickListener { showColorPickerDialog() }
         binding.buttonLineDashed.setOnClickListener { toggleLineDashed() }
         binding.buttonResetZoom.setOnClickListener { binding.routeEditorView.resetZoom() }
@@ -472,6 +520,19 @@ class DiagramEditActivity : AppCompatActivity() {
             binding.buttonRedo.isEnabled = canRedo
         }
         binding.buttonHideOtherLines.setOnClickListener { toggleHideOtherLines() }
+    }
+
+    /** 범례에서 고른 심볼 — 이후 지도를 탭할 때마다 그 심볼이 바로 찍힌다. */
+    private fun selectQuickSymbol(def: SymbolDef) {
+        shapeButtons.forEach { (b, _) -> b.isSelected = false }
+        binding.routeEditorView.setQuickPlaceSymbol(def)
+        binding.buttonLegendSymbol.text = "심볼: ${def.label} ▾"
+        Toast.makeText(this, "지도를 탭하면 ${def.label}이(가) 찍힙니다", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun clearSymbolSelection() {
+        binding.routeEditorView.setQuickPlaceSymbol(null)
+        binding.buttonLegendSymbol.text = "도형 심볼 ▾"
     }
 
     private fun toggleHideOtherLines() {
@@ -493,7 +554,9 @@ class DiagramEditActivity : AppCompatActivity() {
         updateColorSwatch(colorHex)
         val idx = lines.indexOfFirst { it.id == activeLineId }
         if (idx < 0) return
-        val updated = lines[idx].copy(colorHex = colorHex)
+        val updated = lines[idx].copy(colorHex = colorHex, styleId = null)
+        binding.routeEditorView.setLineStyleDef(null)
+        binding.buttonLegendLine.text = "선 종류 ▾"
         lines[idx] = updated
         rebuildLineChips()
         lifecycleScope.launch { viewModel.setLineStyle(updated.id, updated.colorHex, updated.dashed) }
@@ -502,7 +565,9 @@ class DiagramEditActivity : AppCompatActivity() {
     private fun toggleLineDashed() {
         val idx = lines.indexOfFirst { it.id == activeLineId }
         if (idx < 0) return
-        val updated = lines[idx].copy(dashed = !lines[idx].dashed)
+        val updated = lines[idx].copy(dashed = !lines[idx].dashed, styleId = null)
+        binding.routeEditorView.setLineStyleDef(null)
+        binding.buttonLegendLine.text = "선 종류 ▾"
         lines[idx] = updated
         binding.routeEditorView.setLineDashed(updated.dashed)
         binding.buttonLineDashed.setImageResource(
@@ -517,9 +582,18 @@ class DiagramEditActivity : AppCompatActivity() {
     }
 
     private fun showAddPointDialog(relPoint: PointF) {
-        showMarkerTypeDialog("점 추가") { markerType, label, status ->
-            binding.routeEditorView.addPoint(relPoint, markerType, label, status)
-        }
+        LegendPickerDialog.showSymbols(
+            this,
+            title = "점 종류 선택",
+            extraTop = listOf(
+                "● 일반 경로점" to { binding.routeEditorView.addPoint(relPoint) },
+                "함체·전주를 이름 목록에서 선택 (기존 방식)" to {
+                    showMarkerTypeDialog("점 추가") { markerType, label, status ->
+                        binding.routeEditorView.addPoint(relPoint, markerType, label, status)
+                    }
+                }
+            )
+        ) { def -> binding.routeEditorView.addSymbolPoint(relPoint, def) }
     }
 
     /** 카문다 모델러의 "노드 선택 → 액션 메뉴" 방식을 참고해서, 이미 찍힌 점을 탭하면
@@ -528,12 +602,15 @@ class DiagramEditActivity : AppCompatActivity() {
     private fun showPointActionMenu(index: Int) {
         AlertDialog.Builder(this)
             .setTitle("점 편집")
-            .setItems(arrayOf("종류/이름 변경", "이 점 삭제")) { _, which ->
+            .setItems(arrayOf("범례 심볼로 변경", "종류/이름 변경 (기존 방식)", "이 점 삭제")) { _, which ->
                 when (which) {
-                    0 -> showMarkerTypeDialog("종류 변경") { markerType, label, status ->
+                    0 -> LegendPickerDialog.showSymbols(this, title = "심볼 변경") { def ->
+                        binding.routeEditorView.updatePointSymbol(index, def)
+                    }
+                    1 -> showMarkerTypeDialog("종류 변경") { markerType, label, status ->
                         binding.routeEditorView.updatePointMarker(index, markerType, label, status)
                     }
-                    1 -> binding.routeEditorView.removePointAt(index)
+                    2 -> binding.routeEditorView.removePointAt(index)
                 }
             }
             .setNegativeButton("취소", null)
