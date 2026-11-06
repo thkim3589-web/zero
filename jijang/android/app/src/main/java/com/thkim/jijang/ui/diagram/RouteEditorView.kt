@@ -86,7 +86,7 @@ class RouteEditorView @JvmOverloads constructor(
     private val quickPlaceCounters = mutableMapOf<MarkerType, Int>()
 
     private var lineDashed = false
-    private val dashPathEffect = DashPathEffect(floatArrayOf(28f, 16f), 0f)
+    private var dashPathEffect = DashPathEffect(floatArrayOf(28f, 16f), 0f)
 
     private var lineColor = Color.parseColor("#FF3B30")
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -127,15 +127,66 @@ class RouteEditorView @JvmOverloads constructor(
         isFakeBoldText = true
     }
 
-    private val pointRadiusPx = 7f
+    private val density = resources.displayMetrics.density
+
+    /** 점/선/글자 크기는 "화면에서 보이는 크기"를 일정하게 유지한다 — 확대해도 점이 같이 커져서
+     * 정밀하게 찍기 어려워지는 일이 없도록 현재 배율로 나눠서 쓴다. */
+    private val pointRadiusPx: Float get() = 6.5f * density / currentScale
+    private val hitRadiusPx: Float get() = 24f * density / currentScale
+
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
 
     private var activeIndex = -1
     private var moved = false
-    private var downX = 0f
-    private var downY = 0f
+    private var downRawX = 0f
+    private var downRawY = 0f
     private var lastRawX = 0f
     private var lastRawY = 0f
+
+    /** 점을 끌 때 손가락 위쪽에 점을 띄워서(조준) 손가락에 가려 정확히 못 놓는 문제를 없앤다. */
+    var aimLiftEnabled = true
+    private val aimLiftPx get() = 52f * density
+    private var dragging = false
+    private var dragHistoryPushed = false
+
+    /** 실행 취소/다시 실행 — 점 추가/이동/삭제/종류 변경 단위로 되돌린다. */
+    private val undoStack = ArrayDeque<List<EditablePoint>>()
+    private val redoStack = ArrayDeque<List<EditablePoint>>()
+    var onHistoryChanged: ((canUndo: Boolean, canRedo: Boolean) -> Unit)? = null
+
+    private fun notifyHistory() = onHistoryChanged?.invoke(undoStack.isNotEmpty(), redoStack.isNotEmpty())
+
+    private fun pushHistory() {
+        undoStack.addLast(points.toList())
+        if (undoStack.size > 60) undoStack.removeFirst()
+        redoStack.clear()
+        notifyHistory()
+    }
+
+    fun undo() {
+        if (undoStack.isEmpty()) return
+        redoStack.addLast(points.toList())
+        val prev = undoStack.removeLast()
+        points.clear(); points.addAll(prev)
+        onPointsChanged?.invoke(points.toList())
+        notifyHistory()
+        invalidate()
+    }
+
+    fun redo() {
+        if (redoStack.isEmpty()) return
+        undoStack.addLast(points.toList())
+        val next = redoStack.removeLast()
+        points.clear(); points.addAll(next)
+        onPointsChanged?.invoke(points.toList())
+        notifyHistory()
+        invalidate()
+    }
+
+    private val guidePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#2563EB")
+        style = Paint.Style.STROKE
+    }
 
     private val scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
@@ -185,6 +236,7 @@ class RouteEditorView @JvmOverloads constructor(
 
     fun removePointAt(index: Int) {
         if (index !in points.indices) return
+        pushHistory()
         points.removeAt(index)
         onPointsChanged?.invoke(points.toList())
         invalidate()
@@ -192,6 +244,7 @@ class RouteEditorView @JvmOverloads constructor(
 
     fun updatePointMarker(index: Int, markerType: MarkerType, label: String?, status: MarkerStatus?) {
         if (index !in points.indices) return
+        pushHistory()
         points[index] = points[index].copy(markerType = markerType, label = label, status = status)
         onPointsChanged?.invoke(points.toList())
         invalidate()
@@ -232,6 +285,7 @@ class RouteEditorView @JvmOverloads constructor(
     }
 
     fun setPoints(newPoints: List<EditablePoint>) {
+        undoStack.clear(); redoStack.clear(); notifyHistory()
         points.clear()
         points.addAll(newPoints)
         invalidate()
@@ -247,6 +301,7 @@ class RouteEditorView @JvmOverloads constructor(
 
     /** [onEmptyTap]에서 넘겨준 좌표로 실제 점을 확정해서 추가한다. */
     fun addPoint(point: PointF, markerType: MarkerType = MarkerType.PLAIN, label: String? = null, status: MarkerStatus? = null) {
+        pushHistory()
         val adjusted = avoidOverlap(point)
         points.add(EditablePoint(adjusted.x, adjusted.y, markerType, label, status))
         onPointsChanged?.invoke(points.toList())
@@ -279,6 +334,7 @@ class RouteEditorView @JvmOverloads constructor(
     }
 
     fun clearAll() {
+        if (points.isNotEmpty()) pushHistory()
         points.clear()
         onPointsChanged?.invoke(points.toList())
         invalidate()
@@ -314,6 +370,15 @@ class RouteEditorView @JvmOverloads constructor(
         val bmp = bitmap ?: return
         if (fitRect.width() == 0f) computeFitRect()
 
+        // 확대 배율과 상관없이 선 굵기/글자/점선 간격이 화면에서 같은 크기로 보이게 한다
+        val inv = 1f / currentScale
+        linePaint.strokeWidth = 2.5f * density * inv
+        secondaryLinePaint.strokeWidth = 2f * density * inv
+        pointStrokePaint.strokeWidth = 1.8f * density * inv
+        glyphBorderPaint.strokeWidth = 1.2f * density * inv
+        labelPaint.textSize = 10f * density * inv
+        dashPathEffect = DashPathEffect(floatArrayOf(10f * density * inv, 6f * density * inv), 0f)
+
         canvas.save()
         canvas.concat(viewMatrix)
         canvas.drawBitmap(bmp, null, fitRect, null)
@@ -324,6 +389,21 @@ class RouteEditorView @JvmOverloads constructor(
         }
         drawLine(canvas, points, lineColor, linePaint, drawMarkers = true, dashed = lineDashed)
         canvas.restore()
+
+        // 점을 끄는 동안: 손가락 → 점 안내선 + 십자 조준선 (화면 좌표로 그린다)
+        if (dragging && activeIndex in points.indices) {
+            val v = relativeToView(points[activeIndex].x, points[activeIndex].y)
+            val s = floatArrayOf(v.x, v.y)
+            viewMatrix.mapPoints(s)
+            guidePaint.strokeWidth = 1.5f * density
+            guidePaint.pathEffect = DashPathEffect(floatArrayOf(6f * density, 4f * density), 0f)
+            canvas.drawLine(lastRawX, lastRawY, s[0], s[1], guidePaint)
+            guidePaint.pathEffect = null
+            val arm = 22f * density
+            canvas.drawLine(s[0] - arm, s[1], s[0] + arm, s[1], guidePaint)
+            canvas.drawLine(s[0], s[1] - arm, s[0], s[1] + arm, guidePaint)
+            canvas.drawCircle(s[0], s[1], 12f * density, guidePaint)
+        }
     }
 
     private fun drawLine(canvas: Canvas, pts: List<EditablePoint>, color: Int, paint: Paint, drawMarkers: Boolean, dashed: Boolean = false) {
@@ -389,12 +469,13 @@ class RouteEditorView @JvmOverloads constructor(
 
     private fun drawLabel(canvas: Canvas, text: String, anchor: PointF) {
         val textWidth = labelPaint.measureText(text)
-        val bgLeft = anchor.x - textWidth / 2f - 5f
+        val pad = 3f * density / currentScale
+        val bgLeft = anchor.x - textWidth / 2f - pad
         val bgTop = anchor.y - pointRadiusPx * 2.6f - labelPaint.textSize
-        val bgRight = anchor.x + textWidth / 2f + 5f
-        val bgBottom = anchor.y - pointRadiusPx * 2.6f + 5f
-        canvas.drawRoundRect(RectF(bgLeft, bgTop, bgRight, bgBottom), 5f, 5f, labelBgPaint)
-        canvas.drawText(text, anchor.x - textWidth / 2f, bgBottom - 7f, labelPaint)
+        val bgRight = anchor.x + textWidth / 2f + pad
+        val bgBottom = anchor.y - pointRadiusPx * 2.6f + pad
+        canvas.drawRoundRect(RectF(bgLeft, bgTop, bgRight, bgBottom), pad, pad, labelBgPaint)
+        canvas.drawText(text, anchor.x - textWidth / 2f, bgBottom - pad * 1.4f, labelPaint)
     }
 
     private fun findNearestPointIndex(x: Float, y: Float): Int {
@@ -403,7 +484,7 @@ class RouteEditorView @JvmOverloads constructor(
         points.forEachIndexed { index, pt ->
             val v = relativeToView(pt.x, pt.y)
             val d = hypot((v.x - x).toDouble(), (v.y - y).toDouble()).toFloat()
-            if (d < pointRadiusPx * 2.2f && d < bestDist) {
+            if (d < hitRadiusPx && d < bestDist) {
                 bestDist = d
                 best = index
             }
@@ -431,7 +512,8 @@ class RouteEditorView @JvmOverloads constructor(
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                downX = x; downY = y; moved = false
+                downRawX = rawX; downRawY = rawY; moved = false
+                dragging = false; dragHistoryPushed = false
                 lastRawX = rawX; lastRawY = rawY
                 activeIndex = findNearestPointIndex(x, y)
                 return true
@@ -443,11 +525,19 @@ class RouteEditorView @JvmOverloads constructor(
             }
             MotionEvent.ACTION_MOVE -> {
                 if (scaleGestureDetector.isInProgress) return true
-                if (hypot((x - downX).toDouble(), (y - downY).toDouble()) > touchSlop) moved = true
+                if (hypot((rawX - downRawX).toDouble(), (rawY - downRawY).toDouble()) > touchSlop) moved = true
                 if (activeIndex in points.indices && moved) {
-                    val rel = viewToRelative(x, y)
+                    if (!dragHistoryPushed) { pushHistory(); dragHistoryPushed = true }
+                    dragging = true
+                    // 조준: 점을 손가락 위쪽에 띄워서 놓는다 (손가락에 가려지지 않게)
+                    val targetY = if (aimLiftEnabled) (rawY - aimLiftPx).coerceAtLeast(0f) else rawY
+                    val tgt = floatArrayOf(rawX, targetY)
+                    inverseMatrix.mapPoints(tgt)
+                    val rel = viewToRelative(tgt[0], tgt[1])
                     points[activeIndex] = points[activeIndex].copy(x = rel.x, y = rel.y)
+                    lastRawX = rawX; lastRawY = rawY
                     invalidate()
+                    return true
                 } else if (activeIndex == -1 && moved) {
                     // 빈 곳을 드래그 — 화면 이동(팬). translate는 화면(스크린) 좌표 기준이다.
                     viewMatrix.postTranslate(rawX - lastRawX, rawY - lastRawY)
@@ -475,6 +565,9 @@ class RouteEditorView @JvmOverloads constructor(
                 }
                 activeIndex = -1
                 moved = false
+                dragging = false
+                dragHistoryPushed = false
+                invalidate()
                 return true
             }
         }

@@ -460,6 +460,17 @@ class DiagramEditActivity : AppCompatActivity() {
         binding.buttonLineColor.setOnClickListener { showColorPickerDialog() }
         binding.buttonLineDashed.setOnClickListener { toggleLineDashed() }
         binding.buttonResetZoom.setOnClickListener { binding.routeEditorView.resetZoom() }
+        binding.buttonUndo.setOnClickListener { binding.routeEditorView.undo() }
+        binding.buttonRedo.setOnClickListener { binding.routeEditorView.redo() }
+        binding.buttonAim.setOnClickListener {
+            val on = !binding.routeEditorView.aimLiftEnabled
+            binding.routeEditorView.aimLiftEnabled = on
+            binding.buttonAim.text = if (on) "조준 ON" else "조준 OFF"
+        }
+        binding.routeEditorView.onHistoryChanged = { canUndo, canRedo ->
+            binding.buttonUndo.isEnabled = canUndo
+            binding.buttonRedo.isEnabled = canRedo
+        }
         binding.buttonHideOtherLines.setOnClickListener { toggleHideOtherLines() }
     }
 
