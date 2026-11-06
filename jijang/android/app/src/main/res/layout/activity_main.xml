@@ -49,19 +49,27 @@
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipAll"
                     style="@style/Widget.Jijang.FilterChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:checked="true" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipDraft"
-                    style="@style/Widget.Jijang.FilterChip" />
+                    style="@style/Widget.Jijang.FilterChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipSubmitted"
-                    style="@style/Widget.Jijang.FilterChip" />
+                    style="@style/Widget.Jijang.FilterChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipExported"
-                    style="@style/Widget.Jijang.FilterChip" />
+                    style="@style/Widget.Jijang.FilterChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
     </com.google.android.material.appbar.AppBarLayout>
