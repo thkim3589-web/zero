@@ -1,0 +1,52 @@
+# 19단계 — 디자인 v3 적용 및 추후 변경 예상 요소
+
+기준 시안: `디자인시안_v3.html` (밝은 배경 + 큰 라운드 카드, 파랑 기본 / 주황 핵심 동작 / 초록 완료).
+
+## 이번에 적용한 것 (토큰 교체 → 전 화면 반영)
+
+| 파일 | 변경 |
+|---|---|
+| `res/values/colors.xml` | 팔레트 전면 교체 (primary `#2F6FED`, accent `#F58220`, 배경 `#EEF2F8`, 성공 `#1FB56F`) |
+| `res/values/dimens.xml` | 카드 18dp, 입력칸 12dp, 버튼 14dp/50dp 신설(`button_radius`, `button_height`) |
+| `res/values/themes.xml` | 버튼 모서리·높이를 dimen으로 연결 |
+| 상태 칩 색 | 작성중=주황, 제출=파랑, 내보냄=초록 (`status_*` 색 이름은 유지) |
+| `activity_main.xml` | FAB → 하단 중앙 `ExtendedFloatingActionButton`("새 현장 추가") |
+| 드로어블 | `bg_card_notice`, `bg_popup_menu`가 dimen 참조 |
+
+`assembleDebug` 빌드 통과 확인. 실기기/에뮬레이터 화면 확인은 아직 못 했다.
+
+## 추후 변경될 가능성이 큰 요소
+
+### A. 시안에는 있으나 앱에 아직 없는 기능 (결정 필요)
+1. **현장 목록 상태 필터 탭** (전체/작성중/제출/완료) — `MainActivity` + DAO 쿼리 필요.
+2. **현장 조사 화면의 GPS 자동 입력 / 지장물 아이콘 선택(관로·수목·건물·전주)** — 현재 ENG 체크리스트 폼 구조와 충돌 여부 확인 필요. 위치 권한도 추가됨.
+3. **예산 산출 도넛 차트** — 공량 화면에 노무/자재/장비 비율. 단가 마스터에서 계산 가능하나 분류 기준 확정 필요.
+4. **PDF 출력 / 공유** — 지금은 엑셀(xlsx) 내보내기만 있음. 시안의 "PDF", "공유" 버튼은 임시 요소.
+5. **알림(벨) 아이콘** — 시안 상단에 있으나 앱에 알림 개념이 없음. 넣지 않는 것을 권장.
+
+### B. 코드에 박혀 있는 색 (토큰만 바꿔서는 안 바뀜)
+- `FormBuilder.kt:99,193`, `DiagramEditActivity.kt:316` — `#F5F7F9` 외곽선 색 (`surface_muted`로 이전 권장)
+- `DiagramEditActivity.kt:354`, `DiagramCompositor.kt:61` — `#B7C0CC` 테두리/격자
+- `RouteEditorView.kt:91,201` — 기본 선 색 `#FF3B30`. **시안 v3의 "기존=파랑 실선 / 이설=주황 점선"과 다름.** 개황도 기본 색을 바꿀지 결정 필요
+- 개황도 선 색(`colorHex`)은 **DB에 저장된 사용자 값**이라 디자인 개편으로 일괄 변경하면 안 됨. 엑셀 합성(`DiagramCompositor`)과 화면 색이 같아야 한다.
+- `FormBuilder.kt:35` 섹션 번호 배지 색 6개 — 새 팔레트에서 파랑·주황·초록이 겹쳐 보일 수 있어 눈으로 확인 필요
+- `CaseDetailActivity.kt:65~69` 메뉴 배지 색 (`badge_teal`은 이제 초록)
+
+### C. 화면별로 아직 시안 레이아웃이 아닌 곳
+- 현장 상세: 시안의 "6단계 진행률 + 단계 목록" 구조가 아니라 기존 메뉴 카드 목록 (v2 시안 아이디어, 필요하면 적용)
+- 툴바: 지금은 파란 단색 바. 시안의 "밝은 배경 + 큰 제목" 헤더로 바꾸면 모든 화면 레이아웃(약 10개) 수정 필요
+- 하단 고정 액션 바: 시안은 모든 화면에 두지만 앱은 화면마다 버튼 위치가 제각각
+- 아이콘 `ic_menu_*`는 흰색 선 고정 — 배경이 밝은 헤더로 바뀌면 `tint` 방식으로 변경해야 함
+- `ic_input_add`는 안드로이드 기본 아이콘 (자체 아이콘으로 교체 권장)
+
+### D. 기타
+- 다크 모드: 테마가 `DayNight`이나 `values-night`가 없어 시스템 다크 모드에서 일부 흰/검정이 어긋날 수 있음. 라이트 고정(`AppCompatDelegate`) 여부 결정 필요.
+- 글꼴: 시안은 Noto Sans KR. 앱은 시스템 글꼴 → 기기별로 느낌이 다름. 폰트 번들 시 APK 용량 증가.
+- 문구: FAB "새 현장 추가", 상태 라벨 "작성중/제출됨/내보내기 완료"는 `StatusChip.kt`에 하드코딩 — 문구 바뀌면 strings로 이전.
+
+## 2차 진행 (완료)
+- **상태 필터 탭**: 현장 목록 상단에 전체/작성중/제출/완료 칩 + 건수 표시 (`MainViewModel`의 `statusFilter`·`counts`, `Widget.Jijang.FilterChip`).
+- **하드코딩 색 정리**: `FormBuilder`, `DiagramEditActivity`의 `#F5F7F9`/`#B7C0CC`를 `surface_muted`/`icon_muted` 리소스로 교체.
+  남겨둔 것: `DiagramCompositor`(엑셀용 이미지 출력)와 개황도 선 기본색 `#FF3B30`(사용자 저장값과 연결되어 결정 필요).
+- **라이트 모드 고정**: `JijangApp`에서 `MODE_NIGHT_NO` 설정 (D항목 다크 모드 해결).
+- `assembleDebug` 통과.

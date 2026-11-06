@@ -28,6 +28,42 @@
                 android:padding="12dp"
                 android:src="@drawable/ic_overflow_menu" />
         </androidx.appcompat.widget.Toolbar>
+
+        <!-- 상태 필터 탭 (디자인 v3) -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/background"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupFilter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAll"
+                    style="@style/Widget.Jijang.FilterChip"
+                    android:checked="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipDraft"
+                    style="@style/Widget.Jijang.FilterChip" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSubmitted"
+                    style="@style/Widget.Jijang.FilterChip" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipExported"
+                    style="@style/Widget.Jijang.FilterChip" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -65,15 +101,18 @@
             android:textSize="13.5sp" />
     </LinearLayout>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fabAddCase"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="24dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_margin="20dp"
         android:contentDescription="@string/add_case"
-        android:src="@android:drawable/ic_input_add"
+        android:text="@string/add_case"
+        android:textColor="@color/on_accent"
+        android:textSize="15sp"
         app:backgroundTint="@color/accent"
-        app:tint="@color/on_accent" />
+        app:icon="@android:drawable/ic_input_add"
+        app:iconTint="@color/on_accent" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -96,7 +96,7 @@ object FormBuilder {
             btn.layoutParams = lp
         }
 
-        val outlineColor = Color.parseColor("#F5F7F9")
+        val outlineColor = ctx.getColor(R.color.surface_muted)
         fun refresh() {
             val trueOn = selected == trueLabel
             val falseOn = selected == falseLabel
@@ -190,7 +190,7 @@ object FormBuilder {
         val row = LinearLayout(ctx)
         row.orientation = LinearLayout.HORIZONTAL
         row.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        val outlineColor = Color.parseColor("#F5F7F9")
+        val outlineColor = ctx.getColor(R.color.surface_muted)
         val pills = options.map { opt ->
             val pill = TextView(ctx)
             pill.text = opt

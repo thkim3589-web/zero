@@ -60,6 +60,24 @@ class MainActivity : AppCompatActivity() {
         // 시작할 때 조용히 새 버전 확인 (인터넷이 없거나 실패하면 아무 안내 없이 넘어감)
         if (savedInstanceState == null) UpdateManager.check(this, manual = false)
 
+        binding.chipGroupFilter.setOnCheckedStateChangeListener { _, ids ->
+            viewModel.setFilter(
+                when (ids.firstOrNull()) {
+                    R.id.chipDraft -> "DRAFT"
+                    R.id.chipSubmitted -> "SUBMITTED"
+                    R.id.chipExported -> "EXPORTED"
+                    else -> null
+                }
+            )
+        }
+        lifecycleScope.launch {
+            viewModel.counts.collectLatest { c ->
+                binding.chipAll.text = "전체 ${c[null] ?: 0}"
+                binding.chipDraft.text = "작성중 ${c["DRAFT"] ?: 0}"
+                binding.chipSubmitted.text = "제출 ${c["SUBMITTED"] ?: 0}"
+                binding.chipExported.text = "완료 ${c["EXPORTED"] ?: 0}"
+            }
+        }
         lifecycleScope.launch {
             viewModel.cases.collectLatest { cases ->
                 adapter.submitList(cases)

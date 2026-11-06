@@ -1,42 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 디자인 시안 v3 기준 팔레트: 파랑(기본) · 주황(촬영/추가/핵심 동작) · 초록(완료/생성).
+     화면/Kotlin 코드에서는 HEX를 직접 쓰지 말고 이 파일의 이름만 참조한다. -->
 <resources>
-        <color name="primary">#1F403A</color>
-        <color name="primary_light">#315E55</color>
-        <color name="primary_dark">#102C27</color>
+    <!-- 브랜드: 기본 동작/헤더 -->
+    <color name="primary">#2F6FED</color>
+    <color name="primary_light">#5B8FF2</color>
+    <color name="primary_dark">#1E54C4</color>
     <color name="on_primary">#FFFFFF</color>
-        <color name="on_primary_muted">#C5D4CE</color>
+    <color name="on_primary_muted">#D3E0FB</color>
 
-        <color name="accent">#D86532</color>
-        <color name="accent_dark">#B94925</color>
+    <!-- 포인트: 핵심 동작(저장/추가/사진 첨부) -->
+    <color name="accent">#F58220</color>
+    <color name="accent_dark">#C96510</color>
     <color name="on_accent">#FFFFFF</color>
 
-        <color name="background">#F2F5F3</color>
+    <!-- 바탕/구분선/글자 -->
+    <color name="background">#EEF2F8</color>
     <color name="surface">#FFFFFF</color>
-        <color name="line">#D9E2DE</color>
+    <color name="line">#E4E9F2</color>
+    <color name="text_primary">#172036</color>
+    <color name="text_secondary">#6B7790</color>
 
-        <color name="text_primary">#1D2B27</color>
-        <color name="text_secondary">#66746F</color>
+    <!-- 상태 -->
+    <color name="status_ok">#1FB56F</color>
+    <color name="status_warn">#E5484D</color>
 
-        <color name="status_ok">#227A59</color>
-        <color name="status_warn">#B4423A</color>
+    <!-- 현장 상세 메뉴 카드 아이콘 배지 -->
+    <color name="badge_teal">#1FB56F</color>
+    <color name="badge_purple">#7A5AF8</color>
+    <color name="badge_blue">#2F6FED</color>
 
-    <!-- 현장 상세 메뉴 카드 아이콘 배지 색상 -->
-    <color name="badge_teal">#087F8C</color>
-    <color name="badge_purple">#7656A6</color>
-    <color name="badge_blue">#326CB0</color>
+    <!-- 상태 칩: 작성중=주황, 제출=파랑, 내보냄=초록 -->
+    <color name="status_draft_bg">#FFF1E3</color>
+    <color name="status_draft_text">#C96510</color>
+    <color name="status_submitted_bg">#E6EEFE</color>
+    <color name="status_submitted_text">#2456C9</color>
+    <color name="status_exported_bg">#DCF6EA</color>
+    <color name="status_exported_text">#12864F</color>
 
-    <color name="status_draft_bg">#E9EFEC</color>
-    <color name="status_draft_text">#56645F</color>
-    <color name="status_submitted_bg">#FFF0E1</color>
-    <color name="status_submitted_text">#A94E17</color>
-    <color name="status_exported_bg">#E4F3EA</color>
-    <color name="status_exported_text">#246D4D</color>
-
-    <!-- 드로어블/레이아웃에 직접 쓰던 HEX를 공통 리소스로 이전 -->
-    <color name="accent_soft">#FFF1DC</color>
-    <color name="surface_muted">#F5F7F6</color>
-    <color name="danger_soft">#FBEAE7</color>
-    <color name="icon_muted">#A9B7B1</color>
+    <!-- 공통 보조 -->
+    <color name="accent_soft">#FFF1E3</color>
+    <color name="surface_muted">#F1F5FB</color>
+    <color name="danger_soft">#FDECEC</color>
+    <color name="icon_muted">#B5BFD3</color>
     <color name="scrim">#B3000000</color>
-    <color name="select_bg">#F7FAF8</color>
+    <color name="select_bg">#F7F9FC</color>
 </resources>

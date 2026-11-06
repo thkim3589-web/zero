@@ -313,7 +313,7 @@ class DiagramEditActivity : AppCompatActivity() {
         val container = binding.containerLineChips
         container.removeAllViews()
         val density = resources.displayMetrics.density
-        val outlineBg = Color.parseColor("#F5F7F9")
+        val outlineBg = getColor(R.color.surface_muted)
 
         lines.forEach { line ->
             val lineColorInt = try { Color.parseColor(line.colorHex) } catch (e: IllegalArgumentException) { Color.GRAY }
@@ -351,7 +351,7 @@ class DiagramEditActivity : AppCompatActivity() {
             background = android.graphics.drawable.GradientDrawable().apply {
                 cornerRadius = 999f
                 setColor(outlineBg)
-                setStroke((1 * density).toInt(), Color.parseColor("#B7C0CC"))
+                setStroke((1 * density).toInt(), getColor(R.color.icon_muted))
             }
             setOnClickListener { showAddLineDialog() }
         }
