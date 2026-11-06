@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지장이설관리 · 디자인 시안 04</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --slate-900:#0f172a; --slate-800:#1e293b; --slate-700:#334155; --slate-500:#64748b; --slate-400:#94a3b8;
+    --slate-300:#cbd5e1; --slate-200:#e2e8f0; --slate-100:#f1f5f9; --slate-50:#f8fafc;
+    --blue:#2563eb; --blue-400:#60a5fa; --blue-50:#eff6ff; --blue-100:#dbeafe;
+    --red:#dc2626; --red-50:#fef2f2; --amber:#d97706; --amber-100:#fef3c7; --green:#059669; --green-100:#d1fae5;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:"Noto Sans KR",sans-serif; color:var(--slate-800); background:var(--slate-100); }
+  .board { max-width:1500px; margin:0 auto; padding:44px 40px 70px; }
+  h1 { margin:0 0 6px; font-size:28px; font-weight:900; text-align:center; }
+  .intro { margin:0 auto 32px; max-width:720px; text-align:center; font-size:13.5px; line-height:1.7; color:var(--slate-500); }
+  .gallery { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:24px; align-items:start; }
+  .cap { text-align:center; margin-bottom:10px; } .cap b { display:block; font-size:14.5px; } .cap span { font-size:11.5px; color:var(--slate-500); }
+
+  .phone { position:relative; height:760px; overflow:hidden; border:7px solid var(--slate-900); border-radius:34px; background:var(--slate-100); box-shadow:0 20px 40px #0f172a30; }
+  .status { height:30px; padding:10px 20px 0; display:flex; justify-content:space-between; font-size:10px; font-weight:700; background:var(--slate-900); color:#fff; }
+  .hdr { background:var(--slate-900); color:#fff; padding:6px 16px 0; }
+  .hdr .row { display:flex; align-items:center; gap:10px; padding-bottom:10px; }
+  .logo { width:34px; height:34px; border-radius:9px; background:var(--blue); display:grid; place-items:center; font-size:17px; }
+  .hdr h2 { margin:0; font-size:15px; font-weight:700; line-height:1.2; } .hdr small { font-size:10px; color:var(--slate-400); }
+  .hdr .who { margin-left:auto; font-size:10px; padding:4px 9px; border-radius:99px; background:var(--slate-800); color:var(--blue-400); border:1px solid var(--slate-700); }
+  .tabs { display:flex; margin:0 -16px; background:var(--slate-800); border-top:1px solid var(--slate-700); overflow:hidden; }
+  .tabs div { flex:1; padding:10px 2px 9px; text-align:center; font-size:10.5px; font-weight:700; color:var(--slate-400); border-bottom:2px solid transparent; white-space:nowrap; }
+  .tabs div i { display:block; font-style:normal; font-size:15px; margin-bottom:1px; }
+  .tabs .on { color:var(--blue-400); border-bottom-color:var(--blue); }
+  .body { padding:12px; height:calc(100% - 30px - 100px - 66px); overflow:hidden; }
+  .card { background:#fff; border:1px solid var(--slate-200); border-radius:12px; padding:13px; margin-bottom:10px; box-shadow:0 1px 2px #0f172a0a; }
+  .card h3 { margin:0 0 10px; display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:700; }
+  .lbl { display:block; margin:0 0 4px; font-size:10px; font-weight:700; letter-spacing:.5px; color:var(--slate-500); }
+  .in { height:38px; display:flex; align-items:center; padding:0 11px; margin-bottom:10px; border:1px solid var(--slate-300); border-radius:9px; background:var(--slate-50); font-size:12.5px; }
+  .in.ro { background:var(--slate-100); color:var(--slate-500); }
+  .badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:6px; }
+  .b-ok { background:var(--green-100); color:#047857; } .b-bl { background:var(--blue-100); color:#1d4ed8; } .b-am { background:var(--amber-100); color:#92400e; } .b-rd { background:#fee2e2; color:#b91c1c; } .b-gr { background:var(--slate-200); color:var(--slate-700); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+  .pick { padding:10px 4px; border:1px solid var(--slate-200); border-radius:11px; text-align:center; font-size:11px; font-weight:500; color:var(--slate-500); }
+  .pick i { display:block; font-style:normal; font-size:20px; margin-bottom:2px; }
+  .pick.on { border:2px solid var(--blue); background:var(--blue-50); color:#1d4ed8; font-weight:700; padding:9px 3px; }
+  .drop { padding:14px; border:2px dashed var(--slate-300); border-radius:11px; text-align:center; font-size:11.5px; color:var(--slate-500); }
+  .item { padding:10px; margin-bottom:8px; border:1px solid var(--slate-200); border-radius:10px; background:var(--slate-50); }
+  .item .t { display:flex; justify-content:space-between; align-items:center; } .item h4 { margin:5px 0 1px; font-size:12.5px; } .item p { margin:0; font-size:10.5px; color:var(--slate-500); }
+  .dock { position:absolute; left:0; right:0; bottom:0; height:66px; padding:10px 12px; display:flex; gap:8px; background:#fff; border-top:1px solid var(--slate-200); }
+  .btn { flex:1; height:46px; display:grid; place-items:center; border-radius:10px; font-size:13px; font-weight:700; border:1px solid var(--slate-300); color:var(--slate-700); background:#fff; }
+  .btn.p { background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 2px 6px #2563eb55; } .btn.sm { flex:0 0 90px; }
+
+  /* 지도 */
+  .mapbar { display:flex; gap:6px; margin-bottom:8px; }
+  .chip { padding:5px 9px; border-radius:8px; font-size:10.5px; font-weight:700; border:1px solid; display:flex; align-items:center; gap:5px; }
+  .chip i { width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .map { position:relative; height:430px; border-radius:12px; overflow:hidden; background:#16202b; }
+  .map svg { position:absolute; inset:0; width:100%; height:100%; }
+  .glass { position:absolute; padding:9px 11px; border-radius:11px; background:#0f172ae6; color:#fff; font-size:10.5px; line-height:1.7; border:1px solid var(--slate-700); }
+  .tools { position:absolute; right:8px; top:8px; display:grid; gap:6px; }
+  .tool { width:36px; height:36px; display:grid; place-items:center; border-radius:9px; background:#fff; font-size:15px; box-shadow:0 2px 6px #0004; }
+  .tool.on { background:var(--blue); color:#fff; }
+
+  /* 표 */
+  table { width:100%; border-collapse:collapse; font-size:10.5px; }
+  th { padding:7px 4px; background:var(--slate-100); color:var(--slate-700); font-weight:700; text-align:right; border-bottom:1px solid var(--slate-200); }
+  th:first-child, td:first-child { text-align:left; }
+  td { padding:8px 4px; text-align:right; border-bottom:1px solid var(--slate-100); }
+  .tot { display:flex; justify-content:space-between; align-items:center; padding:11px 12px; border-radius:10px; background:var(--slate-900); color:#fff; font-size:11.5px; font-weight:700; }
+  .tot b { color:var(--blue-400); font-size:15px; }
+
+  /* 대시보드 */
+  .kpi { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+  .kpi div { padding:11px 12px; background:#fff; border:1px solid var(--slate-200); border-radius:11px; }
+  .kpi small { display:block; font-size:9.5px; font-weight:700; color:var(--slate-400); } .kpi b { font-size:20px; font-weight:900; }
+  .col { padding:10px; margin-bottom:8px; border-radius:12px; background:#e2e8f099; }
+  .col h5 { margin:0 0 8px; display:flex; justify-content:space-between; font-size:11.5px; }
+  .k { padding:10px; border-radius:9px; background:#fff; border:1px solid var(--slate-200); }
+  .k h4 { margin:5px 0 2px; font-size:12px; } .k p { margin:0; font-size:10px; color:var(--slate-500); }
+  @media (max-width:1200px){ .gallery{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @media (max-width:640px){ .board{padding:24px 16px 48px;} .gallery{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="board">
+  <h1>통신 지장이설 설계서 작성 시스템</h1>
+  <p class="intro">참고 웹앱(슬레이트 헤더 + 블루 포인트 + 4탭 업무 구조)을 모바일 앱 화면으로 옮긴 시안입니다. 어두운 헤더와 탭으로 "어느 단계인지"를 항상 보여주고, 본문은 흰 카드와 표 중심으로 정보 밀도를 높였습니다.</p>
+  <div class="gallery">
+
+    <section><div class="cap"><b>1. 현장 조사 & 지장물 등록</b><span>입력 폼 + 등록된 지장물 목록</span></div>
+      <div class="phone"><div class="status"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="hdr"><div class="row"><div class="logo">📡</div><div><h2>지장이설 설계서</h2><small>Relocation System</small></div><span class="who">대구 달서구 사업</span></div>
+          <div class="tabs"><div class="on"><i>📋</i>현장조사</div><div><i>📍</i>도면</div><div><i>🧮</i>물량</div><div><i>📊</i>현황</div></div></div>
+        <div class="body">
+          <div class="card"><h3>현장 데이터 입력 <span class="badge b-ok">GPS 수신</span></h3>
+            <span class="lbl">프로젝트명</span><div class="in">대구 달서구 도로확장 지장물 이설</div>
+            <span class="lbl">GPS 위치</span><div class="in ro">35.8294° N, 128.5325° E</div>
+            <span class="lbl">지장물 종류</span>
+            <div class="grid2" style="grid-template-columns:repeat(4,1fr);margin-bottom:0"><div class="pick on"><i>🗼</i>통신주</div><div class="pick"><i>🔌</i>케이블</div><div class="pick"><i>⚫</i>맨홀</div><div class="pick"><i>📦</i>함체</div></div></div>
+          <div class="card"><h3>현장 지장물 <span class="badge b-bl">총 3건</span></h3>
+            <div class="item"><div class="t"><span class="badge b-am">철거/이설</span><small style="font-size:10px;color:var(--slate-400)">09:30</small></div><h4>달서_P01 (통신주 10m)</h4><p>달서구 상인동 124-5 앞</p></div>
+            <div class="item" style="margin:0"><div class="t"><span class="badge b-bl">신설</span><small style="font-size:10px;color:var(--slate-400)">10:15</small></div><h4>신설_P01 (통신주 12m)</h4><p>우회 도로 신설 구역</p></div></div>
+        </div>
+        <div class="dock"><div class="btn sm">📷 사진</div><div class="btn p">저장 후 도면 이동 →</div></div></div></section>
+
+    <section><div class="cap"><b>2. 이설 경로 설계 (도면)</b><span>기존/이설 경로 비교, 지도 위 도구</span></div>
+      <div class="phone"><div class="status"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="hdr"><div class="row"><div class="logo">📡</div><div><h2>지장이설 설계서</h2><small>Relocation System</small></div><span class="who">대구 달서구 사업</span></div>
+          <div class="tabs"><div><i>📋</i>현장조사</div><div class="on"><i>📍</i>도면</div><div><i>🧮</i>물량</div><div><i>📊</i>현황</div></div></div>
+        <div class="body">
+          <div class="mapbar"><div class="chip" style="background:var(--red-50);color:var(--red);border-color:#fecaca"><i style="background:#ef4444"></i>기존(철거)</div><div class="chip" style="background:var(--blue-50);color:var(--blue);border-color:#bfdbfe"><i style="background:#3b82f6"></i>이설(신설)</div></div>
+          <div class="map">
+            <svg viewBox="0 0 300 430" preserveAspectRatio="none"><defs><pattern id="g" width="22" height="22" patternUnits="userSpaceOnUse"><path d="M22 0H0V22" fill="none" stroke="#ffffff10"/></pattern></defs>
+              <rect width="300" height="430" fill="#1b2733"/><rect width="300" height="430" fill="url(#g)"/>
+              <rect x="20" y="40" width="90" height="60" fill="#2a3a49"/><rect x="190" y="300" width="80" height="70" fill="#2a3a49"/><rect x="40" y="320" width="70" height="60" fill="#253544"/>
+              <path d="M40 330 L150 250 L260 190" stroke="#ef4444" stroke-width="4" stroke-dasharray="7 6" fill="none"/>
+              <path d="M40 330 L90 370 L200 320 L260 190" stroke="#3b82f6" stroke-width="4" fill="none"/>
+              <g stroke="#fff" stroke-width="2"><circle cx="40" cy="330" r="7" fill="#1e293b"/><circle cx="150" cy="250" r="7" fill="#ef4444"/><circle cx="260" cy="190" r="7" fill="#1e293b"/><circle cx="90" cy="370" r="7" fill="#3b82f6"/><circle cx="200" cy="320" r="7" fill="#3b82f6"/></g></svg>
+            <div class="glass" style="left:8px;top:8px"><b style="color:var(--blue-400)">경로 비교</b><br>철거 <span style="color:#f87171;font-weight:700">185m</span> · 신설 <span style="color:var(--blue-400);font-weight:700">230m</span><br>연장 케이블 <span style="color:#34d399;font-weight:700">250m (72C)</span></div>
+            <div class="tools"><div class="tool on">✎</div><div class="tool">📏</div><div class="tool">⬤</div><div class="tool">↶</div></div>
+            <div class="glass" style="left:8px;bottom:8px;padding:5px 9px;font-size:9.5px;background:#fffffff0;color:var(--slate-700);border-color:#fff">DXF-2026-DALSEO-04</div></div>
+          <div class="card" style="margin-top:10px"><h3 style="margin:0">선택: 신설_P01 <span class="badge b-bl">이설</span></h3></div>
+        </div>
+        <div class="dock"><div class="btn sm">이미지 변경</div><div class="btn p">도면 레이어 저장</div></div></div></section>
+
+    <section><div class="cap"><b>3. 물량 산출 & 예산 내역서</b><span>표준 품셈 표 + 합계 + 내보내기</span></div>
+      <div class="phone"><div class="status"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="hdr"><div class="row"><div class="logo">📡</div><div><h2>지장이설 설계서</h2><small>Relocation System</small></div><span class="who">대구 달서구 사업</span></div>
+          <div class="tabs"><div><i>📋</i>현장조사</div><div><i>📍</i>도면</div><div class="on"><i>🧮</i>물량</div><div><i>📊</i>현황</div></div></div>
+        <div class="body">
+          <div class="card"><h3 style="margin-bottom:4px">표준 품셈 물량 내역서</h3><p style="margin:0 0 8px;font-size:10.5px;color:var(--slate-500)">지장물 이설공사 표준 단가 자동 적용</p>
+            <table><tr><th>품명</th><th>수량</th><th>단가</th><th>금액</th></tr>
+              <tr><td><span class="badge b-bl">신설</span> 전주 12m</td><td>2본</td><td>450,000</td><td><b>900,000</b></td></tr>
+              <tr><td><span class="badge b-bl">신설</span> 광케이블 72C</td><td>250m</td><td>12,000</td><td><b>3,000,000</b></td></tr>
+              <tr><td><span class="badge b-rd">철거</span> 통신주 철거</td><td>2본</td><td>180,000</td><td><b>360,000</b></td></tr>
+              <tr><td><span class="badge b-am">노무</span> 통신전공</td><td>6인</td><td>240,000</td><td><b>1,440,000</b></td></tr></table></div>
+          <div class="tot"><span>합계 (VAT 별도)</span><b>5,700,000 원</b></div>
+        </div>
+        <div class="dock"><div class="btn sm" style="color:#047857;border-color:#6ee7b7">📗 Excel</div><div class="btn p">설계서 생성</div></div></div></section>
+
+    <section><div class="cap"><b>4. 프로젝트 현황</b><span>KPI + 진행 단계별 칸반 (필터 탭 대체)</span></div>
+      <div class="phone"><div class="status"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="hdr"><div class="row"><div class="logo">📡</div><div><h2>지장이설 설계서</h2><small>Relocation System</small></div><span class="who">대구 달서구 사업</span></div>
+          <div class="tabs"><div><i>📋</i>현장조사</div><div><i>📍</i>도면</div><div><i>🧮</i>물량</div><div class="on"><i>📊</i>현황</div></div></div>
+        <div class="body">
+          <div class="kpi"><div><small>진행중</small><b>12 건</b></div><div><small>작성중</small><b style="color:var(--amber)">3 건</b></div><div><small>제출</small><b style="color:var(--blue)">2 건</b></div><div><small>내보냄</small><b style="color:var(--green)">7 건</b></div></div>
+          <div class="col"><h5><span>작성중</span><span class="badge b-gr">3</span></h5>
+            <div class="k"><span class="badge b-bl">달서구</span><h4>구지면 관로 지장이설</h4><p>사진 8/12 · 방금 수정</p></div></div>
+          <div class="col"><h5><span>제출</span><span class="badge b-am">2</span></h5>
+            <div class="k" style="border-left:4px solid var(--amber)"><span class="badge b-am">제출 대기</span><h4>수성구 범어동 불량함체</h4><p>개황도 완료</p></div></div>
+          <div class="col" style="margin:0"><h5><span>내보냄</span><span class="badge b-ok">7</span></h5>
+            <div class="k" style="border-left:4px solid var(--green)"><span class="badge b-ok">엑셀 완료</span><h4>북구 칠성동 접속함체</h4><p>11.03 내보냄</p></div></div>
+        </div>
+        <div class="dock"><div class="btn p">＋ 새 현장 등록</div></div></div></section>
+
+  </div>
+</div>
+</body>
+</html>
