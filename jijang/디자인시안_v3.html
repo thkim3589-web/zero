@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지장이설관리 · 디자인 시안 03</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #eef2f8;
+    --card: #ffffff;
+    --ink: #172036;
+    --sub: #6b7790;
+    --line: #e4e9f2;
+    --blue: #2f6fed;
+    --blue-soft: #e6eefe;
+    --orange: #f58220;
+    --green: #1fb56f;
+    --red: #e5484d;
+    --shadow: 0 8px 24px #1d2f5a14, 0 1px 3px #1d2f5a0f;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Noto Sans KR", sans-serif; color: var(--ink);
+    background: radial-gradient(900px 500px at 85% -10%, #dbe6fb, transparent), radial-gradient(700px 400px at 0% 100%, #e3ecf8, transparent), var(--bg); }
+  .board { max-width: 1500px; margin: 0 auto; padding: 48px 40px 72px; }
+  h1 { margin: 0 0 8px; text-align: center; font-size: 30px; font-weight: 900; letter-spacing: -.5px; }
+  .intro { margin: 0 auto 36px; max-width: 680px; text-align: center; color: var(--sub); font-size: 14px; line-height: 1.7; }
+  .gallery { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 26px; align-items: start; }
+  .cap { text-align: center; margin-bottom: 12px; }
+  .cap b { display: block; font-size: 15px; }
+  .cap span { font-size: 11.5px; color: var(--sub); }
+
+  .phone { position: relative; height: 760px; overflow: hidden; border: 7px solid #dfe5ef; outline: 1px solid #c9d2e2; border-radius: 38px; background: #f4f7fb; box-shadow: 0 24px 50px #1d2f5a22; }
+  .notch { position: absolute; z-index: 20; top: 0; left: 50%; width: 110px; height: 22px; transform: translateX(-50%); background: #dfe5ef; border-radius: 0 0 16px 16px; }
+  .status { height: 34px; padding: 12px 22px 0; display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; }
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 8px 18px 4px; }
+  .ico { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #fff; box-shadow: var(--shadow); font-size: 14px; position: relative; }
+  .ico em { position: absolute; top: -2px; right: -2px; width: 14px; height: 14px; border-radius: 50%; background: var(--red); color: #fff; font: 700 8px/14px "Noto Sans KR"; text-align: center; }
+  h2.title { margin: 6px 18px 12px; font-size: 24px; font-weight: 900; letter-spacing: -.5px; }
+  .body { padding: 0 14px; height: calc(100% - 34px - 50px - 52px - 82px); overflow: hidden; }
+  .card { background: var(--card); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; }
+  .lbl { margin: 0 0 7px; font-size: 13px; font-weight: 700; }
+  .input { height: 42px; display: flex; align-items: center; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: #f7f9fc; color: #9aa5bb; font-size: 13px; margin-bottom: 14px; }
+  .gps { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: #f1f5fb; margin-bottom: 14px; }
+  .gps .pin { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--blue-soft); color: var(--blue); }
+  .gps b { display: block; font-size: 12.5px; } .gps span { font-size: 11px; color: var(--sub); }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 14px; }
+  .pick { padding: 9px 2px 7px; border: 1.5px solid transparent; border-radius: 12px; background: #f1f5fb; text-align: center; font-size: 10.5px; font-weight: 500; }
+  .pick i { display: block; font-style: normal; font-size: 20px; margin-bottom: 3px; }
+  .pick.on { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); font-weight: 700; }
+  .memo { height: 78px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #f7f9fc; color: #9aa5bb; font-size: 12.5px; }
+  .dock { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 14px 18px; background: linear-gradient(#f4f7fb00, #f4f7fb 30%); display: flex; gap: 10px; }
+  .btn { flex: 1; height: 50px; display: grid; place-items: center; border-radius: 14px; font-weight: 700; font-size: 14.5px; color: #fff; background: var(--blue); box-shadow: 0 6px 14px #2f6fed40; }
+  .btn.o { background: var(--orange); box-shadow: 0 6px 14px #f5822040; }
+  .btn.g { background: var(--green); box-shadow: 0 6px 14px #1fb56f40; }
+  .btn.w { background: #fff; color: var(--ink); box-shadow: var(--shadow); }
+  .home-ind { position: absolute; bottom: 6px; left: 50%; width: 110px; height: 4px; transform: translateX(-50%); background: #172036; border-radius: 4px; z-index: 30; }
+
+  /* 목록 */
+  .tabs { display: flex; gap: 8px; margin: 0 18px 12px; }
+  .tabs span { padding: 7px 14px; border-radius: 999px; background: #fff; font-size: 12px; font-weight: 500; color: var(--sub); box-shadow: var(--shadow); }
+  .tabs .on { background: var(--blue); color: #fff; }
+  .site { display: flex; gap: 12px; align-items: center; }
+  .site .th { flex: 0 0 52px; height: 52px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: var(--blue-soft); }
+  .site h4 { margin: 0 0 3px; font-size: 13.5px; line-height: 1.35; }
+  .site p { margin: 0; font-size: 11px; color: var(--sub); }
+  .tag { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+  .tag.d { background: #fff1e3; color: var(--orange); } .tag.s { background: var(--blue-soft); color: var(--blue); } .tag.x { background: #dcf6ea; color: var(--green); }
+  .site .go { margin-left: auto; color: #b5bfd3; font-size: 18px; }
+
+  /* 지도 */
+  .map { position: absolute; inset: 0; background: #2a3d2c; }
+  .map svg.bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .map .top { position: relative; z-index: 5; color: #fff; }
+  .map .ico { background: #ffffffee; color: var(--ink); }
+  .map h2.title { position: relative; z-index: 5; color: #fff; text-shadow: 0 2px 8px #0008; }
+  .tools { position: relative; z-index: 5; display: flex; gap: 8px; margin: 0 14px; }
+  .tool { flex: 1; padding: 9px 2px 7px; border-radius: 14px; background: #fffffff2; text-align: center; font-size: 11px; font-weight: 700; box-shadow: var(--shadow); }
+  .tool i { display: block; font-style: normal; font-size: 20px; margin-bottom: 2px; }
+  .tool.on { background: var(--blue); color: #fff; }
+  .fab { position: absolute; z-index: 5; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; background: #fff; box-shadow: var(--shadow); font-size: 15px; }
+  .bubble { position: absolute; z-index: 5; padding: 4px 10px; border-radius: 8px; color: #fff; font-size: 11px; font-weight: 700; }
+  .info { position: absolute; z-index: 5; width: 150px; padding: 10px 12px; border-radius: 14px; background: #fffffff5; box-shadow: var(--shadow); font-size: 10.5px; }
+  .info b { display: block; margin-bottom: 4px; font-size: 12px; }
+  .info div { display: flex; justify-content: space-between; color: var(--sub); line-height: 1.7; } .info div span:last-child { color: var(--ink); font-weight: 700; }
+
+  /* 내역서 */
+  table { width: 100%; border-collapse: collapse; font-size: 11px; overflow: hidden; border-radius: 10px; }
+  th { padding: 7px 4px; color: #fff; font-weight: 700; } th:nth-child(1) { background: var(--blue); } th:nth-child(2) { background: var(--green); } th:nth-child(3) { background: var(--orange); }
+  td { padding: 7px 6px; border-bottom: 1px solid var(--line); } td:nth-child(n+2) { text-align: right; font-variant-numeric: tabular-nums; }
+  .donut-row { display: flex; align-items: center; gap: 14px; }
+  .donut { flex: 0 0 96px; height: 96px; border-radius: 50%; background: conic-gradient(var(--blue) 0 48%, var(--green) 0 78%, var(--orange) 0 100%); display: grid; place-items: center; }
+  .donut div { width: 56px; height: 56px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 10px; font-weight: 700; text-align: center; line-height: 1.2; }
+  .legend div { font-size: 11.5px; line-height: 1.9; } .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+  .fmt { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .fmt div { padding: 10px 2px 8px; border-radius: 12px; background: #f1f5fb; text-align: center; font-size: 10.5px; font-weight: 500; } .fmt i { display: block; font-style: normal; font-size: 22px; }
+  .fmt .on { background: var(--blue-soft); outline: 1.5px solid var(--blue); font-weight: 700; }
+
+  @media (max-width: 1200px) { .gallery { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width: 640px) { .board { padding: 28px 16px 48px; } .gallery { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="board">
+  <h1>통신 지장이설 설계서 작성 App</h1>
+  <p class="intro">참고 이미지의 톤을 기준으로 한 시안입니다. 밝은 배경 + 큰 라운드 카드, 파랑(기본) · 주황(촬영/추가) · 초록(생성/완료)의 역할 분리, 지도 위에 도구와 정보 카드를 띄우는 구성을 앱의 실제 기능에 맞춰 옮겼습니다.</p>
+  <div class="gallery">
+
+    <!-- 1 현장 목록 -->
+    <section><div class="cap"><b>현장 목록</b><span>상태 필터 + 썸네일형 카드</span></div>
+      <div class="phone"><div class="notch"></div><div class="status"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="top"><div class="ico">☰</div><div class="ico">🔔<em>1</em></div></div>
+        <h2 class="title">내 현장</h2>
+        <div class="tabs"><span class="on">전체 12</span><span>작성 중 3</span><span>제출 2</span><span>완료 7</span></div>
+        <div class="body">
+          <div class="card site"><div class="th">📡</div><div><h4>수성구 범어동 불량함체 개선</h4><p>대구 수성구 범어로 112</p><span class="tag d">작성 중 · 사진 8/12</span></div><span class="go">›</span></div>
+          <div class="card site"><div class="th">🕳️</div><div><h4>달서구 월성동 지장이설(관로)</h4><p>대구 달서구 월배로 233</p><span class="tag s">제출 대기</span></div><span class="go">›</span></div>
+          <div class="card site"><div class="th">🗼</div><div><h4>북구 칠성동 접속함체 교체</h4><p>대구 북구 칠성로 45</p><span class="tag x">엑셀 내보냄</span></div><span class="go">›</span></div>
+          <div class="card site"><div class="th">🛣️</div><div><h4>동구 신암동 도로확장 이설</h4><p>대구 동구 아양로 90</p><span class="tag x">엑셀 내보냄</span></div><span class="go">›</span></div>
+        </div>
+        <div class="dock"><div class="btn o">＋ 새 현장 등록</div></div><div class="home-ind"></div></div></section>
+
+    <!-- 2 현장 조사 -->
+    <section><div class="cap"><b>현장 조사</b><span>입력 → 지장물 선택 → 사진 첨부</span></div>
+      <div class="phone"><div class="notch"></div><div class="status"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="top"><div class="ico">‹</div><div class="ico">🔔<em>1</em></div></div>
+        <h2 class="title">현장 조사</h2>
+        <div class="body"><div class="card">
+          <p class="lbl">프로젝트 이름</p><div class="input">프로젝트 이름</div>
+          <p class="lbl">위치 정보</p><div class="gps"><div class="pin">📍</div><div><b>GPS 정보</b><span>35.8582°N, 128.6306°E</span></div></div>
+          <p class="lbl">지장물 선택</p>
+          <div class="grid4"><div class="pick on"><i>🗼</i>관로</div><div class="pick"><i>🌳</i>수목</div><div class="pick"><i>🏢</i>건물</div><div class="pick"><i>🔌</i>전주</div></div>
+          <p class="lbl">메모</p><div class="memo">현장 특이사항을 입력하세요</div>
+        </div></div>
+        <div class="dock"><div class="btn o">📷 사진 첨부</div></div><div class="home-ind"></div></div></section>
+
+    <!-- 3 경로 설계 -->
+    <section><div class="cap"><b>이설 경로 설계</b><span>개황도 편집 — 위성/GIS 위에 도구를 띄움</span></div>
+      <div class="phone"><div class="map">
+        <svg class="bg" viewBox="0 0 300 760" preserveAspectRatio="none"><defs><radialGradient id="g" cx=".4" cy=".4"><stop offset="0" stop-color="#3f5c40"/><stop offset="1" stop-color="#1f2f22"/></radialGradient></defs>
+          <rect width="300" height="760" fill="url(#g)"/>
+          <g fill="#4d7048" opacity=".55"><circle cx="50" cy="260" r="32"/><circle cx="240" cy="330" r="40"/><circle cx="70" cy="450" r="30"/><circle cx="220" cy="130" r="36"/></g>
+          <rect x="30" y="560" width="70" height="40" fill="#8a96a3"/><rect x="190" y="520" width="60" height="34" fill="#9aa6b3"/>
+          <polyline points="110,130 118,260 140,380 150,470 150,560 120,700" fill="none" stroke="#2f6fed" stroke-width="7" stroke-linecap="round"/>
+          <polyline points="118,260 200,320 215,420 150,470" fill="none" stroke="#f58220" stroke-width="5" stroke-dasharray="3 9" stroke-linecap="round"/>
+          <circle cx="118" cy="260" r="7" fill="#fff" stroke="#2f6fed" stroke-width="3"/><circle cx="150" cy="470" r="7" fill="#f58220" stroke="#fff" stroke-width="2"/></svg>
+        <div class="notch"></div><div class="status" style="color:#fff;position:relative;z-index:5"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="top"><div class="ico">‹</div><div class="ico">🔔<em>1</em></div></div>
+        <h2 class="title">이설 경로 설계</h2>
+        <div class="tools"><div class="tool on"><i>✎</i>선 그리기</div><div class="tool"><i>⬤</i>핀 삽입</div><div class="tool"><i>▦</i>범례</div></div>
+        <div class="fab" style="right:14px;top:196px">⛶</div>
+        <div class="bubble" style="background:var(--blue);left:34px;top:330px">기존 선로</div>
+        <div class="bubble" style="background:var(--orange);right:26px;top:300px">이설 경로</div>
+        <div class="info" style="left:12px;bottom:92px"><b>이설 전</b><div><span>선로 길이</span><span>126m</span></div><div><span>함체</span><span>2개</span></div></div>
+        <div class="info" style="right:12px;bottom:150px"><b>이설 후</b><div><span>선로 길이</span><span>138m</span></div><div><span>증감</span><span style="color:var(--orange)">+12m</span></div></div>
+        <div class="fab" style="right:14px;bottom:96px;z-index:6">◎</div>
+        <div class="dock" style="z-index:6;background:linear-gradient(#0000,#0008)"><div class="btn w">이미지 변경</div><div class="btn">저장</div></div><div class="home-ind"></div>
+      </div></section>
+
+    <!-- 4 내역서 -->
+    <section><div class="cap"><b>설계서 및 내역서</b><span>공량 표 · 비율 · 내보내기 형식</span></div>
+      <div class="phone"><div class="notch"></div><div class="status"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="top"><div class="ico">‹</div><div class="ico">🔔<em>1</em></div></div>
+        <h2 class="title">설계서 및 내역서</h2>
+        <div class="body">
+          <div class="card"><p class="lbl">물량 내역</p>
+            <table><tr><th>항목</th><th>수량</th><th>단가</th></tr>
+              <tr><td>광케이블 포설</td><td>214m</td><td>3,200</td></tr>
+              <tr><td>함체 교체</td><td>2EA</td><td>85,000</td></tr>
+              <tr><td>관로 신설</td><td>48m</td><td>12,500</td></tr></table></div>
+          <div class="card"><p class="lbl">예산 산출</p>
+            <div class="donut-row"><div class="donut"><div>총액<br>1,284천</div></div>
+              <div class="legend"><div><i style="background:var(--blue)"></i>노무 48%</div><div><i style="background:var(--green)"></i>자재 30%</div><div><i style="background:var(--orange)"></i>장비 22%</div></div></div></div>
+          <div class="card"><p class="lbl">출력 양식</p><div class="fmt"><div class="on"><i>📗</i>정산 엑셀</div><div><i>📕</i>PDF</div><div><i>🖼️</i>사진시트</div></div></div>
+        </div>
+        <div class="dock"><div class="btn">설계서 생성</div><div class="btn g">공유</div></div><div class="home-ind"></div></div></section>
+
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지장이설관리 · 디자인 시안 02 (Blueprint)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #f6f4ee;
+    --sheet: #fffdf8;
+    --ink: #14204f;        /* 인디고 잉크 */
+    --ink-2: #4a5683;
+    --ink-3: #8b93b3;
+    --rule: #dcdbd2;
+    --grid: #14204f12;
+    --signal: #ff5a1f;     /* 안전 주황: 핵심 동작 1개에만 */
+    --signal-soft: #ffe7dc;
+    --ok: #1f8a5b;
+    --warn: #c98a00;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: var(--ink); font-family: "Noto Sans KR", sans-serif;
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .board { max-width: 1500px; margin: 0 auto; padding: 48px 40px 72px; }
+  .eyebrow { font: 700 11px var(--mono); letter-spacing: 2px; color: var(--signal); }
+  h1 { margin: 10px 0 8px; font-size: 34px; font-weight: 900; letter-spacing: -.5px; }
+  .intro { margin: 0 0 14px; max-width: 700px; color: var(--ink-2); font-size: 14px; line-height: 1.75; }
+  .tokens { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px; }
+  .tok { display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border: 1px solid var(--rule); border-radius: 4px; background: var(--sheet); font: 500 11px var(--mono); }
+  .tok i { width: 20px; height: 20px; border-radius: 2px; border: 1px solid #0002; }
+
+  .gallery { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; align-items: start; }
+  .no { font: 700 11px var(--mono); color: var(--signal); letter-spacing: 1.5px; }
+  .concept h2 { margin: 4px 0 2px; font-size: 15px; }
+  .concept > p { margin: 0 0 12px; font-size: 11.5px; color: var(--ink-3); min-height: 32px; }
+
+  .phone { position: relative; height: 760px; overflow: hidden; border: 8px solid var(--ink); border-radius: 30px; background: var(--sheet); box-shadow: 8px 8px 0 #14204f18; }
+  .status { height: 30px; padding: 10px 18px 0; display: flex; justify-content: space-between; font: 700 9px var(--mono); }
+  .scroll { height: calc(100% - 30px - 74px); overflow: hidden; }
+
+  /* 헤더 */
+  .head { padding: 10px 18px 16px; background: var(--ink); color: #fff; }
+  .head .row { display: flex; align-items: center; justify-content: space-between; }
+  .head .crumb { font: 500 10px var(--mono); color: #aeb7e0; letter-spacing: 1px; }
+  .head h3 { margin: 8px 0 4px; font-size: 19px; font-weight: 900; line-height: 1.3; }
+  .head .addr { font-size: 11.5px; color: #c9d0ee; }
+  .icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid #ffffff44; border-radius: 4px; font-size: 15px; color: #fff; }
+
+  /* 칩 / 라벨 */
+  .chip { display: inline-block; padding: 3px 8px; border-radius: 2px; font: 700 10px var(--mono); letter-spacing: .5px; }
+  .chip.draft { background: #eceefa; color: var(--ink-2); }
+  .chip.sub { background: #fff3d2; color: #8a5f00; }
+  .chip.done { background: #d9f1e6; color: var(--ok); }
+  .label { font: 700 10px var(--mono); letter-spacing: 1.4px; color: var(--ink-3); text-transform: uppercase; }
+
+  /* 홈: 요약 + 목록 */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--rule); }
+  .stat { padding: 14px 18px; border-right: 1px solid var(--rule); }
+  .stat:last-child { border: 0; }
+  .stat b { display: block; font: 700 24px var(--mono); }
+  .stat span { font-size: 10.5px; color: var(--ink-3); }
+  .search { margin: 14px 18px; height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1.5px solid var(--ink); border-radius: 4px; color: var(--ink-3); font-size: 13px; background: #fff; }
+  .case { margin: 0 18px 10px; padding: 14px; border: 1px solid var(--rule); border-left: 5px solid var(--ink); border-radius: 4px; background: #fff; }
+  .case.hot { border-left-color: var(--signal); }
+  .case .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .case h4 { margin: 0 0 4px; font-size: 14.5px; font-weight: 700; line-height: 1.4; }
+  .case p { margin: 0; font-size: 11.5px; color: var(--ink-2); }
+  .case .meta { margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--rule); display: flex; justify-content: space-between; font: 500 10.5px var(--mono); color: var(--ink-3); }
+  .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 74px; padding: 10px 14px; display: flex; gap: 10px; align-items: center; background: var(--sheet); border-top: 2px solid var(--ink); }
+  .btn { flex: 1; height: 52px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 4px; font-weight: 700; font-size: 14px; background: #fff; color: var(--ink); }
+  .btn.primary { background: var(--signal); border-color: var(--signal); color: #fff; box-shadow: 3px 3px 0 var(--ink); }
+  .btn.sm { flex: 0 0 52px; font-size: 18px; }
+
+  /* 작업공간: 진행 단계 */
+  .progress { margin: 16px 18px 6px; }
+  .progress .track { display: flex; gap: 3px; margin: 8px 0 6px; }
+  .progress .seg { flex: 1; height: 8px; background: #e3e3dc; }
+  .progress .seg.on { background: var(--ink); }
+  .progress .seg.now { background: var(--signal); }
+  .task { margin: 0 18px; padding: 14px 0; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--rule); }
+  .task .n { flex: 0 0 38px; height: 38px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 4px; font: 700 13px var(--mono); }
+  .task.done .n { background: var(--ink); color: #fff; }
+  .task.now .n { background: var(--signal); border-color: var(--signal); color: #fff; }
+  .task .t { flex: 1; min-width: 0; }
+  .task .t b { display: block; font-size: 14.5px; }
+  .task .t span { font-size: 11px; color: var(--ink-3); }
+  .task .go { font: 700 16px var(--mono); color: var(--ink-3); }
+
+  /* 체크리스트 */
+  .sec { margin: 14px 18px 0; border: 1.5px solid var(--ink); border-radius: 4px; background: #fff; }
+  .sec-h { display: flex; align-items: center; gap: 10px; padding: 11px 12px; background: #eceefa; border-bottom: 1.5px solid var(--ink); }
+  .sec-h .n { font: 700 11px var(--mono); padding: 2px 6px; background: var(--ink); color: #fff; border-radius: 2px; }
+  .sec-h b { flex: 1; font-size: 13.5px; }
+  .sec.closed .sec-h { border-bottom: 0; }
+  .field { padding: 11px 12px; border-bottom: 1px dashed var(--rule); }
+  .field:last-child { border: 0; }
+  .field .q { margin-bottom: 8px; font-size: 12.5px; font-weight: 500; }
+  .seg2 { display: grid; grid-template-columns: 1fr 1fr; border: 1.5px solid var(--ink); border-radius: 4px; overflow: hidden; }
+  .seg2 div { height: 44px; display: grid; place-items: center; font-weight: 700; font-size: 14px; color: var(--ink-3); }
+  .seg2 .sel { background: var(--ink); color: #fff; }
+  .seg2 .sel.no { background: var(--signal); }
+  .input { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border: 1.5px solid var(--rule); border-radius: 4px; font: 500 14px var(--mono); }
+  .input small { font: 400 11px "Noto Sans KR"; color: var(--ink-3); }
+
+  /* 개황도 */
+  .canvas { position: relative; height: 100%; background-color: #fff;
+    background-image: linear-gradient(#14204f14 1px, transparent 1px), linear-gradient(90deg, #14204f14 1px, transparent 1px);
+    background-size: 20px 20px; }
+  .canvas svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .tabs { position: absolute; top: 12px; left: 12px; display: flex; border: 2px solid var(--ink); border-radius: 4px; overflow: hidden; background: #fff; z-index: 3; }
+  .tabs div { padding: 8px 16px; font-weight: 700; font-size: 13px; }
+  .tabs .on { background: var(--ink); color: #fff; }
+  .tools { position: absolute; right: 10px; top: 12px; display: grid; gap: 8px; z-index: 3; }
+  .tool { width: 44px; height: 44px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 4px; background: #fff; font-size: 17px; }
+  .tool.on { background: var(--ink); color: #fff; }
+  .legend { position: absolute; left: 12px; bottom: 12px; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: 4px; background: #fffffff0; font: 500 10px var(--mono); line-height: 1.8; }
+  .legend i { display: inline-block; width: 18px; height: 0; margin-right: 6px; vertical-align: middle; border-top: 3px solid; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 74px; z-index: 4; padding: 12px 16px; background: var(--sheet); border-top: 2px solid var(--ink); display: flex; gap: 8px; }
+  .swatch { flex: 1; height: 40px; display: grid; place-items: center; border: 2px solid var(--ink); border-radius: 4px; font: 700 11px var(--mono); }
+
+  @media (max-width: 1200px) { .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { .board { padding: 28px 16px 48px; } .gallery { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="board">
+  <div class="eyebrow">JIJANG / DESIGN PROPOSAL 02</div>
+  <h1>Blueprint — 도면처럼 정확하고, 현장에서 바로 읽히는 UI</h1>
+  <p class="intro">v1(포레스트 그린)을 폐기하고 새로 잡은 컨셉입니다. 지장이설은 "도면과 수량"을 다루는 일이라, 방안지 위의 인디고 잉크 느낌을 UI 언어로 삼았습니다. 야외 직사광선에서도 읽히도록 대비를 높이고, 주황은 화면당 <b>단 하나의 핵심 동작</b>에만 씁니다.</p>
+  <div class="tokens">
+    <div class="tok"><i style="background:#14204f"></i>ink #14204F</div>
+    <div class="tok"><i style="background:#ff5a1f"></i>signal #FF5A1F</div>
+    <div class="tok"><i style="background:#f6f4ee"></i>paper #F6F4EE</div>
+    <div class="tok"><i style="background:#eceefa"></i>tint #ECEEFA</div>
+    <div class="tok"><i style="background:#1f8a5b"></i>ok #1F8A5B</div>
+    <div class="tok">radius 4dp · border 1.5–2dp · touch ≥ 44dp</div>
+    <div class="tok">Noto Sans KR + JetBrains Mono(숫자/코드)</div>
+  </div>
+
+  <div class="gallery">
+
+    <!-- 1. 현장 홈 -->
+    <section class="concept">
+      <div class="no">SCREEN 01</div><h2>현장 홈</h2><p>상단 3칸 요약으로 오늘 할 일을 먼저 보여주고, 카드 좌측 띠로 상태를 구분</p>
+      <div class="phone"><div class="status"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="head"><div class="row"><span class="crumb">JIJANG / 현장</span><div class="icon-btn">⋮</div></div>
+          <h3>내 현장</h3><div class="addr">2026.11.06 목요일</div></div>
+        <div class="scroll">
+          <div class="stats">
+            <div class="stat"><b>12</b><span>전체 현장</span></div>
+            <div class="stat"><b style="color:var(--signal)">3</b><span>작성 중</span></div>
+            <div class="stat"><b style="color:var(--ok)">7</b><span>내보냄</span></div>
+          </div>
+          <div class="search">🔍 공사명·주소 검색</div>
+          <div class="case hot"><div class="top"><span class="chip draft">작성 중</span><span class="label">#0412</span></div>
+            <h4>대구 수성구 범어동 불량함체 개선</h4><p>📍 대구 수성구 범어로 112</p>
+            <div class="meta"><span>사진 8/12</span><span>수량 입력 완료</span></div></div>
+          <div class="case"><div class="top"><span class="chip sub">제출 대기</span><span class="label">#0409</span></div>
+            <h4>달서구 월성동 지장이설 (관로)</h4><p>📍 대구 달서구 월배로 233</p>
+            <div class="meta"><span>사진 12/12</span><span>개황도 완료</span></div></div>
+          <div class="case"><div class="top"><span class="chip done">내보냄</span><span class="label">#0403</span></div>
+            <h4>북구 칠성동 접속함체 교체</h4><p>📍 대구 북구 칠성로 45</p>
+            <div class="meta"><span>사진 10/10</span><span>11.03 xlsx</span></div></div>
+        </div>
+        <div class="bar"><div class="btn primary">＋ 새 현장 등록</div></div>
+      </div>
+    </section>
+
+    <!-- 2. 작업공간 -->
+    <section class="concept">
+      <div class="no">SCREEN 02</div><h2>현장 작업공간</h2><p>메뉴 나열 대신 "작업 순서"로 재구성 — 지금 할 단계가 주황으로 강조</p>
+      <div class="phone"><div class="status"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="head"><div class="row"><span class="crumb">‹ 현장 / #0412</span><div class="icon-btn">⋮</div></div>
+          <h3>대구 수성구 범어동<br>불량함체 개선</h3><div class="addr">📍 대구 수성구 범어로 112 &nbsp;<span class="chip draft">작성 중</span></div></div>
+        <div class="scroll">
+          <div class="progress"><div class="label">진행률 3 / 6 단계</div>
+            <div class="track"><div class="seg on"></div><div class="seg on"></div><div class="seg on"></div><div class="seg now"></div><div class="seg"></div><div class="seg"></div></div></div>
+          <div class="task done"><div class="n">✓</div><div class="t"><b>ENG 체크리스트</b><span>42개 항목 입력됨</span></div><div class="go">›</div></div>
+          <div class="task done"><div class="n">✓</div><div class="t"><b>구간(기별) 입력</b><span>3개 구간 · 총 214m</span></div><div class="go">›</div></div>
+          <div class="task done"><div class="n">✓</div><div class="t"><b>공량(작업수량)</b><span>노무 6 · 자재 11 항목</span></div><div class="go">›</div></div>
+          <div class="task now"><div class="n">4</div><div class="t"><b>현장 사진</b><span>8 / 12장 · 4장 남음</span></div><div class="go" style="color:var(--signal)">›</div></div>
+          <div class="task"><div class="n">5</div><div class="t"><b>개황도 (전/후)</b><span>GIS 캡처 이미지 필요</span></div><div class="go">›</div></div>
+          <div class="task"><div class="n">6</div><div class="t"><b>엑셀 내보내기</b><span>모든 단계 완료 후 활성화</span></div><div class="go">›</div></div>
+        </div>
+        <div class="bar"><div class="btn sm">📷</div><div class="btn primary">사진 이어서 찍기</div></div>
+      </div>
+    </section>
+
+    <!-- 3. 체크리스트 -->
+    <section class="concept">
+      <div class="no">SCREEN 03</div><h2>체크리스트 입력</h2><p>양식지처럼 칸을 나누고, 예/아니오는 한 번에 누르는 큰 분할 버튼</p>
+      <div class="phone"><div class="status"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="head"><div class="row"><span class="crumb">‹ #0412 / ENG</span><span class="chip" style="background:#ffffff22;color:#fff">자동저장 ●</span></div>
+          <h3>ENG 체크리스트</h3><div class="addr">12 / 42 항목 입력</div></div>
+        <div class="scroll">
+          <div class="sec"><div class="sec-h"><span class="n">01</span><b>기본 정보</b><span>⌃</span></div>
+            <div class="field"><div class="q">함체 불량 여부</div><div class="seg2"><div class="sel">예</div><div>아니오</div></div></div>
+            <div class="field"><div class="q">작업 지점 수</div><div class="input">3<small>개소</small></div></div>
+            <div class="field"><div class="q">지장물 간섭</div><div class="seg2"><div>예</div><div class="sel no">아니오</div></div></div>
+          </div>
+          <div class="sec closed"><div class="sec-h"><span class="n">02</span><b>관로 / 맨홀</b><span>⌄</span></div></div>
+          <div class="sec closed"><div class="sec-h"><span class="n">03</span><b>케이블 · 접속</b><span>⌄</span></div></div>
+          <div class="sec closed"><div class="sec-h"><span class="n">04</span><b>안전 조치</b><span>⌄</span></div></div>
+        </div>
+        <div class="bar"><div class="btn">‹ 이전</div><div class="btn primary">저장하고 다음 ›</div></div>
+      </div>
+    </section>
+
+    <!-- 4. 개황도 -->
+    <section class="concept">
+      <div class="no">SCREEN 04</div><h2>개황도 편집</h2><p>캔버스를 최대한 넓히고, 도구는 우측 세로 레일로 — 엄지로 닿는 위치</p>
+      <div class="phone"><div class="status"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="scroll" style="height:calc(100% - 30px - 74px)">
+          <div class="canvas">
+            <div class="tabs"><div class="on">개선 전</div><div>개선 후</div></div>
+            <div class="tools"><div class="tool on">✎</div><div class="tool">⬚</div><div class="tool">◉</div><div class="tool">⌫</div><div class="tool">↶</div></div>
+            <svg viewBox="0 0 300 640" preserveAspectRatio="none">
+              <rect x="30" y="170" width="160" height="90" fill="#14204f0d" stroke="#14204f55" stroke-dasharray="4 3"/>
+              <rect x="60" y="380" width="120" height="110" fill="#14204f0d" stroke="#14204f55" stroke-dasharray="4 3"/>
+              <polyline points="20,330 110,330 110,270 230,270 230,210" fill="none" stroke="#14204f" stroke-width="4" stroke-linejoin="round"/>
+              <polyline points="110,330 110,430 200,430" fill="none" stroke="#ff5a1f" stroke-width="4" stroke-dasharray="9 6" stroke-linejoin="round"/>
+              <g fill="#fff" stroke="#14204f" stroke-width="3"><circle cx="20" cy="330" r="7"/><circle cx="110" cy="330" r="7"/><circle cx="110" cy="270" r="7"/><circle cx="230" cy="270" r="7"/></g>
+              <g fill="#fff" stroke="#ff5a1f" stroke-width="3"><circle cx="110" cy="430" r="7"/><circle cx="200" cy="430" r="7"/></g>
+              <rect x="222" y="202" width="16" height="16" fill="#ff5a1f"/>
+              <text x="122" y="262" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#14204f">A-02 · 42m</text>
+            </svg>
+            <div class="legend"><div><i style="border-color:#14204f"></i>기설 관로</div><div><i style="border-color:#ff5a1f;border-top-style:dashed"></i>이설 관로</div><div><i style="border-color:#ff5a1f;height:10px;width:10px;border:0;background:#ff5a1f;display:inline-block"></i>함체</div></div>
+          </div>
+        </div>
+        <div class="sheet"><div class="swatch" style="background:#14204f;color:#fff">실선</div><div class="swatch">점선</div><div class="swatch" style="border-color:var(--signal);color:var(--signal)">주황</div><div class="swatch">굵게</div></div>
+        <div class="bar"><div class="btn">이미지 변경</div><div class="btn primary">저장</div></div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</body>
+</html>
