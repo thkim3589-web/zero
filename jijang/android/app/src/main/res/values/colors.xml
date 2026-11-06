@@ -1,48 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 디자인 시안 v3 기준 팔레트: 파랑(기본) · 주황(촬영/추가/핵심 동작) · 초록(완료/생성).
+<!-- 디자인 시안 v4 기준 팔레트: 슬레이트(헤더/구조) + 블루(핵심 동작) + 앰버/그린(상태).
      화면/Kotlin 코드에서는 HEX를 직접 쓰지 말고 이 파일의 이름만 참조한다. -->
 <resources>
-    <!-- 브랜드: 기본 동작/헤더 -->
-    <color name="primary">#2F6FED</color>
-    <color name="primary_light">#5B8FF2</color>
-    <color name="primary_dark">#1E54C4</color>
+    <!-- 구조: 헤더/툴바/아웃라인 -->
+    <color name="primary">#0F172A</color>
+    <color name="primary_light">#475569</color>
+    <color name="primary_dark">#020617</color>
     <color name="on_primary">#FFFFFF</color>
-    <color name="on_primary_muted">#D3E0FB</color>
+    <color name="on_primary_muted">#CBD5E1</color>
 
-    <!-- 포인트: 핵심 동작(저장/추가/사진 첨부) -->
-    <color name="accent">#F58220</color>
-    <color name="accent_dark">#C96510</color>
+    <!-- 핵심 동작(저장/추가/선택) -->
+    <color name="accent">#2563EB</color>
+    <color name="accent_dark">#1D4ED8</color>
     <color name="on_accent">#FFFFFF</color>
 
     <!-- 바탕/구분선/글자 -->
-    <color name="background">#EEF2F8</color>
+    <color name="background">#F1F5F9</color>
     <color name="surface">#FFFFFF</color>
-    <color name="line">#E4E9F2</color>
-    <color name="text_primary">#172036</color>
-    <color name="text_secondary">#6B7790</color>
+    <color name="line">#E2E8F0</color>
+    <color name="text_primary">#1E293B</color>
+    <color name="text_secondary">#64748B</color>
 
     <!-- 상태 -->
-    <color name="status_ok">#1FB56F</color>
-    <color name="status_warn">#E5484D</color>
+    <color name="status_ok">#059669</color>
+    <color name="status_warn">#DC2626</color>
 
     <!-- 현장 상세 메뉴 카드 아이콘 배지 -->
-    <color name="badge_teal">#1FB56F</color>
-    <color name="badge_purple">#7A5AF8</color>
-    <color name="badge_blue">#2F6FED</color>
+    <color name="badge_teal">#059669</color>
+    <color name="badge_purple">#7C3AED</color>
+    <color name="badge_blue">#2563EB</color>
+    <color name="badge_amber">#D97706</color>
 
-    <!-- 상태 칩: 작성중=주황, 제출=파랑, 내보냄=초록 -->
-    <color name="status_draft_bg">#FFF1E3</color>
-    <color name="status_draft_text">#C96510</color>
-    <color name="status_submitted_bg">#E6EEFE</color>
-    <color name="status_submitted_text">#2456C9</color>
-    <color name="status_exported_bg">#DCF6EA</color>
-    <color name="status_exported_text">#12864F</color>
+    <!-- 상태 칩: 작성중=앰버, 제출=블루, 내보냄=그린 -->
+    <color name="status_draft_bg">#FEF3C7</color>
+    <color name="status_draft_text">#92400E</color>
+    <color name="status_submitted_bg">#DBEAFE</color>
+    <color name="status_submitted_text">#1D4ED8</color>
+    <color name="status_exported_bg">#D1FAE5</color>
+    <color name="status_exported_text">#047857</color>
 
     <!-- 공통 보조 -->
-    <color name="accent_soft">#FFF1E3</color>
-    <color name="surface_muted">#F1F5FB</color>
-    <color name="danger_soft">#FDECEC</color>
-    <color name="icon_muted">#B5BFD3</color>
+    <color name="accent_soft">#EFF6FF</color>
+    <color name="surface_muted">#F8FAFC</color>
+    <color name="danger_soft">#FEF2F2</color>
+    <color name="icon_muted">#94A3B8</color>
     <color name="scrim">#B3000000</color>
-    <color name="select_bg">#F7F9FC</color>
+    <color name="select_bg">#F8FAFC</color>
 </resources>

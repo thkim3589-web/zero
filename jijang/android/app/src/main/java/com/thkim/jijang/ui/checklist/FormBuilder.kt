@@ -33,7 +33,7 @@ object FormBuilder {
 
     private val sectionPalette = listOf(
         R.color.primary, R.color.accent_dark, R.color.badge_teal,
-        R.color.badge_purple, R.color.badge_blue, R.color.status_ok
+        R.color.badge_purple, R.color.badge_blue, R.color.badge_amber
     )
 
     private fun label(ctx: Context, container: ViewGroup, text: String) {
