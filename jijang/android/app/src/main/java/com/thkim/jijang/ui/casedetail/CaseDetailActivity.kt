@@ -68,6 +68,8 @@ class CaseDetailActivity : AppCompatActivity() {
         setupRow(binding.rowDiagramBefore, R.drawable.ic_menu_map, R.color.badge_blue, "개황도(전) 편집", "이설 전 경로 그리기")
         setupRow(binding.rowDiagramAfter, R.drawable.ic_menu_map, R.color.badge_blue, "개황도(후) 편집", "이설 후 경로 그리기")
         setupRow(binding.rowExport, R.drawable.ic_menu_export, R.color.status_ok, "엑셀 내보내기", "정산 엑셀 생성 · 공유")
+        binding.rowExport.textTitle.setTextColor(ContextCompat.getColor(this, R.color.on_primary))
+        binding.rowExport.textSubtitle.setTextColor(ContextCompat.getColor(this, R.color.on_primary_muted))
 
         binding.buttonEditChecklist.setOnClickListener { openChecklist(siteCaseId) }
         binding.buttonManagePhotos.setOnClickListener { openPhotos(siteCaseId) }

@@ -15,8 +15,8 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/primary"
-            android:title="현장 사진"
-            android:titleTextColor="@color/on_primary" />
+            app:title="현장 사진"
+            app:titleTextColor="@color/on_primary" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.recyclerview.widget.RecyclerView

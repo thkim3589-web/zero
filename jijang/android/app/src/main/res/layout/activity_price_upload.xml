@@ -11,8 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/primary"
-        android:title="단가표 업로드"
-        android:titleTextColor="@color/on_primary" />
+        app:title="단가표 업로드"
+        app:titleTextColor="@color/on_primary" />
 
     <ScrollView
         android:layout_width="match_parent"

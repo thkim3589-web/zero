@@ -11,8 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/primary"
-        android:title="원가계산 수량 입력"
-        android:titleTextColor="@color/on_primary" />
+        app:title="원가계산 수량 입력"
+        app:titleTextColor="@color/on_primary" />
 
     <ScrollView
         android:layout_width="match_parent"
