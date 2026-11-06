@@ -1,6 +1,6 @@
 {
-  "version": "0.3.1",
-  "code": 4,
-  "notes": ["0.3.0에서 앱이 실행되지 않던 문제 수정", "화면 상단 제목 표시 및 글씨 가독성 개선"],
+  "version": "0.3.2",
+  "code": 5,
+  "notes": ["앱 오류 발생 시 원인을 화면에 표시하는 진단 기능 추가", "0.3.1 실행 문제 확인용"],
   "apk": "https://thkim3589-web.github.io/zero/apk/jijang.apk"
 }
