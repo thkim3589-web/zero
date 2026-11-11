@@ -40,11 +40,74 @@ object DiagramCompositor {
 
         if (legend != null) {
             drawLegend(canvas, legend, w, h)
+        } else {
+            drawAutoLegend(canvas, lines, w, h)
         }
 
         if (lines.all { it.points.isEmpty() }) return result
         drawLinesAndMarkers(canvas, lines, w, h)
         return result
+    }
+
+    /**
+     * 범례 이미지가 없을 때: 도면에 실제로 쓰인 선 종류와 도형 심볼만 모아 우하단에 표로 그린다.
+     * 범례 카탈로그의 정의(색/패턴/모양)를 그대로 써서 도면 위 모양과 항상 일치한다.
+     */
+    private fun drawAutoLegend(canvas: Canvas, lines: List<LineRender>, w: Float, h: Float) {
+        val usedLines = lines.filter { it.points.size >= 2 }
+            .mapNotNull { LegendCatalog.line(it.styleId) }.distinctBy { it.id }
+        val usedSymbols = lines.flatMap { it.points }
+            .mapNotNull { LegendCatalog.symbol(it.symbolId) }.distinctBy { it.id }
+        if (usedLines.isEmpty() && usedSymbols.isEmpty()) return
+
+        val unit = (w * 0.002f).coerceAtLeast(2f)
+        val textSize = (w * 0.011f).coerceAtLeast(12f)
+        val rowH = textSize * 1.9f
+        val pad = textSize * 0.7f
+        val sampleW = textSize * 3.2f
+        val title = "범 례"
+
+        val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK; this.textSize = textSize }
+        val bold = Paint(text).apply { isFakeBoldText = true }
+        val labels = usedLines.map { it.label } + usedSymbols.map { it.label }
+        val maxLabel = labels.maxOf { text.measureText(it) }
+        val boxW = pad * 3.6f + sampleW + maxLabel
+        val rows = usedLines.size + usedSymbols.size
+        val boxH = pad * 2 + rowH * (rows + 1)
+        val margin = w * 0.015f
+        val left = w - boxW - margin
+        val top = h - boxH - margin
+
+        val bg = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; style = Paint.Style.FILL }
+        val frame = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.parseColor("#B7C0CC"); style = Paint.Style.STROKE; strokeWidth = (w * 0.0015f).coerceAtLeast(2f)
+        }
+        canvas.drawRect(left, top, left + boxW, top + boxH, bg)
+        canvas.drawRect(left, top, left + boxW, top + boxH, frame)
+
+        fun baseline(y: Float) = y - (text.fontMetrics.ascent + text.fontMetrics.descent) / 2f
+        var cy = top + pad + rowH / 2
+        canvas.drawText(title, left + boxW / 2 - bold.measureText(title) / 2, baseline(cy), bold)
+        cy += rowH
+
+        val sx = left + pad
+        val tx = left + pad * 2 + sampleW
+        val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = unit * 1.3f }
+        usedLines.forEach { def ->
+            linePaint.color = parseColorSafe(def.colorHex, Color.RED)
+            linePaint.pathEffect = LegendDraw.pathEffect(def.pattern, linePaint.strokeWidth)
+            canvas.drawLine(sx, cy, sx + sampleW, cy, linePaint)
+            if (def.pattern == LinePattern.ARROW) {
+                LegendDraw.drawArrowHead(canvas, sx, cy, sx + sampleW, cy, linePaint, linePaint.strokeWidth * 4.5f)
+            }
+            canvas.drawText(def.label, tx, baseline(cy), text)
+            cy += rowH
+        }
+        usedSymbols.forEach { def ->
+            LegendDraw.drawSymbol(canvas, sx + sampleW / 2, cy, rowH * 0.38f, def, unit * 0.5f)
+            canvas.drawText(def.label, tx, baseline(cy), text)
+            cy += rowH
+        }
     }
 
     private fun drawLegend(canvas: Canvas, legend: Bitmap, w: Float, h: Float) {
