@@ -6,8 +6,6 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
 import com.thkim.jijang.data.db.AppDatabase
 import com.thkim.jijang.ui.common.CrashActivity
-import java.io.PrintWriter
-import java.io.StringWriter
 import kotlin.system.exitProcess
 
 class JijangApp : Application() {
@@ -26,14 +24,11 @@ class JijangApp : Application() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
             try {
-                val sw = StringWriter()
-                error.printStackTrace(PrintWriter(sw))
-                val version = try { packageManager.getPackageInfo(packageName, 0).versionName } catch (e: Exception) { "?" }
+                // 화면에는 원인 요약만 보여준다 (전체 스택트레이스·기기 제조사/모델은 노출하지 않는다)
                 val root = generateSequence(error) { it.cause }.last()
-                val frames = root.stackTrace.take(4).joinToString("\n") { "   at $it" }
-                val summary = "★ 원인: ${root.javaClass.name}: ${root.message}\n$frames\n\n"
-                val text = summary + "앱 $version / ${Build.MANUFACTURER} ${Build.MODEL} / Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})\n" +
-                    "스레드: ${thread.name}\n\n$sw"
+                val frames = root.stackTrace.take(6).joinToString("\n") { "   at $it" }
+                val text = "★ 원인: ${root.javaClass.name}\n$frames\n\n" +
+                    "앱 ${BuildConfig.VERSION_NAME} / Android API ${Build.VERSION.SDK_INT}\n스레드: ${thread.name}"
                 startActivity(Intent(this, CrashActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     putExtra(CrashActivity.EXTRA_TRACE, text.take(12000))

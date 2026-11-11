@@ -1,5 +1,6 @@
 package com.thkim.jijang.ui.priceupload
 
+import com.thkim.jijang.util.tryExpected
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
@@ -66,7 +67,7 @@ class PriceUploadActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            try {
+            tryExpected {
                 val cacheFile = copyToCache(uri, fileName)
                 val result = viewModel.parseAndSave(cacheFile, year, fileName)
                 cacheFile.delete()
@@ -76,7 +77,7 @@ class PriceUploadActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
                 loadHistory()
-            } catch (e: Exception) {
+            }?.let { e ->
                 Toast.makeText(this@PriceUploadActivity, "업로드 실패: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }

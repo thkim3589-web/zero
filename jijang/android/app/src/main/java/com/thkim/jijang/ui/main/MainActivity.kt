@@ -1,5 +1,6 @@
 package com.thkim.jijang.ui.main
 
+import com.thkim.jijang.util.tryExpected
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -152,7 +153,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun copyTemplate(uri: Uri) {
         lifecycleScope.launch {
-            try {
+            tryExpected {
                 contentResolver.openInputStream(uri)?.use { input ->
                     CaseTemplateStore.templateFile(this@MainActivity).outputStream().use { output ->
                         input.copyTo(output)
@@ -160,7 +161,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 Toast.makeText(this@MainActivity, "템플릿이 저장되었습니다", Toast.LENGTH_SHORT).show()
                 pendingRefreshTemplateStatus?.invoke()
-            } catch (e: Exception) {
+            }?.let { e ->
                 Toast.makeText(this@MainActivity, "템플릿 저장 실패: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }

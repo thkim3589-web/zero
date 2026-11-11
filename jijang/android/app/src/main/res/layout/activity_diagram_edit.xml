@@ -127,6 +127,11 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonUndo"
+                android:insetLeft="0dp"
+                android:insetRight="0dp"
+                android:maxLines="1"
+                android:paddingHorizontal="2dp"
+                android:textSize="12sp"
                 style="@style/Widget.Jijang.Button.Outlined"
                 android:layout_width="0dp"
                 android:layout_height="44dp"
@@ -139,6 +144,11 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonRedo"
+                android:insetLeft="0dp"
+                android:insetRight="0dp"
+                android:maxLines="1"
+                android:paddingHorizontal="2dp"
+                android:textSize="12sp"
                 style="@style/Widget.Jijang.Button.Outlined"
                 android:layout_width="0dp"
                 android:layout_height="44dp"
@@ -151,13 +161,34 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/buttonAim"
+                android:insetLeft="0dp"
+                android:insetRight="0dp"
+                android:maxLines="1"
+                android:paddingHorizontal="2dp"
+                android:textSize="12sp"
+                style="@style/Widget.Jijang.Button.Outlined"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:minHeight="0dp"
+                android:paddingVertical="0dp"
+                android:text="조준 ON" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonOrtho"
+                android:insetLeft="0dp"
+                android:insetRight="0dp"
+                android:maxLines="1"
+                android:paddingHorizontal="2dp"
+                android:textSize="12sp"
                 style="@style/Widget.Jijang.Button.Outlined"
                 android:layout_width="0dp"
                 android:layout_height="44dp"
                 android:layout_weight="1"
                 android:minHeight="0dp"
                 android:paddingVertical="0dp"
-                android:text="조준 ON" />
+                android:text="직각 OFF" />
         </LinearLayout>
 
         <HorizontalScrollView

@@ -28,7 +28,21 @@ object UpdateManager {
 
     private const val VERSION_URL = "https://thkim3589-web.github.io/zero/apk/jijang-version.json"
 
-    data class Info(val code: Int, val name: String, val notes: List<String>, val apkUrl: String)
+    /** [sha256]은 APK 파일의 SHA-256(소문자 16진수) — 다운로드 후 일치할 때만 설치한다. */
+    data class Info(val code: Int, val name: String, val notes: List<String>, val apkUrl: String, val sha256: String)
+
+    private fun sha256Of(file: File): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buf = ByteArray(16 * 1024)
+            while (true) {
+                val n = input.read(buf)
+                if (n < 0) break
+                digest.update(buf, 0, n)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
 
     /** @param manual true면 "최신 버전입니다"/실패 안내도 토스트로 보여준다 (자동 확인은 조용히 넘어감) */
     fun check(activity: AppCompatActivity, manual: Boolean) {
@@ -55,7 +69,8 @@ object UpdateManager {
                 code = json.getInt("code"),
                 name = json.optString("version"),
                 notes = (0 until (notes?.length() ?: 0)).map { notes!!.getString(it) },
-                apkUrl = json.getString("apk")
+                apkUrl = json.getString("apk"),
+                sha256 = json.optString("sha256").lowercase()
             )
         } finally {
             conn.disconnect()
@@ -80,6 +95,10 @@ object UpdateManager {
         // https만 허용 — 중간에 바뀐 파일을 설치하는 일을 줄인다
         if (!info.apkUrl.startsWith("https://")) {
             toast(activity, "안전하지 않은 다운로드 주소입니다")
+            return
+        }
+        if (!Regex("[0-9a-f]{64}").matches(info.sha256)) {
+            toast(activity, "업데이트 파일의 검증 정보가 없어 설치할 수 없습니다")
             return
         }
         var cancelled = false
@@ -123,6 +142,7 @@ object UpdateManager {
                     conn.disconnect()
                     if (cancelled) { file.delete(); null }
                     else if (total > 0 && done != total) { file.delete(); error("다운로드가 중간에 끊겼습니다") }
+                    else if (sha256Of(file) != info.sha256) { file.delete(); error("파일 검증에 실패했습니다 (변조되었거나 잘못된 파일)") }
                     else file
                 }
             }

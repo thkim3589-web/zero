@@ -1,5 +1,6 @@
 package com.thkim.jijang.ui.diagram
 
+import com.thkim.jijang.util.tryExpected
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.PointF
@@ -90,7 +91,7 @@ class DiagramEditActivity : AppCompatActivity() {
     private val pickExcelLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             lifecycleScope.launch {
-                try {
+                tryExpected {
                     val tempFile = File(cacheDir, "diagram_import_${System.currentTimeMillis()}.xlsx")
                     contentResolver.openInputStream(uri)?.use { input ->
                         tempFile.outputStream().use { output -> input.copyTo(output) }
@@ -106,7 +107,7 @@ class DiagramEditActivity : AppCompatActivity() {
                         }
                         else -> showMediaPickerDialog(tempFile, entries)
                     }
-                } catch (e: Exception) {
+                }?.let { e ->
                     Toast.makeText(this@DiagramEditActivity, "엑셀 파일을 여는 데 실패했습니다: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
@@ -206,14 +207,16 @@ class DiagramEditActivity : AppCompatActivity() {
     private fun useMediaEntryAsBaseMap(xlsxFile: File, entryName: String) {
         lifecycleScope.launch {
             try {
-                val siteCaseId = intent.getLongExtra(EXTRA_SITE_CASE_ID, -1)
-                val ext = entryName.substringAfterLast('.', "jpg")
-                val destFile = File(filesDir, "map_${siteCaseId}_${routeType.name}_${System.currentTimeMillis()}.$ext")
-                destFile.writeBytes(XlsxReader.readMediaBytes(xlsxFile, entryName))
-                viewModel.setBaseMapImage(destFile.absolutePath)
-                loadImageAndLines(destFile.absolutePath)
-            } catch (e: Exception) {
-                Toast.makeText(this@DiagramEditActivity, "이미지를 가져오는 데 실패했습니다: ${e.message}", Toast.LENGTH_LONG).show()
+                tryExpected {
+                    val siteCaseId = intent.getLongExtra(EXTRA_SITE_CASE_ID, -1)
+                    val ext = entryName.substringAfterLast('.', "jpg")
+                    val destFile = File(filesDir, "map_${siteCaseId}_${routeType.name}_${System.currentTimeMillis()}.$ext")
+                    destFile.writeBytes(XlsxReader.readMediaBytes(xlsxFile, entryName))
+                    viewModel.setBaseMapImage(destFile.absolutePath)
+                    loadImageAndLines(destFile.absolutePath)
+                }?.let { e ->
+                    Toast.makeText(this@DiagramEditActivity, "이미지를 가져오는 데 실패했습니다: ${e.message}", Toast.LENGTH_LONG).show()
+                }
             } finally {
                 xlsxFile.delete()
             }
@@ -241,7 +244,9 @@ class DiagramEditActivity : AppCompatActivity() {
             val bitmap = try {
                 val bytes = XlsxReader.readMediaBytes(xlsxFile, entryName)
                 BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            } catch (e: Exception) {
+            } catch (e: java.io.IOException) {
+                null
+            } catch (e: IllegalArgumentException) {
                 null
             }
             val row = LinearLayout(this).apply {
@@ -510,6 +515,11 @@ class DiagramEditActivity : AppCompatActivity() {
         binding.buttonResetZoom.setOnClickListener { binding.routeEditorView.resetZoom() }
         binding.buttonUndo.setOnClickListener { binding.routeEditorView.undo() }
         binding.buttonRedo.setOnClickListener { binding.routeEditorView.redo() }
+        binding.buttonOrtho.setOnClickListener {
+            val on = !binding.routeEditorView.orthoSnapEnabled
+            binding.routeEditorView.orthoSnapEnabled = on
+            binding.buttonOrtho.text = if (on) "직각 ON" else "직각 OFF"
+        }
         binding.buttonAim.setOnClickListener {
             val on = !binding.routeEditorView.aimLiftEnabled
             binding.routeEditorView.aimLiftEnabled = on

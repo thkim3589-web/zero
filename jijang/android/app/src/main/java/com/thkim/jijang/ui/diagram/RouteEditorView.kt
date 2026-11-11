@@ -153,6 +153,22 @@ class RouteEditorView @JvmOverloads constructor(
     /** 점을 끌 때 손가락 위쪽에 점을 띄워서(조준) 손가락에 가려 정확히 못 놓는 문제를 없앤다. */
     var aimLiftEnabled = true
     private val aimLiftPx get() = 52f * density
+
+    /** 직각 맞춤 — 켜면 점을 찍거나 끌 때 이웃 점과 거의 수평/수직인 경우 정확히 수평/수직으로 맞춘다. */
+    var orthoSnapEnabled = false
+    private val orthoSnapPx get() = 14f * density / currentScale
+
+    /** [cand]를 [anchor]에 대해 수평/수직으로 맞춘다 (화면 거리 [orthoSnapPx] 이내일 때만). 상대좌표 입출력. */
+    private fun snapOrtho(anchor: EditablePoint, cand: PointF): PointF {
+        if (!orthoSnapEnabled) return cand
+        val a = relativeToView(anchor.x, anchor.y)
+        val c = relativeToView(cand.x, cand.y)
+        return when {
+            kotlin.math.abs(c.y - a.y) < orthoSnapPx -> viewToRelative(c.x, a.y)
+            kotlin.math.abs(c.x - a.x) < orthoSnapPx -> viewToRelative(a.x, c.y)
+            else -> cand
+        }
+    }
     private var dragging = false
     private var dragHistoryPushed = false
 
@@ -351,10 +367,40 @@ class RouteEditorView @JvmOverloads constructor(
     /** [onEmptyTap]에서 넘겨준 좌표로 실제 점을 확정해서 추가한다. */
     fun addPoint(point: PointF, markerType: MarkerType = MarkerType.PLAIN, label: String? = null, status: MarkerStatus? = null, symbolId: String? = null) {
         pushHistory()
-        val adjusted = avoidOverlap(point)
-        points.add(EditablePoint(adjusted.x, adjusted.y, markerType, label, status, symbolId))
+        val hit = findSegmentHit(point)
+        if (hit != null) {
+            // 선 위를 탭했으면 맨 끝에 붙이지 않고 그 선분 사이에 끼워 넣는다 (선 위로 투영한 자리).
+            points.add(hit.first + 1, EditablePoint(hit.second.x, hit.second.y, markerType, label, status, symbolId))
+        } else {
+            val snapped = if (points.isNotEmpty()) snapOrtho(points.last(), point) else point
+            val adjusted = if (snapped == point) avoidOverlap(point) else snapped
+            points.add(EditablePoint(adjusted.x, adjusted.y, markerType, label, status, symbolId))
+        }
         onPointsChanged?.invoke(points.toList())
         invalidate()
+    }
+
+    /** 편집 중인 선의 선분 중 [relPoint]에 가장 가깝고 터치 반경 안인 것의 (앞 점 인덱스, 선 위 투영 상대좌표). */
+    private fun findSegmentHit(relPoint: PointF): Pair<Int, PointF>? {
+        if (points.size < 2) return null
+        val p = relativeToView(relPoint.x, relPoint.y)
+        val limit = hitRadiusPx * 0.6f
+        var bestIdx = -1
+        var bestDist = Float.MAX_VALUE
+        var bestProj = PointF()
+        for (i in 0 until points.size - 1) {
+            val a = relativeToView(points[i].x, points[i].y)
+            val b = relativeToView(points[i + 1].x, points[i + 1].y)
+            val dx = b.x - a.x
+            val dy = b.y - a.y
+            val len2 = dx * dx + dy * dy
+            if (len2 < 1e-3f) continue
+            val t = (((p.x - a.x) * dx + (p.y - a.y) * dy) / len2).coerceIn(0f, 1f)
+            val proj = PointF(a.x + t * dx, a.y + t * dy)
+            val d = hypot((p.x - proj.x).toDouble(), (p.y - proj.y).toDouble()).toFloat()
+            if (d < limit && d < bestDist) { bestDist = d; bestIdx = i; bestProj = proj }
+        }
+        return if (bestIdx < 0) null else bestIdx to viewToRelative(bestProj.x, bestProj.y)
     }
 
     /** 선이 여러 개 겹치는 교차점 근처에 새 점을 찍으면 다른 선의 점과 원이 완전히
@@ -595,7 +641,9 @@ class RouteEditorView @JvmOverloads constructor(
                     val targetY = if (aimLiftEnabled) (rawY - aimLiftPx).coerceAtLeast(0f) else rawY
                     val tgt = floatArrayOf(rawX, targetY)
                     inverseMatrix.mapPoints(tgt)
-                    val rel = viewToRelative(tgt[0], tgt[1])
+                    var rel = viewToRelative(tgt[0], tgt[1])
+                    val neighbor = points.getOrNull(activeIndex - 1) ?: points.getOrNull(activeIndex + 1)
+                    if (neighbor != null) rel = snapOrtho(neighbor, rel)
                     points[activeIndex] = points[activeIndex].copy(x = rel.x, y = rel.y)
                     lastRawX = rawX; lastRawY = rawY
                     invalidate()
