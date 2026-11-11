@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -164,7 +165,12 @@ class DiagramEditActivity : AppCompatActivity() {
             }
         }
 
-        binding.routeEditorView.onPointsChanged = { if (activeLineId >= 0) pointsByLineId[activeLineId] = it.toMutableList() }
+        binding.routeEditorView.onPointsChanged = {
+            if (activeLineId >= 0) pointsByLineId[activeLineId] = it.toMutableList()
+            updateScaleInfo()
+        }
+        binding.buttonScale.setOnClickListener { startScaleCalibration() }
+        binding.buttonScale.setOnLongClickListener { clearScale(); true }
         binding.routeEditorView.onEmptyTap = { relPoint -> showAddPointDialog(relPoint) }
         binding.routeEditorView.onPointTap = { index, _ -> showPointActionMenu(index) }
 
@@ -186,6 +192,7 @@ class DiagramEditActivity : AppCompatActivity() {
 
         val image = viewModel.getBaseMapImage() ?: viewModel.setBaseMapImage(path)
         currentBaseMapImageId = image.id
+        binding.routeEditorView.metersPerWidth = image.metersPerWidth
         if (image.legendImagePath != null) showLegendThumbnail(image.legendImagePath) else hideLegendThumbnail()
 
         lines = viewModel.getLines(image.id).toMutableList()
@@ -201,6 +208,60 @@ class DiagramEditActivity : AppCompatActivity() {
         activeLineId = lines.first().id
         rebuildLineChips()
         applyActiveLineToView()
+        updateScaleInfo()
+    }
+
+    /** 축척 안내줄 — 설정돼 있으면 편집 중인 선의 전체 길이를, 아니면 설정 방법을 보여준다. */
+    private fun updateScaleInfo() {
+        val total = binding.routeEditorView.totalLengthMeters()
+        binding.textScaleInfo.text = when {
+            binding.routeEditorView.metersPerWidth == null -> "축척 미설정 — 기준 두 점을 탭해 설정"
+            else -> "이 선 길이 합계 %.1fm (길게 누르면 축척 해제)".format(total ?: 0.0)
+        }
+    }
+
+    /** 실제 거리를 아는 두 점을 지도에서 차례로 탭하게 하고, 그 거리를 입력받아 축척을 저장한다. */
+    private fun startScaleCalibration() {
+        if (currentBaseMapImageId < 0) {
+            Toast.makeText(this, "먼저 이미지를 불러오세요", Toast.LENGTH_SHORT).show()
+            return
+        }
+        Toast.makeText(this, "실제 거리를 아는 두 지점을 지도에서 차례로 탭하세요", Toast.LENGTH_LONG).show()
+        binding.routeEditorView.startCalibration { widthUnits ->
+            val input = EditText(this).apply {
+                inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+                hint = "두 점 사이 실제 거리 (m)"
+            }
+            AlertDialog.Builder(this)
+                .setTitle("축척 설정")
+                .setMessage("방금 찍은 두 점 사이의 실제 거리를 미터로 입력하세요.")
+                .setView(input)
+                .setPositiveButton("확인") { _, _ ->
+                    val meters = input.text.toString().toDoubleOrNull()
+                    if (meters == null || meters <= 0.0) {
+                        Toast.makeText(this, "0보다 큰 숫자를 입력하세요", Toast.LENGTH_SHORT).show()
+                    } else {
+                        applyScale(meters / widthUnits)
+                    }
+                }
+                .setNegativeButton("취소", null)
+                .show()
+        }
+    }
+
+    private fun applyScale(metersPerWidth: Double?) {
+        binding.routeEditorView.metersPerWidth = metersPerWidth
+        updateScaleInfo()
+        lifecycleScope.launch { viewModel.setScale(currentBaseMapImageId, metersPerWidth) }
+    }
+
+    private fun clearScale() {
+        if (binding.routeEditorView.metersPerWidth == null || currentBaseMapImageId < 0) return
+        AlertDialog.Builder(this)
+            .setMessage("축척을 해제할까요? 구간 길이 표시가 사라집니다.")
+            .setPositiveButton("해제") { _, _ -> applyScale(null) }
+            .setNegativeButton("취소", null)
+            .show()
     }
 
     /** 선택한 zip 항목(엑셀 안의 그림)을 개황도 배경 이미지로 확정한다. */

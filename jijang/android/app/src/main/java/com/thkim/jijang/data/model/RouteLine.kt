@@ -30,7 +30,9 @@ data class BaseMapImage(
     val importedAt: Long = System.currentTimeMillis(),
     // 직접 그리는 범례 대신, 실제 범례 이미지(사진/캡처)를 그대로 붙여 넣을 수 있게 한 필드.
     // 개황도 우하단에 그대로 합성되어 내보내진다.
-    val legendImagePath: String? = null
+    val legendImagePath: String? = null,
+    // 축척: 이미지 가로 폭(상대좌표 1.0)이 실제 몇 m인지. null이면 미설정. 이미지를 바꾸면 초기화된다.
+    val metersPerWidth: Double? = null
 )
 
 /**

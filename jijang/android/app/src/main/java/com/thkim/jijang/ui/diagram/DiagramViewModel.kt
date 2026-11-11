@@ -34,6 +34,10 @@ class DiagramViewModel(
         return image.copy(id = id)
     }
 
+    suspend fun setScale(baseMapImageId: Long, metersPerWidth: Double?) {
+        db.diagramDao().updateScale(baseMapImageId, metersPerWidth)
+    }
+
     /** 직접 그리기 대신 실제 범례 이미지를 그대로 첨부할 수 있게 한다 — 내보내기 시 우하단에 합성된다. */
     suspend fun setLegendImage(baseMapImageId: Long, localFilePath: String?) {
         db.diagramDao().updateLegendImage(baseMapImageId, localFilePath)

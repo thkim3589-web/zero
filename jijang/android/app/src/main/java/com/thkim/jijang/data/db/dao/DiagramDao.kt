@@ -24,8 +24,11 @@ interface DiagramDao {
     /** 기존 이미지를 다시 고를 때는 이 UPDATE를 써야 한다 — [upsertBaseMapImage]를 다시
      * 부르면 (siteCaseId, routeType) UNIQUE 충돌로 기존 행이 지워졌다 새로 들어가면서
      * FK CASCADE로 그 위에 그려둔 route_line/route_point가 전부 같이 삭제돼버린다. */
-    @Query("UPDATE base_map_image SET localFilePath = :path, importedAt = :importedAt WHERE id = :id")
+    @Query("UPDATE base_map_image SET localFilePath = :path, importedAt = :importedAt, metersPerWidth = NULL WHERE id = :id")
     suspend fun updateBaseMapImagePath(id: Long, path: String, importedAt: Long)
+
+    @Query("UPDATE base_map_image SET metersPerWidth = :value WHERE id = :id")
+    suspend fun updateScale(id: Long, value: Double?)
 
     @Query("UPDATE base_map_image SET legendImagePath = :path WHERE id = :id")
     suspend fun updateLegendImage(id: Long, path: String?)

@@ -154,6 +154,44 @@ class RouteEditorView @JvmOverloads constructor(
     var aimLiftEnabled = true
     private val aimLiftPx get() = 52f * density
 
+    /** 축척 — 이미지 가로 폭(상대좌표 1.0)이 실제 몇 m인지. null이면 길이를 표시하지 않는다. */
+    var metersPerWidth: Double? = null
+        set(value) { field = value; invalidate() }
+
+    /** 두 상대좌표 점 사이의 거리를 "이미지 가로 폭 단위"로 계산한다 (세로는 가로세로비로 보정). */
+    private fun widthUnitDistance(ax: Float, ay: Float, bx: Float, by: Float): Double {
+        val bmp = bitmap ?: return 0.0
+        val dx = (bx - ax).toDouble()
+        val dy = (by - ay).toDouble() * bmp.height / bmp.width
+        return hypot(dx, dy)
+    }
+
+    /** 편집 중인 선의 전체 길이(m). 축척이 없으면 null. */
+    fun totalLengthMeters(): Double? {
+        val mw = metersPerWidth ?: return null
+        var sum = 0.0
+        for (i in 0 until points.size - 1) sum += widthUnitDistance(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y)
+        return sum * mw
+    }
+
+    /** 축척 보정 — 지도에서 실제 거리를 아는 두 점을 차례로 탭하면 [onDone]에 두 점 사이 거리(가로 폭 단위)를 넘긴다. */
+    private var calibrating = false
+    private val calibPoints = mutableListOf<PointF>()
+    private var onCalibrationDone: ((Double) -> Unit)? = null
+
+    fun startCalibration(onDone: (Double) -> Unit) {
+        calibrating = true
+        calibPoints.clear()
+        onCalibrationDone = onDone
+        invalidate()
+    }
+
+    fun cancelCalibration() {
+        calibrating = false
+        calibPoints.clear()
+        invalidate()
+    }
+
     /** 직각 맞춤 — 켜면 점을 찍거나 끌 때 이웃 점과 거의 수평/수직인 경우 정확히 수평/수직으로 맞춘다. */
     var orthoSnapEnabled = false
     private val orthoSnapPx get() = 14f * density / currentScale
@@ -483,6 +521,8 @@ class RouteEditorView @JvmOverloads constructor(
             drawLine(canvas, ref.points, refColor, secondaryLinePaint, drawMarkers = false, dashed = ref.dashed, styleDef = LegendCatalog.line(ref.styleId))
         }
         drawLine(canvas, points, lineColor, linePaint, drawMarkers = true, dashed = lineDashed, styleDef = lineStyleDef)
+        drawSegmentLengths(canvas)
+        drawCalibration(canvas)
         canvas.restore()
 
         // 점을 끄는 동안: 손가락 → 점 안내선 + 십자 조준선 (화면 좌표로 그린다)
@@ -499,6 +539,36 @@ class RouteEditorView @JvmOverloads constructor(
             canvas.drawLine(s[0], s[1] - arm, s[0], s[1] + arm, guidePaint)
             canvas.drawCircle(s[0], s[1], 12f * density, guidePaint)
         }
+    }
+
+    /** 축척이 있으면 편집 중인 선의 구간마다 가운데에 길이(m)를 표시한다. */
+    private fun drawSegmentLengths(canvas: Canvas) {
+        val mw = metersPerWidth ?: return
+        for (i in 0 until points.size - 1) {
+            val a = points[i]
+            val b = points[i + 1]
+            val m = widthUnitDistance(a.x, a.y, b.x, b.y) * mw
+            val mid = relativeToView((a.x + b.x) / 2f, (a.y + b.y) / 2f)
+            val text = if (m >= 100) "%.0fm".format(m) else "%.1fm".format(m)
+            val w = labelPaint.measureText(text)
+            val pad = labelPaint.textSize * 0.3f
+            val top = mid.y - labelPaint.textSize / 2f - pad
+            canvas.drawRoundRect(
+                RectF(mid.x - w / 2f - pad, top, mid.x + w / 2f + pad, top + labelPaint.textSize + pad * 2),
+                pad, pad, labelBgPaint
+            )
+            canvas.drawText(text, mid.x - w / 2f, top + labelPaint.textSize + pad * 0.6f, labelPaint)
+        }
+    }
+
+    /** 축척 보정 중 찍은 기준점(최대 2개)과 그 사이 선. */
+    private fun drawCalibration(canvas: Canvas) {
+        if (calibPoints.isEmpty()) return
+        val vs = calibPoints.map { relativeToView(it.x, it.y) }
+        guidePaint.strokeWidth = 2f * density / currentScale
+        guidePaint.pathEffect = null
+        if (vs.size == 2) canvas.drawLine(vs[0].x, vs[0].y, vs[1].x, vs[1].y, guidePaint)
+        vs.forEach { canvas.drawCircle(it.x, it.y, pointRadiusPx * 1.4f, guidePaint) }
     }
 
     private fun drawLine(canvas: Canvas, pts: List<EditablePoint>, baseColor: Int, paint: Paint, drawMarkers: Boolean, dashed: Boolean = false, styleDef: LineStyleDef? = null) {
@@ -623,7 +693,7 @@ class RouteEditorView @JvmOverloads constructor(
                 downRawX = rawX; downRawY = rawY; moved = false
                 dragging = false; dragHistoryPushed = false
                 lastRawX = rawX; lastRawY = rawY
-                activeIndex = findNearestPointIndex(x, y)
+                activeIndex = if (calibrating) -1 else findNearestPointIndex(x, y)
                 return true
             }
             MotionEvent.ACTION_POINTER_DOWN -> {
@@ -663,6 +733,15 @@ class RouteEditorView @JvmOverloads constructor(
                         onPointsChanged?.invoke(points.toList())
                     } else if (activeIndex in points.indices && !moved) {
                         onPointTap?.invoke(activeIndex, PointF(rawX, rawY))
+                    } else if (activeIndex == -1 && !moved && calibrating) {
+                        calibPoints.add(viewToRelative(x, y))
+                        if (calibPoints.size == 2) {
+                            val d = widthUnitDistance(calibPoints[0].x, calibPoints[0].y, calibPoints[1].x, calibPoints[1].y)
+                            val done = onCalibrationDone
+                            calibrating = false
+                            calibPoints.clear()
+                            if (d > 1e-6) done?.invoke(d)
+                        }
                     } else if (activeIndex == -1 && !moved) {
                         val quickSym = quickPlaceSymbol
                         val quick = quickPlaceType

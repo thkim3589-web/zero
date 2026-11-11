@@ -190,6 +190,34 @@
                 android:paddingVertical="0dp"
                 android:text="직각 OFF" />
         </LinearLayout>
+        <!-- 축척 설정 / 선 길이 표시 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonScale"
+                style="@style/Widget.Jijang.Button.Outlined"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:minHeight="0dp"
+                android:paddingVertical="0dp"
+                android:textSize="12sp"
+                android:text="축척 설정" />
+
+            <TextView
+                android:id="@+id/textScaleInfo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:text="축척 미설정 — 기준 두 점을 탭해 설정"
+                android:textSize="12sp" />
+        </LinearLayout>
+
 
         <HorizontalScrollView
             android:layout_width="match_parent"
