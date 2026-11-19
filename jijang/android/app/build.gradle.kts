@@ -12,15 +12,19 @@ android {
         applicationId = "com.thkim.jijang"
         minSdk = 26
         targetSdk = 34
-        versionCode = 13
-        versionName = "0.8.0"
+        versionCode = 14
+        versionName = "0.8.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isDebuggable = false
+            // 현장 기기에 이미 설치된 앱과 같은 서명이어야 덮어쓰기 업데이트가 된다 (키를 바꾸면 재설치 필요).
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

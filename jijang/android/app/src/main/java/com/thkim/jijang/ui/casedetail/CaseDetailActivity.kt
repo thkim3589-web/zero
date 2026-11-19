@@ -221,10 +221,8 @@ class CaseDetailActivity : AppCompatActivity() {
     private fun copyTemplateThenExport(uri: Uri) {
         lifecycleScope.launch {
             tryExpected {
-                contentResolver.openInputStream(uri)?.use { input ->
-                    CaseTemplateStore.templateFile(this@CaseDetailActivity).outputStream().use { output ->
-                        input.copyTo(output)
-                    }
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    CaseTemplateStore.saveFrom(this@CaseDetailActivity, uri)
                 }
                 Toast.makeText(this@CaseDetailActivity, "템플릿이 저장되었습니다", Toast.LENGTH_SHORT).show()
                 if (pendingExportSiteCaseId >= 0) exportExcel(pendingExportSiteCaseId)

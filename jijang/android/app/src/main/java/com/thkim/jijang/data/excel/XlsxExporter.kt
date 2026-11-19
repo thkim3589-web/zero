@@ -14,11 +14,11 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
-private const val ENG_SHEET_NAME = "ENG시트(Checklist)"
-private const val PHOTO_SHEET_NAME = "공문 및 사진"
-private const val GIBYEOL_SHEET_NAME = "기별"
-private const val DIAGRAM_BEFORE_SHEET_NAME = "개황도(전)"
-private const val DIAGRAM_AFTER_SHEET_NAME = "개황도(후)"
+internal const val ENG_SHEET_NAME = "ENG시트(Checklist)"
+internal const val PHOTO_SHEET_NAME = "공문 및 사진"
+internal const val GIBYEOL_SHEET_NAME = "기별"
+internal const val DIAGRAM_BEFORE_SHEET_NAME = "개황도(전)"
+internal const val DIAGRAM_AFTER_SHEET_NAME = "개황도(후)"
 
 // 실제 파일 확인 결과 — 개황도 시트의 GIS 캡처 배경 이미지는 항상 이 좌표(col 0~35, row 20~89,
 // xdr 0-indexed)에 있다. 범례 아이콘들은 훨씬 작은 1~2셀짜리 앵커라 이 좌표와 절대 겹치지 않는다.

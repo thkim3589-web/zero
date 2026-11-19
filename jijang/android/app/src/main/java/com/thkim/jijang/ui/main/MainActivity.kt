@@ -154,10 +154,8 @@ class MainActivity : AppCompatActivity() {
     private fun copyTemplate(uri: Uri) {
         lifecycleScope.launch {
             tryExpected {
-                contentResolver.openInputStream(uri)?.use { input ->
-                    CaseTemplateStore.templateFile(this@MainActivity).outputStream().use { output ->
-                        input.copyTo(output)
-                    }
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    CaseTemplateStore.saveFrom(this@MainActivity, uri)
                 }
                 Toast.makeText(this@MainActivity, "템플릿이 저장되었습니다", Toast.LENGTH_SHORT).show()
                 pendingRefreshTemplateStatus?.invoke()
